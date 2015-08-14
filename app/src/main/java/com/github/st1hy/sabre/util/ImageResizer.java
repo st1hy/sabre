@@ -16,18 +16,22 @@
 
 package com.github.st1hy.sabre.util;
 
+import android.content.ContentResolver;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 
 import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
- *
  * Taken from DisplayingBitmaps example.
- *
  */
-public class ImageResizer {
+public enum ImageResizer {
+    ;
 
     /**
      * Decode and sample down a bitmap from resources to the requested width and height.
@@ -115,6 +119,37 @@ public class ImageResizer {
         addInBitmapOptions(options, cache);
 
         return BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+    }
+
+    public static Bitmap decodeUri(Uri uri, int reqWidth, int reqHeight, ImageCache cache, ContentResolver contentResolver) {
+        try {
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+
+            InputStream input = contentResolver.openInputStream(uri);
+            try {
+                BitmapFactory.decodeStream(input, null, options);
+            } finally {
+                input.close();
+            }
+            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+            options.inJustDecodeBounds = false;
+
+            addInBitmapOptions(options, cache);
+
+            input = contentResolver.openInputStream(uri);
+            try {
+                return BitmapFactory.decodeStream(input, null, options);
+            } finally {
+                input.close();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private static void addInBitmapOptions(BitmapFactory.Options options, ImageCache cache) {

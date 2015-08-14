@@ -25,7 +25,8 @@ import android.os.Build.VERSION_CODES;
  ******************************************************************************
  * Class containing some static utility methods.
  */
-public class Utils {
+public enum Utils {
+    ;
 
     public static boolean hasKitKat() {
         return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;

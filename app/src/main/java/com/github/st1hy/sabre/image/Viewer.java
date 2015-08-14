@@ -10,14 +10,17 @@ import android.view.SurfaceView;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callback2, Runnable {
-    protected ExecutorService executor = Executors.newSingleThreadExecutor();
-    protected SurfaceHolder holder;
-    protected int width, height;
+public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callback2 {
+    protected volatile ScheduledExecutorService executor = newExecutor();
+    protected volatile SurfaceHolder holder;
+    protected volatile int width, height;
     protected volatile Bitmap cache;
     protected volatile Canvas cacheCanvas;
+    private volatile DrawTask drawTask;
 
     public Viewer(Context context) {
         super(context);
@@ -41,15 +44,14 @@ public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callba
     }
 
     protected void init() {
+        drawTask = new DrawTask();
         holder = getHolder();
         holder.addCallback(this);
     }
 
     @Override
     public void surfaceRedrawNeeded(SurfaceHolder holder) {
-        if (executor.isShutdown())
-            executor = Executors.newSingleThreadExecutor();
-        executor.submit(this);
+        drawTask.onRedrawNeeded();
     }
 
     @Override
@@ -66,23 +68,53 @@ public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callba
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        executor.shutdownNow();
-        boolean isTerminated = executor.isTerminated();
-        if (!isTerminated) {
-            try {
-                executor.awaitTermination(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        drawTask.shutdownNow();
+    }
+
+    private class DrawTask implements Runnable {
+        private final AtomicInteger pending = new AtomicInteger(0);
+
+        @Override
+        public void run() {
+            pending.decrementAndGet();
+            if (isInterrupted()) return;
+            if (width == 0 || height == 0) return;
+            Canvas canvas = holder.lockCanvas();
+            if (!isInterrupted()) {
+                drawContent(canvas);
+            }
+            holder.unlockCanvasAndPost(canvas);
+        }
+
+        void onRedrawNeeded() {
+            if (executor.isShutdown()) {
+                executor = newExecutor();
+            }
+            if (pending.compareAndSet(0, 1)) {
+                executor.submit(this);
+            }
+        }
+
+        void shutdownNow() {
+            executor.shutdownNow();
+            boolean isTerminated = executor.isTerminated();
+            if (!isTerminated) {
+                try {
+                    executor.awaitTermination(1, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
-    @Override
-    public void run() {
-        Canvas canvas = holder.lockCanvas();
-        drawContent(canvas);
-        holder.unlockCanvasAndPost(canvas);
+    private static boolean isInterrupted() {
+        return Thread.currentThread().isInterrupted();
     }
 
     public abstract void drawContent(Canvas canvas);
+
+    private static ScheduledExecutorService newExecutor() {
+        return Executors.newSingleThreadScheduledExecutor();
+    }
 }

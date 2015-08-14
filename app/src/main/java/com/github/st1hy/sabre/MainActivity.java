@@ -2,33 +2,54 @@ package com.github.st1hy.sabre;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 
 import com.github.st1hy.sabre.image.ImageViewer;
+import com.github.st1hy.sabre.util.ImageCache;
 import com.github.st1hy.sabre.util.SystemUIMode;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ImageViewer.ImageLoadingCallback {
     private static final int REQUEST_IMAGE = 0x16ed;
     private static final String SAVE_IMAGE_URI = "com.github.st1hy.sabre.IMAGE_URI";
     private Uri loadedImage;
     private ViewDelegate viewDelegate;
+    private ImageCache imageCache;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        viewDelegate = new ViewDelegate(this);
         if (savedInstanceState != null) {
             loadedImage = savedInstanceState.getParcelable(SAVE_IMAGE_URI);
+            if (loadedImage != null) switchUIMode(SystemUIMode.IMMERSIVE);
+        }
+        initCache();
+        setContentView(R.layout.activity_main);
+        viewDelegate = new ViewDelegate(this);
+        viewDelegate.getViewer().setLoadingCallback(this);
+        viewDelegate.getViewer().addImageCache(imageCache);
+        if (loadedImage != null) {
             onImageLoaded(loadedImage);
         }
+    }
+
+    private ImageCache initCache() {
+        ImageCache.ImageCacheParams params = new ImageCache.ImageCacheParams(this, "images");
+        params.diskCacheEnabled = false;
+        params.setMemCacheSizePercent(0.25f);
+        imageCache = ImageCache.getInstance(getSupportFragmentManager(), params);
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                imageCache.initDiskCache();
+            }
+        });
+        return imageCache;
     }
 
     @Override
@@ -44,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
     //Called using menu_main.xml
     public void onActionSettings(final MenuItem item) {
+        //TODO Add settings or remove;
     }
 
     //Called using main_empty_view.xml
@@ -63,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
                 if (resultCode == RESULT_OK && null != data) {
                     loadedImage = data.getData();
                     onImageLoaded(loadedImage);
+                    switchUIMode(SystemUIMode.IMMERSIVE);
                 }
                 break;
             default:
@@ -81,9 +104,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onImageLoaded(Uri loadedImage) {
-        ImageViewer viewer = (ImageViewer) findViewById(R.id.main_activity_image_viewer);
+        ImageViewer viewer = viewDelegate.getViewer();
         viewer.setImageURI(loadedImage);
-        if (loadedImage == null) return;
-        switchUIMode(SystemUIMode.IMMERSIVE);
+    }
+
+    @Override
+    public void onImageLoadingStarted() {
+        viewDelegate.getEmptyView().setVisibility(View.GONE);
+        viewDelegate.getLoadingProgressBar().setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onImageLoadingFinished() {
+        viewDelegate.getLoadingProgressBar().setVisibility(View.GONE);
+        viewDelegate.getViewer().setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                imageCache.flush();
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        imageCache.close();
     }
 }
