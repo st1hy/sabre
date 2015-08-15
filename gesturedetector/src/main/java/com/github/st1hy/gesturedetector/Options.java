@@ -9,9 +9,10 @@ public final class Options implements Cloneable {
     private boolean listenForClick = true;
     private boolean listenForLongClick = true;
     private boolean listenForDoubleClick = true;
-    private int longPressTimeMs = 500;
     private boolean ignoreClickEventOnGestures = true;
     private int translateStartThreshold;
+    private int longPressTimeMs = 500;
+    private int doubleClickTimeLimitMs = 400;
 
     Options(Context context) {
         translateStartThreshold = context.getResources().getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold);
@@ -87,6 +88,14 @@ public final class Options implements Cloneable {
 
     public void setTranslateStartThreshold(int translateStartThreshold) {
         this.translateStartThreshold = translateStartThreshold;
+    }
+
+    public int getDoubleClickTimeLimitMs() {
+        return doubleClickTimeLimitMs;
+    }
+
+    public void setDoubleClickTimeLimitMs(int doubleClickTimeLimitMs) {
+        this.doubleClickTimeLimitMs = doubleClickTimeLimitMs;
     }
 
     public Options clone() {

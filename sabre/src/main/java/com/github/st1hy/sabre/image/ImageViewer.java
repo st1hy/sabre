@@ -34,9 +34,7 @@ public class ImageViewer extends Viewer {
     private volatile ImageLoadingCallback loadingCallback;
     private final ImageReceiver imageReceiver = new ImageReceiverImp();
     private GestureDetector gestureDetector;
-    private final GestureListener gestureListener = new SimpleGestureListener() {
-        //TODO Respond to gestures.
-    };
+    private GestureListener gestureListener;
 
     public ImageViewer(Context context) {
         super(context);
@@ -57,6 +55,14 @@ public class ImageViewer extends Viewer {
     @Override
     protected void init() {
         super.init();
+        gestureListener = new SimpleGestureListener() {
+            //TODO Respond to gestures.
+
+            @Override
+            public void onClick() {
+                super.onClick();
+            }
+        };
         gestureDetector = new GestureDetector(getContext(), gestureListener);
         setOnTouchListener(gestureDetector);
     }
