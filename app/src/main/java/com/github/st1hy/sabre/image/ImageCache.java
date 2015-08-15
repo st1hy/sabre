@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.st1hy.sabre.util;
+package com.github.st1hy.sabre.image;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -32,6 +32,9 @@ import android.support.v4.util.LruCache;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
+import com.github.st1hy.sabre.image.worker.ImageWorkerImp;
+import com.github.st1hy.sabre.util.DiskLruCache;
+import com.github.st1hy.sabre.util.Utils;
 import com.google.common.hash.Hashing;
 
 import java.io.File;
@@ -52,7 +55,7 @@ import java.util.Set;
  * <p/>
  * *****************************************************************************
  * This class handles disk and memory caching of bitmaps in conjunction with the
- * {@link ImageWorker} class and its subclasses. Use
+ * {@link ImageWorkerImp} class and its subclasses. Use
  * {@link ImageCache#getInstance(android.support.v4.app.FragmentManager, ImageCacheParams)} to get an instance of this
  * class
  */
@@ -60,7 +63,7 @@ public class ImageCache {
     private static final String TAG = "ImageCache";
 
     // Default memory cache size in kilobytes
-    private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 5; // 15MB
+    private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 5; // 5MB
 
     // Default disk cache size in bytes
     private static final int DEFAULT_DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10MB

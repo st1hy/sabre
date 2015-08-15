@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -14,11 +13,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.AttributeSet;
-import android.view.SurfaceHolder;
 
-import com.github.st1hy.sabre.util.ImageCache;
-import com.github.st1hy.sabre.util.ImageResizer;
-import com.github.st1hy.sabre.util.ImageWorker;
+import com.github.st1hy.sabre.image.worker.ImageReceiver;
+import com.github.st1hy.sabre.image.worker.ImageWorkerImp;
+import com.github.st1hy.sabre.image.worker.ImageWorker;
+import com.github.st1hy.sabre.image.worker.TaskOption;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,7 +29,7 @@ public class ImageViewer extends Viewer {
     private ImageWorker imageWorker;
     private volatile Drawable background, image;
     private volatile ImageLoadingCallback loadingCallback;
-    private final ImageWorker.ImageReceiver imageReceiver = new ImageReceiverImp();
+    private final ImageReceiver imageReceiver = new ImageReceiverImp();
 
     public ImageViewer(Context context) {
         super(context);
@@ -54,18 +53,8 @@ public class ImageViewer extends Viewer {
     }
 
     public void addImageCache(ImageCache cache) {
-        imageWorker = new ImageWorker(getContext(), cache);
-        imageWorker.setImageFadeIn(false);
-    }
-
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        super.surfaceCreated(holder);
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        super.surfaceDestroyed(holder);
+        imageWorker = new ImageWorkerImp(getContext(), cache);
+        imageWorker.setTaskOption(TaskOption.RUNNABLE);
     }
 
     public void setLoadingCallback(ImageLoadingCallback loadingCallback) {
@@ -94,9 +83,7 @@ public class ImageViewer extends Viewer {
 
     @Override
     public void drawContent(Canvas canvas) {
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(Color.GREEN);
-        canvas.drawLine(0, 0, width, height, paint);
+        canvas.drawColor(Color.BLACK);
         drawDrawable(canvas, background);
         drawDrawable(canvas, image);
     }
@@ -105,7 +92,6 @@ public class ImageViewer extends Viewer {
         if (drawable == null) return;
         //configureBounds(drawable);
         int saveCount = canvas.getSaveCount();
-        canvas.drawColor(Color.WHITE);
         canvas.save();
         Drawable current = drawable.getCurrent();
         configureBounds(canvas, drawable);
@@ -131,7 +117,7 @@ public class ImageViewer extends Viewer {
         void onImageLoadingFinished();
     }
 
-    private class ImageReceiverImp implements ImageWorker.ImageReceiver, Drawable.Callback {
+    private class ImageReceiverImp implements ImageReceiver, Drawable.Callback {
         private final Map<Drawable, Map<Runnable, Future<?>>> futureDrawingTasks = new ConcurrentHashMap<>();
 
         @Override
@@ -141,13 +127,13 @@ public class ImageViewer extends Viewer {
                 cancelAllFuture(image);
             }
             image = drawable;
-            surfaceRedrawNeeded(holder);
             if (loadingCallback != null) handler.post(new Runnable() {
                 @Override
                 public void run() {
                     loadingCallback.onImageLoadingFinished();
                 }
             });
+            surfaceRedrawNeeded(holder);
             if (image == null) return;
             image.setCallback(this);
         }

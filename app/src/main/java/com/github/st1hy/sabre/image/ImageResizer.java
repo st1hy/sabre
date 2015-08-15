@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.st1hy.sabre.util;
+package com.github.st1hy.sabre.image;
 
 import android.content.ContentResolver;
 import android.content.res.Resources;
@@ -44,8 +44,7 @@ public enum ImageResizer {
      * @return A bitmap sampled down from the original with the same aspect ratio and dimensions
      * that are equal to or greater than the requested width and height
      */
-    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId,
-                                                         int reqWidth, int reqHeight, ImageCache cache) {
+    public static Bitmap decodeSampledBitmapFromResource(Resources res, int resId, int reqWidth, int reqHeight, ImageCache cache) {
 
         // BEGIN_INCLUDE (read_bitmap_dimensions)
         // First decode with inJustDecodeBounds=true to check dimensions
@@ -74,8 +73,7 @@ public enum ImageResizer {
      * @return A bitmap sampled down from the original with the same aspect ratio and dimensions
      * that are equal to or greater than the requested width and height
      */
-    public static Bitmap decodeSampledBitmapFromFile(String filename,
-                                                     int reqWidth, int reqHeight, ImageCache cache) {
+    public static Bitmap decodeSampledBitmapFromFile(String filename, int reqWidth, int reqHeight, ImageCache cache) {
 
         // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();

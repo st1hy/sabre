@@ -11,7 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.github.st1hy.sabre.image.ImageViewer;
-import com.github.st1hy.sabre.util.ImageCache;
+import com.github.st1hy.sabre.image.ImageCache;
 import com.github.st1hy.sabre.util.SystemUIMode;
 
 public class MainActivity extends AppCompatActivity implements ImageViewer.ImageLoadingCallback {

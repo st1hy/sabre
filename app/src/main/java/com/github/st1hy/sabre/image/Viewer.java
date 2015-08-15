@@ -21,6 +21,7 @@ public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callba
     protected volatile Bitmap cache;
     protected volatile Canvas cacheCanvas;
     private volatile DrawTask drawTask;
+    private volatile boolean isSurfaceActive = false;
 
     public Viewer(Context context) {
         super(context);
@@ -56,6 +57,7 @@ public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callba
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+        isSurfaceActive = true;
     }
 
     @Override
@@ -68,6 +70,7 @@ public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callba
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        isSurfaceActive = false;
         drawTask.shutdownNow();
     }
 
@@ -78,7 +81,7 @@ public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callba
         public void run() {
             pending.decrementAndGet();
             if (isInterrupted()) return;
-            if (width == 0 || height == 0) return;
+            if (width == 0 || height == 0 || !isSurfaceActive) return;
             Canvas canvas = holder.lockCanvas();
             if (!isInterrupted()) {
                 drawContent(canvas);
