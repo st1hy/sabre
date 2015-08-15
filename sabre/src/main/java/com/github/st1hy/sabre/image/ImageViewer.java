@@ -14,6 +14,9 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 
+import com.github.st1hy.gesturedetector.GestureDetector;
+import com.github.st1hy.gesturedetector.GestureListener;
+import com.github.st1hy.gesturedetector.SimpleGestureListener;
 import com.github.st1hy.sabre.image.worker.ImageReceiver;
 import com.github.st1hy.sabre.image.worker.ImageWorkerImp;
 import com.github.st1hy.sabre.image.worker.ImageWorker;
@@ -30,6 +33,10 @@ public class ImageViewer extends Viewer {
     private volatile Drawable background, image;
     private volatile ImageLoadingCallback loadingCallback;
     private final ImageReceiver imageReceiver = new ImageReceiverImp();
+    private GestureDetector gestureDetector;
+    private final GestureListener gestureListener = new SimpleGestureListener() {
+        //TODO Respond to gestures.
+    };
 
     public ImageViewer(Context context) {
         super(context);
@@ -50,6 +57,8 @@ public class ImageViewer extends Viewer {
     @Override
     protected void init() {
         super.init();
+        gestureDetector = new GestureDetector(getContext(), gestureListener);
+        setOnTouchListener(gestureDetector);
     }
 
     public void addImageCache(ImageCache cache) {
@@ -90,7 +99,6 @@ public class ImageViewer extends Viewer {
 
     private void drawDrawable(Canvas canvas, Drawable drawable) {
         if (drawable == null) return;
-        //configureBounds(drawable);
         int saveCount = canvas.getSaveCount();
         canvas.save();
         Drawable current = drawable.getCurrent();
