@@ -1,5 +1,6 @@
 package com.github.st1hy.gesturedetector;
 
+import android.graphics.PointF;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.MotionEvent;
@@ -22,19 +23,19 @@ import static com.github.st1hy.gesturedetector.Options.Flag.IGNORE_CLICK_EVENT_O
 
 /**
  * Listens for click events.
- * Calls {@link GestureListener#onClick(float, float)}, {@link GestureListener#onLongPressed(float, float)} or {@link GestureListener#onDoubleClick(float, float)} when appropriate.
+ * Calls {@link GestureListener#onClick(PointF)}, {@link GestureListener#onLongPressed(PointF)} or {@link GestureListener#onDoubleClick(PointF)} when appropriate.
  * <p>
  * To control which events are being delivered use {@link Options}. If option {@link Flag#IGNORE_CLICK_EVENT_ON_GESTURES} is set it will filter out clicks that are part of more complicated gestures.
  * <p>
  * When listening also for double click events, adds delay for second press event to occur.
- * If it doesn't it triggers {@link GestureListener#onClick(float, float)}
+ * If it doesn't it triggers {@link GestureListener#onClick(PointF)}
  */
 class ClickDetector extends SimpleGestureListener implements GestureDetector {
     private final GestureListener listener;
     private final Options options;
     private long pressedTimestamp, previousClickTimestamp;
     private int eventStartPointerId;
-    private float startX, startY;
+    private PointF startPoint;
     private boolean isEventValid = false;
     private int clickCount = 0;
     private final Handler handler;
@@ -42,7 +43,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         @Override
         public void run() {
             if (options.isEnabled(CLICK)) {
-                listener.onClick(startX, startY);
+                listener.onClick(startPoint);
                 invalidate();
             }
         }
@@ -51,7 +52,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         @Override
         public void run() {
             if (options.isEnabled(LONG_PRESS)) {
-                listener.onLongPressed(startX, startY);
+                listener.onLongPressed(startPoint);
                 invalidate();
             }
         }
@@ -101,8 +102,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         pressedTimestamp = event.getEventTime();
         eventStartPointerId = getPointerId(event);
         int pointerIndex = event.getActionIndex();
-        startX = event.getX(pointerIndex);
-        startY = event.getY(pointerIndex);
+        startPoint = new PointF(event.getX(pointerIndex), event.getY(pointerIndex));
         isEventValid = true;
         if (options.isEnabled(DOUBLE_CLICK)) clickCount++;
         if (options.isEnabled(LONG_PRESS)) {
@@ -125,7 +125,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
             if (clickCount == 2) {
                 long timeSinceFirstClick = event.getEventTime() - previousClickTimestamp;
                 if (timeSinceFirstClick < options.get(DOUBLE_CLICK_TIME_LIMIT)) {
-                    listener.onDoubleClick(startX, startY);
+                    listener.onDoubleClick(startPoint);
                 }
                 invalidate();
             } else {
@@ -140,7 +140,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         } else if (options.isEnabled(CLICK)) {
             long timePressed = event.getEventTime() - pressedTimestamp;
             if (timePressed < options.get(LONG_PRESS_TIME_MS)) {
-                listener.onClick(startX, startY);
+                listener.onClick(startPoint);
             }
             invalidate();
         } else {
@@ -150,7 +150,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
     }
 
     @Override
-    public void onTranslate(State state, float startX, float startY, float dx, float dy, double distance) {
+    public void onTranslate(State state, PointF startPoint, float dx, float dy, double distance) {
         if (isEventValid && State.STARTED.equals(state) && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
             invalidate();
         }
@@ -167,7 +167,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
             float x = event.getX(pointerIndex);
             float y = event.getY(pointerIndex);
             //We detect movement above threshold - its no longer a click but a translation.
-            if (getDistance(startX, startY, x, y) > options.get(TRANSLATION_START_THRESHOLD)) {
+            if (getDistance(startPoint, x, y) > options.get(TRANSLATION_START_THRESHOLD)) {
                 invalidate();
             }
             return true;
@@ -188,9 +188,9 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         return event.getPointerId(event.getActionIndex());
     }
 
-    private static double getDistance(float startX, float startY, float endX, float endY) {
-        double a = endX - startX;
-        double b = endY - startY;
+    private static double getDistance(PointF startPoint, float endX, float endY) {
+        double a = endX - startPoint.x;
+        double b = endY - startPoint.y;
         return Math.sqrt(a * a + b * b);
     }
 

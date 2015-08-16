@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="gesture_detector_translation_start_threshold">20dp</dimen>
+    <dimen name="gesture_detector_translation_start_threshold">10dp</dimen>
+    <dimen name="gesture_detector_scale_start_threshold">10dp</dimen>
 </resources>

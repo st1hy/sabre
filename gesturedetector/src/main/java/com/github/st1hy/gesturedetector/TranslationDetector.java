@@ -19,7 +19,7 @@ import static com.github.st1hy.gesturedetector.Options.Flag.TRANSLATION_STRICT_O
 /**
  * Listens for translation events.
  * <p/>
- * Calls {@link GestureListener#onTranslate(State, float, float, float, float, double)} when appropriate.
+ * Calls {@link GestureListener#onTranslate(State, PointF, float, float, double)} when appropriate.
  * <p/>
  * {@link Options.Event#TRANSLATE} enables or disables this detector.
  */
@@ -27,10 +27,10 @@ class TranslationDetector implements GestureDetector {
     private final GestureListener listener;
     private final Options options;
     private int eventStartPointerId;
-    private float startX, startY, dx, dy;
+    private float dx, dy;
     private final SparseArray<PointF> startFingerPositions = new SparseArray<>(); //Indexed by pointer id
     private double currentDistance;
-    private boolean isEventValid = false, isTranslationStarted = false;
+    private boolean isEventValid = false;
     private State currentState = State.ENDED;
 
     TranslationDetector(GestureListener listener, Options options) {
@@ -41,7 +41,6 @@ class TranslationDetector implements GestureDetector {
     @Override
     public void invalidate() {
         isEventValid = false;
-        isTranslationStarted = false;
         if (!State.ENDED.equals(currentState)) {
             notifyListener(State.ENDED);
         }
@@ -68,15 +67,13 @@ class TranslationDetector implements GestureDetector {
     private boolean onActionDown(MotionEvent event) {
         eventStartPointerId = getPointerId(event);
         int pointerIndex = event.getActionIndex();
-        startX = event.getX(pointerIndex);
-        startY = event.getY(pointerIndex);
-        setStartAndGet(startFingerPositions, eventStartPointerId, startX, startY);
+        setStartAndGet(startFingerPositions, eventStartPointerId, event.getX(pointerIndex), event.getY(pointerIndex));
         isEventValid = true;
         return true;
     }
 
     private boolean onActionUp(MotionEvent event) {
-        if (!isEventValid || !isTranslationStarted) return false;
+        if (!isEventValid || currentState == State.ENDED) return false;
         calculatePosition(event);
         if (!isEventValid) return false;
         invalidate();
@@ -87,10 +84,9 @@ class TranslationDetector implements GestureDetector {
         if (!isEventValid) return false;
         calculatePosition(event);
         if (!isEventValid) return false;
-        if (!isTranslationStarted && currentDistance > options.get(TRANSLATION_START_THRESHOLD)) {
-            isTranslationStarted = true;
+        if (currentState == State.ENDED && currentDistance > options.get(TRANSLATION_START_THRESHOLD)) {
             notifyListener(State.STARTED);
-        } else if (isTranslationStarted) {
+        } else if (currentState != State.ENDED) {
             notifyListener(State.IN_PROGRESS);
         }
         return true;
@@ -98,13 +94,15 @@ class TranslationDetector implements GestureDetector {
 
     private void notifyListener(State state) {
         currentState = state;
-        listener.onTranslate(currentState, startX, startY, dx, dy, currentDistance);
+        PointF point = new PointF();
+        point.set(startFingerPositions.get(eventStartPointerId));
+        listener.onTranslate(currentState, point, dx, dy, currentDistance);
     }
 
     private void calculatePosition(MotionEvent event) {
         if (options.getFlag(TRANSLATION_MULTITOUCH) && !options.getFlag(TRANSLATION_STRICT_ONE_FINGER)) {
-            int dx = 0;
-            int dy = 0;
+            float dx = 0;
+            float dy = 0;
             int maxPointers = event.getPointerCount();
             for (int i = 0; i < maxPointers; i++) {
                 int pointerId = event.getPointerId(i);
@@ -124,8 +122,9 @@ class TranslationDetector implements GestureDetector {
             }
             float currentX = event.getX(pointerIndex);
             float currentY = event.getY(pointerIndex);
-            dx = currentX - startX;
-            dy = currentY - startY;
+            PointF point = startFingerPositions.get(eventStartPointerId);
+            dx = currentX - point.x;
+            dy = currentY - point.y;
         }
         currentDistance = Math.sqrt(dx * dx + dy * dy);
     }
@@ -144,10 +143,10 @@ class TranslationDetector implements GestureDetector {
         return true;
     }
 
-    private PointF setStartAndGet(SparseArray<PointF> source, int pointerId, float startX, float startY) {
-        PointF startPoint = source.get(pointerId);
+    private PointF setStartAndGet(SparseArray<PointF> consumer, int pointerId, float startX, float startY) {
+        PointF startPoint = consumer.get(pointerId);
         if (startPoint == null) {
-            source.put(pointerId, new PointF(startX, startY));
+            consumer.put(pointerId, new PointF(startX, startY));
         } else {
             startPoint.set(startX, startY);
         }

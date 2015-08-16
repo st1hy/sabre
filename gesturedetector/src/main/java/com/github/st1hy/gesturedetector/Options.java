@@ -1,11 +1,16 @@
 package com.github.st1hy.gesturedetector;
 
 import android.content.Context;
+import android.content.res.Resources;
 
+import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+
+import static com.github.st1hy.gesturedetector.Options.Constant.DOUBLE_CLICK_TIME_LIMIT;
+import static com.github.st1hy.gesturedetector.Options.Constant.LONG_PRESS_TIME_MS;
+import static com.github.st1hy.gesturedetector.Options.Constant.SCALE_START_THRESHOLD;
+import static com.github.st1hy.gesturedetector.Options.Constant.TRANSLATION_START_THRESHOLD;
+import static com.github.st1hy.gesturedetector.Options.Flag.TRANSLATION_STRICT_ONE_FINGER;
 
 /**
  * Gesture detection options.
@@ -13,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * By default all {@link Options.Event events} are enabled and all {@link Flag flags} except {@link Flag#TRANSLATION_STRICT_ONE_FINGER} are set.
  */
 public class Options implements Cloneable {
-    private Set<Event> enabledEvents = EnumSet.allOf(Event.class);
-    private Set<Flag> flags = EnumSet.allOf(Flag.class);
-    private Map<Constant, Integer> constants = new ConcurrentHashMap<>();
+    private EnumSet<Event> enabledEvents = EnumSet.allOf(Event.class);
+    private EnumSet<Flag> flags = EnumSet.allOf(Flag.class);
+    private EnumMap<Constant, Integer> constants = new EnumMap<>(Constant.class);
 
     protected enum Event {
         SCALE, ROTATE, TRANSLATE, CLICK, DOUBLE_CLICK, LONG_PRESS, FLING
@@ -31,7 +36,7 @@ public class Options implements Cloneable {
          */
         TRANSLATION_MULTITOUCH,
         /**
-         * Restrict translation to using one finger only. When multitouch is detected ends translations.
+         * Restrict translation to using one finger only. When multitouch is detected end translations.
          * <p/>
          * If both {@link Flag#TRANSLATION_MULTITOUCH} and {@link Flag#TRANSLATION_STRICT_ONE_FINGER} are enabled {@link Flag#TRANSLATION_STRICT_ONE_FINGER} takes precedence.
          */
@@ -41,7 +46,8 @@ public class Options implements Cloneable {
     public enum Constant {
         LONG_PRESS_TIME_MS(500),
         DOUBLE_CLICK_TIME_LIMIT(400),
-        TRANSLATION_START_THRESHOLD(100),;
+        TRANSLATION_START_THRESHOLD(100),
+        SCALE_START_THRESHOLD(100),;
         private final int defaultValue;
 
         Constant(int defaultValue) {
@@ -53,20 +59,25 @@ public class Options implements Cloneable {
         for (Constant constant : Constant.values()) {
             constants.put(constant, constant.defaultValue);
         }
-        int translateStartThreshold = context.getResources().getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold);
-        constants.put(Constant.TRANSLATION_START_THRESHOLD, translateStartThreshold);
+        Resources resources = context.getResources();
+        constants.put(LONG_PRESS_TIME_MS, resources.getInteger(R.integer.gesture_detector_long_press_time));
+        constants.put(DOUBLE_CLICK_TIME_LIMIT, resources.getInteger(R.integer.gesture_detector_double_click_time_limit));
+        int translateStartThreshold = resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold);
+        constants.put(TRANSLATION_START_THRESHOLD, translateStartThreshold);
+        int scaleStartThreshold = resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold);
+        constants.put(SCALE_START_THRESHOLD, scaleStartThreshold);
 
-        flags.remove(Flag.TRANSLATION_STRICT_ONE_FINGER);
+        flags.remove(TRANSLATION_STRICT_ONE_FINGER);
+        enabledEvents.remove(Event.TRANSLATE);
     }
 
     public boolean isEnabled(Event event, Event... events) {
         boolean isEnabled = enabledEvents.contains(event);
-        if (events == null) return isEnabled;
+        if (events == null || !isEnabled) return isEnabled;
         for (Event e : events) {
-            isEnabled &= enabledEvents.contains(e);
-            if (!isEnabled) return false;
+            if (!enabledEvents.contains(e)) return false;
         }
-        return isEnabled;
+        return true;
     }
 
     public void setEnabled(Event event, boolean isEnabled) {
@@ -79,12 +90,11 @@ public class Options implements Cloneable {
 
     public boolean getFlag(Flag flag, Flag... flags) {
         boolean isSet = this.flags.contains(flag);
-        if (flags == null) return isSet;
+        if (flags == null || !isSet) return isSet;
         for (Flag f : flags) {
-            isSet &= this.flags.contains(f);
-            if (!isSet) return false;
+            if (!this.flags.contains(f)) return false;
         }
-        return isSet;
+        return true;
     }
 
     public void setFlag(Flag flag, boolean isEnabled) {
@@ -111,7 +121,7 @@ public class Options implements Cloneable {
             Options clone = getClass().cast(object);
             clone.enabledEvents = EnumSet.copyOf(enabledEvents);
             clone.flags = EnumSet.copyOf(flags);
-            clone.constants = new ConcurrentHashMap<>(constants);
+            clone.constants = new EnumMap<>(constants);
             return clone;
         } catch (CloneNotSupportedException e) {
             throw new IllegalStateException(e);
