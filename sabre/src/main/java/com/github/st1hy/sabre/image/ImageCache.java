@@ -73,7 +73,7 @@ public class ImageCache {
     private static final int DEFAULT_COMPRESS_QUALITY = 70;
     private static final int DISK_CACHE_INDEX = 0;
 
-    // Constants to easily toggle various caches
+    // Constant to easily toggle various caches
     private static final boolean DEFAULT_MEM_CACHE_ENABLED = true;
     private static final boolean DEFAULT_DISK_CACHE_ENABLED = true;
     private static final boolean DEFAULT_INIT_DISK_CACHE_ON_CREATE = false;

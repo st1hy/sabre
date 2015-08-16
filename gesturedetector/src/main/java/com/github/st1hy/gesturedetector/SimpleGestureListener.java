@@ -1,64 +1,38 @@
 package com.github.st1hy.gesturedetector;
 
 public class SimpleGestureListener implements GestureListener {
-
     @Override
-    public void onScaleStarted() {
+    public void onTranslate(State state, float startX, float startY, float dx, float dy, double distance) {
 
     }
 
     @Override
-    public void onScale(float scale) {
+    public void onRotate(State state, float startX, float startY, float rotation) {
 
     }
 
     @Override
-    public void onScaleEnded() {
+    public void onScale(State state, float startX, float startY, float scale) {
 
     }
 
     @Override
-    public void onTranslateStarted() {
+    public void onClick(float startX, float startY) {
 
     }
 
     @Override
-    public void onTranslate(float dx, float dy) {
+    public void onLongPressed(float startX, float startY) {
 
     }
 
     @Override
-    public void onTranslateEnded() {
+    public void onDoubleClick(float startX, float startY) {
 
     }
 
     @Override
-    public void onRotateStarted() {
-
-    }
-
-    @Override
-    public void onRotate(float rotation) {
-
-    }
-
-    @Override
-    public void onRotateEnded() {
-
-    }
-
-    @Override
-    public void onClick() {
-
-    }
-
-    @Override
-    public void onDoubleClick() {
-
-    }
-
-    @Override
-    public void onLongPressed() {
+    public void onFling(float startX, float startY, float velocity, FlingDirection direction) {
 
     }
 }

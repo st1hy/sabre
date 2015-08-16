@@ -5,23 +5,35 @@ import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.github.st1hy.gesturedetector.Options.Flag;
+
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_POINTER_DOWN;
+import static android.view.MotionEvent.ACTION_UP;
+import static com.github.st1hy.gesturedetector.Options.Constant.DOUBLE_CLICK_TIME_LIMIT;
+import static com.github.st1hy.gesturedetector.Options.Constant.LONG_PRESS_TIME_MS;
+import static com.github.st1hy.gesturedetector.Options.Constant.TRANSLATION_START_THRESHOLD;
+import static com.github.st1hy.gesturedetector.Options.Event.CLICK;
+import static com.github.st1hy.gesturedetector.Options.Event.DOUBLE_CLICK;
+import static com.github.st1hy.gesturedetector.Options.Event.LONG_PRESS;
+import static com.github.st1hy.gesturedetector.Options.Event.TRANSLATE;
+import static com.github.st1hy.gesturedetector.Options.Flag.IGNORE_CLICK_EVENT_ON_GESTURES;
+
 /**
  * Listens for click events.
- * Calls {@link GestureListener#onClick()}, {@link GestureListener#onLongPressed()} ()} or {@link GestureListener#onDoubleClick()} when appropriate.
- * <p/>
- * If option {@link Options#ignoreClickEventOnGestures} is set it will filter out clicks that are part of more complicated gestures.
- * <p/>
+ * Calls {@link GestureListener#onClick(float, float)}, {@link GestureListener#onLongPressed(float, float)} or {@link GestureListener#onDoubleClick(float, float)} when appropriate.
+ * <p>
+ * To control which events are being delivered use {@link Options}. If option {@link Flag#IGNORE_CLICK_EVENT_ON_GESTURES} is set it will filter out clicks that are part of more complicated gestures.
+ * <p>
  * When listening also for double click events, adds delay for second press event to occur.
- * If it doesn't it triggers {@link GestureListener#onClick()}
+ * If it doesn't it triggers {@link GestureListener#onClick(float, float)}
  */
-class ClickDetector implements View.OnTouchListener {
-    private static final int MS_TO_NS = 1_000_000;
-    private static final boolean inDebug = Config.DEBUG;
-    private static final String TAG = "ClickDetector";
+class ClickDetector extends SimpleGestureListener implements GestureDetector {
     private final GestureListener listener;
-    private Options options;
+    private final Options options;
     private long pressedTimestamp, previousClickTimestamp;
-    private int eventStartPointerIndex;
+    private int eventStartPointerId;
     private float startX, startY;
     private boolean isEventValid = false;
     private int clickCount = 0;
@@ -29,8 +41,8 @@ class ClickDetector implements View.OnTouchListener {
     private final Runnable delayedClick = new Runnable() {
         @Override
         public void run() {
-            if (options.isListenForClick()) {
-                listener.onClick();
+            if (options.isEnabled(CLICK)) {
+                listener.onClick(startX, startY);
                 invalidate();
             }
         }
@@ -38,8 +50,8 @@ class ClickDetector implements View.OnTouchListener {
     private final Runnable delayedLongPress = new Runnable() {
         @Override
         public void run() {
-            if (options.isListenForLongClick()) {
-                listener.onLongPressed();
+            if (options.isEnabled(LONG_PRESS)) {
+                listener.onLongPressed(startX, startY);
                 invalidate();
             }
         }
@@ -47,7 +59,7 @@ class ClickDetector implements View.OnTouchListener {
     private final Runnable doubleClickTimeout = new Runnable() {
         @Override
         public void run() {
-            if (options.isListenForDoubleClick()) {
+            if (options.isEnabled(DOUBLE_CLICK)) {
                 invalidate();
             }
         }
@@ -60,95 +72,6 @@ class ClickDetector implements View.OnTouchListener {
     }
 
     @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        if (!isListeningForSomething()) return false;
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                return onActionDown(event);
-            case MotionEvent.ACTION_UP:
-                return onActionUp(event);
-            case MotionEvent.ACTION_MOVE:
-                return onActionMove(event);
-            case MotionEvent.ACTION_POINTER_DOWN:
-                return onActionPointerDown(event);
-        }
-        return false;
-    }
-
-    private boolean onActionDown(MotionEvent event) {
-        previousClickTimestamp = pressedTimestamp;
-        pressedTimestamp = System.nanoTime();
-        eventStartPointerIndex = getPointerIndex(event);
-        startX = event.getX();
-        startY = event.getY();
-        isEventValid = true;
-        if (options.isListenForDoubleClick()) clickCount++;
-        if (options.isListenForLongClick()) {
-            handler.postDelayed(delayedLongPress, options.getLongPressTimeMs());
-        }
-        handler.removeCallbacks(delayedClick);
-        return true;
-    }
-
-    private boolean onActionUp(MotionEvent event) {
-        if (!isEventValid) return false;
-        if (options.isIgnoreClickEventOnGestures()) {
-            //Other finger is up than was down in the first place.
-            if (getPointerIndex(event) != eventStartPointerIndex) {
-                invalidate();
-                return false;
-            }
-        }
-        if (options.isListenForDoubleClick()) {
-            if (clickCount == 2) {
-                long timeSinceFirstClick = System.nanoTime() - previousClickTimestamp;
-                if (timeSinceFirstClick < options.getDoubleClickTimeLimitMs() * MS_TO_NS) {
-                    listener.onDoubleClick();
-                }
-                invalidate();
-            } else {
-                long timePressed = System.nanoTime() - pressedTimestamp;
-                long delay = options.getDoubleClickTimeLimitMs() + 1 - (timePressed / MS_TO_NS);
-                if (options.isListenForClick()) {
-                    handler.postDelayed(delayedClick, delay);
-                } else {
-                    handler.postDelayed(doubleClickTimeout, delay);
-                }
-            }
-        } else if (options.isListenForClick()) {
-            long timePressed = System.nanoTime() - pressedTimestamp;
-            if (timePressed < options.getLongPressTimeMs() * MS_TO_NS) {
-                listener.onClick();
-            }
-            invalidate();
-        } else {
-            invalidate();
-        }
-        return true;
-    }
-
-    private boolean onActionMove(MotionEvent event) {
-        if (isEventValid && options.isIgnoreClickEventOnGestures()) {
-            float x = event.getX(eventStartPointerIndex);
-            float y = event.getY(eventStartPointerIndex);
-            //We detect movement above threshold - its no longer a click but a translation.
-            if (getDistance(startX, startY, x, y) > options.getTranslateStartThreshold()) {
-                invalidate();
-            }
-            return true;
-        }
-        return false;
-    }
-
-    private boolean onActionPointerDown(MotionEvent event) {
-        if (isEventValid && options.isIgnoreClickEventOnGestures()) {
-            //Multitouch gesture started.
-            invalidate();
-            return true;
-        }
-        return false;
-    }
-
     public void invalidate() {
         isEventValid = false;
         clickCount = 0;
@@ -157,7 +80,111 @@ class ClickDetector implements View.OnTouchListener {
         handler.removeCallbacks(doubleClickTimeout);
     }
 
-    private static int getPointerIndex(MotionEvent event) {
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        if (!isListeningForSomething()) return false;
+        switch (event.getActionMasked()) {
+            case ACTION_DOWN:
+                return onActionDown(event);
+            case ACTION_UP:
+                return onActionUp(event);
+            case ACTION_MOVE:
+                return onActionMove(event);
+            case ACTION_POINTER_DOWN:
+                return onActionPointerDown(event);
+        }
+        return false;
+    }
+
+    private boolean onActionDown(MotionEvent event) {
+        previousClickTimestamp = pressedTimestamp;
+        pressedTimestamp = event.getEventTime();
+        eventStartPointerId = getPointerId(event);
+        int pointerIndex = event.getActionIndex();
+        startX = event.getX(pointerIndex);
+        startY = event.getY(pointerIndex);
+        isEventValid = true;
+        if (options.isEnabled(DOUBLE_CLICK)) clickCount++;
+        if (options.isEnabled(LONG_PRESS)) {
+            handler.postDelayed(delayedLongPress, options.get(LONG_PRESS_TIME_MS));
+        }
+        handler.removeCallbacks(delayedClick);
+        return true;
+    }
+
+    private boolean onActionUp(MotionEvent event) {
+        if (!isEventValid) return false;
+        if (options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
+            //Other finger is up than was down in the first place.
+            if (getPointerId(event) != eventStartPointerId) {
+                invalidate();
+                return false;
+            }
+        }
+        if (options.isEnabled(DOUBLE_CLICK)) {
+            if (clickCount == 2) {
+                long timeSinceFirstClick = event.getEventTime() - previousClickTimestamp;
+                if (timeSinceFirstClick < options.get(DOUBLE_CLICK_TIME_LIMIT)) {
+                    listener.onDoubleClick(startX, startY);
+                }
+                invalidate();
+            } else {
+                long timePressed = event.getEventTime() - pressedTimestamp;
+                long delay = options.get(DOUBLE_CLICK_TIME_LIMIT) + 1 - timePressed;
+                if (options.isEnabled(CLICK)) {
+                    handler.postDelayed(delayedClick, delay);
+                } else {
+                    handler.postDelayed(doubleClickTimeout, delay);
+                }
+            }
+        } else if (options.isEnabled(CLICK)) {
+            long timePressed = event.getEventTime() - pressedTimestamp;
+            if (timePressed < options.get(LONG_PRESS_TIME_MS)) {
+                listener.onClick(startX, startY);
+            }
+            invalidate();
+        } else {
+            invalidate();
+        }
+        return true;
+    }
+
+    @Override
+    public void onTranslate(State state, float startX, float startY, float dx, float dy, double distance) {
+        if (isEventValid && State.STARTED.equals(state) && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
+            invalidate();
+        }
+    }
+
+    private boolean onActionMove(MotionEvent event) {
+        //If translation detection is disabled we need to detect it ourselves unless we don't care
+        if (isEventValid && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES) && !options.isEnabled(TRANSLATE)) {
+            int pointerIndex = event.findPointerIndex(eventStartPointerId);
+            if (pointerIndex == -1) {
+                invalidate();
+                return false;
+            }
+            float x = event.getX(pointerIndex);
+            float y = event.getY(pointerIndex);
+            //We detect movement above threshold - its no longer a click but a translation.
+            if (getDistance(startX, startY, x, y) > options.get(TRANSLATION_START_THRESHOLD)) {
+                invalidate();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean onActionPointerDown(MotionEvent event) {
+        if (isEventValid && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
+            //Multitouch gesture started.
+            invalidate();
+            return true;
+        }
+        return false;
+    }
+
+    private static int getPointerId(MotionEvent event) {
         return event.getPointerId(event.getActionIndex());
     }
 
@@ -168,6 +195,6 @@ class ClickDetector implements View.OnTouchListener {
     }
 
     private boolean isListeningForSomething() {
-        return options.isListenForClick() || options.isListenForDoubleClick() || options.isListenForLongClick();
+        return options.isEnabled(CLICK, DOUBLE_CLICK, LONG_PRESS);
     }
 }

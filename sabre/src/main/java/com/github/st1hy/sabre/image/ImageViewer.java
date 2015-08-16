@@ -15,6 +15,7 @@ import android.os.SystemClock;
 import android.util.AttributeSet;
 
 import com.github.st1hy.gesturedetector.GestureDetector;
+import com.github.st1hy.gesturedetector.GestureDetectorImp;
 import com.github.st1hy.gesturedetector.GestureListener;
 import com.github.st1hy.gesturedetector.SimpleGestureListener;
 import com.github.st1hy.sabre.image.worker.ImageReceiver;
@@ -57,13 +58,8 @@ public class ImageViewer extends Viewer {
         super.init();
         gestureListener = new SimpleGestureListener() {
             //TODO Respond to gestures.
-
-            @Override
-            public void onClick() {
-                super.onClick();
-            }
         };
-        gestureDetector = new GestureDetector(getContext(), gestureListener);
+        gestureDetector = GestureDetectorImp.newInstance(getContext(), gestureListener, null);
         setOnTouchListener(gestureDetector);
     }
 
