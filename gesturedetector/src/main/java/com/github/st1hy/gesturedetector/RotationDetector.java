@@ -4,6 +4,12 @@ import android.graphics.PointF;
 import android.view.MotionEvent;
 import android.view.View;
 
+import static android.view.MotionEvent.ACTION_DOWN;
+import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_POINTER_DOWN;
+import static android.view.MotionEvent.ACTION_POINTER_UP;
+import static android.view.MotionEvent.ACTION_UP;
+
 //TODO
 
 /**
@@ -33,7 +39,7 @@ public class RotationDetector implements GestureDetector {
 
     public interface Listener {
         /**
-         * Called when rotation is detected. Only received when {@link Options.Event#TRANSLATE} is set in {@link Options}.
+         * Called when rotation is detected. Only received when {@link Options.Event#ROTATE} is set in {@link Options}.
          *
          * @param state       state of event. Can be either {@link GestureEventState#STARTED} when {@link Options.Constant#ROTATION_START_THRESHOLD} is first reached, {@link GestureEventState#ENDED} when rotation ends or {@link GestureEventState#IN_PROGRESS}.
          * @param centerPoint point of reference for rotation
@@ -49,6 +55,39 @@ public class RotationDetector implements GestureDetector {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        if (!options.isEnabled(Options.Event.ROTATE)) return false;
+        switch (event.getActionMasked()) {
+            case ACTION_DOWN:
+                return onActionDown(event);
+            case ACTION_UP:
+                return onActionUp(event);
+            case ACTION_MOVE:
+                return onActionMove(event);
+            case ACTION_POINTER_DOWN:
+                return onActionPointerDown(event);
+            case ACTION_POINTER_UP:
+                return onActionPointerUp(event);
+        }
+        return false;
+    }
+
+    protected boolean onActionDown(MotionEvent event) {
+        return false;
+    }
+
+    protected boolean onActionUp(MotionEvent event) {
+        return false;
+    }
+
+    protected boolean onActionMove(MotionEvent event) {
+        return false;
+    }
+
+    protected boolean onActionPointerDown(MotionEvent event) {
+        return false;
+    }
+
+    protected boolean onActionPointerUp(MotionEvent event) {
         return false;
     }
 }

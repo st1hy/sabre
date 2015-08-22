@@ -5,7 +5,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -17,17 +17,18 @@ public class GestureDetectorImp implements GestureListener, GestureDetector {
     protected static final boolean inDebug = Config.DEBUG;
     protected static final String TAG = "GestureDetector";
     protected final GestureListener listener;
-    private final ClickDetector clickDetector;
+    protected final ClickDetector clickDetector;
     protected final List<GestureDetector> detectors;
 
     protected GestureDetectorImp(GestureListener listener, Options options) {
         this.listener = listener;
+        this.detectors = new LinkedList<>();
         this.clickDetector = new ClickDetector(this, options);
-        this.detectors = Arrays.asList(clickDetector,
-                new TranslationDetector(this, options),
-                new ScaleDetector(this, options),
-                new RotationDetector(this, options),
-                new FlingDetector(this, options));
+        this.detectors.add(clickDetector);
+        if (options.isEnabled(Options.Event.TRANSLATE)) this.detectors.add(new TranslationDetector(this, options));
+        if (options.isEnabled(Options.Event.SCALE)) this.detectors.add(new ScaleDetector(this, options));
+        if (options.isEnabled(Options.Event.ROTATE)) this.detectors.add(new RotationDetector(this, options));
+        if (options.isEnabled(Options.Event.FLING)) this.detectors.add(new FlingDetector(this, options));
     }
 
     /**
@@ -74,6 +75,9 @@ public class GestureDetectorImp implements GestureListener, GestureDetector {
     @Override
     public void onRotate(GestureEventState state, PointF centerPoint, float rotation) {
         listener.onRotate(state, centerPoint, rotation);
+        if (inDebug) {
+            Log.d(TAG, String.format("Rotation %s: x = %.1f, y = %.1f, rotation = %.2f", state.toString(), centerPoint.x, centerPoint.y, rotation));
+        }
     }
 
     @Override
@@ -111,5 +115,8 @@ public class GestureDetectorImp implements GestureListener, GestureDetector {
     @Override
     public void onFling(PointF startPoint, float velocity, FlingDetector.Direction direction) {
         listener.onFling(startPoint, velocity, direction);
+        if (inDebug) {
+            Log.d(TAG, String.format("Fling %s: x = %.1f, y = %.1f, velocity = %.2f", direction.toString(), startPoint.x, startPoint.y, velocity));
+        }
     }
 }

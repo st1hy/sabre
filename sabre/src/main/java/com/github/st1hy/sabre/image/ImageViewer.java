@@ -20,8 +20,8 @@ import com.github.st1hy.gesturedetector.GestureListener;
 import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.SimpleGestureListener;
 import com.github.st1hy.sabre.image.worker.ImageReceiver;
-import com.github.st1hy.sabre.image.worker.ImageWorkerImp;
 import com.github.st1hy.sabre.image.worker.ImageWorker;
+import com.github.st1hy.sabre.image.worker.ImageWorkerImp;
 import com.github.st1hy.sabre.image.worker.TaskOption;
 
 import java.util.Map;
@@ -60,7 +60,8 @@ public class ImageViewer extends Viewer {
         gestureListener = new SimpleGestureListener() {
             //TODO Respond to gestures.
         };
-        gestureDetector = GestureDetectorImp.newInstance(gestureListener, new Options(getContext().getResources()));
+        Options options = new Options(getContext().getResources());
+        gestureDetector = GestureDetectorImp.newInstance(gestureListener, options);
         setOnTouchListener(gestureDetector);
     }
 

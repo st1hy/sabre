@@ -41,7 +41,7 @@ public class ScaleDetector implements GestureDetector {
 
     public interface Listener {
         /**
-         * Called when scaling is detected. Only received when {@link Options.Event#SCALE} is set in {@link Options}.
+         * Called when scaling is detected. Only called when {@link Options.Event#SCALE} is set in {@link Options}.
          *
          * @param state       state of event. Can be either {@link GestureEventState#STARTED} when {@link Options.Constant#SCALE_START_THRESHOLD} is first reached, {@link GestureEventState#ENDED} when scaling ends or {@link GestureEventState#IN_PROGRESS}.
          * @param centerPoint center of the gesture from the moment of event start.

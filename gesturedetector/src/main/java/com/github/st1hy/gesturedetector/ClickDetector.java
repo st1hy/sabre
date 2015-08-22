@@ -235,6 +235,6 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
     }
 
     protected boolean isListeningForSomething() {
-        return options.isEnabled(CLICK, DOUBLE_CLICK, LONG_PRESS);
+        return options.isEnabled(CLICK) || options.isEnabled(DOUBLE_CLICK) || options.isEnabled(LONG_PRESS);
     }
 }

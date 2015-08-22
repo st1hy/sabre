@@ -6,6 +6,8 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 
 import static com.github.st1hy.gesturedetector.Options.Constant.DOUBLE_CLICK_TIME_LIMIT;
+import static com.github.st1hy.gesturedetector.Options.Constant.FLING_TRANSLATION_THRESHOLD;
+import static com.github.st1hy.gesturedetector.Options.Constant.FLING_VELOCITY_THRESHOLD;
 import static com.github.st1hy.gesturedetector.Options.Constant.LONG_PRESS_TIME_MS;
 import static com.github.st1hy.gesturedetector.Options.Constant.ROTATION_START_THRESHOLD;
 import static com.github.st1hy.gesturedetector.Options.Constant.SCALE_START_THRESHOLD;
@@ -57,7 +59,18 @@ public class Options implements Cloneable {
         /**
          * Hardcoded default: 20 px
          */
-        SCALE_START_THRESHOLD(20),;
+        SCALE_START_THRESHOLD(20),
+        /**
+         * Hardcoded default: 100 px / s
+         */
+        FLING_VELOCITY_THRESHOLD(100),
+        /**
+         * How much pointer have to move to consider this a fling.
+         *
+         * i.e value 50 means that pointer needs to move 50 % of the related view width or height depending on the fling.
+         * Hardcoded default: 50 %
+         */
+        FLING_TRANSLATION_THRESHOLD(50);
         private final int defaultValue;
 
         Constant(int defaultValue) {
@@ -85,6 +98,8 @@ public class Options implements Cloneable {
         constants.put(TRANSLATION_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold));
         constants.put(SCALE_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold));
         constants.put(ROTATION_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_rotation_start_threshold));
+        constants.put(FLING_VELOCITY_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_fling_velocity_threshold));
+        constants.put(FLING_TRANSLATION_THRESHOLD, resources.getInteger(R.integer.gesture_detector_fling_translation_threshold));
     }
 
     /**

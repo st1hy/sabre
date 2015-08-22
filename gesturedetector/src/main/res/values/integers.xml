@@ -2,4 +2,5 @@
 <resources>
     <integer name="gesture_detector_long_press_time">500</integer>
     <integer name="gesture_detector_double_click_time_limit">400</integer>
+    <integer name="gesture_detector_fling_translation_threshold">50</integer>
 </resources>
