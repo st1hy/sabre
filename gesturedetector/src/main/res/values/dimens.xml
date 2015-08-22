@@ -2,4 +2,5 @@
 <resources>
     <dimen name="gesture_detector_translation_start_threshold">10dp</dimen>
     <dimen name="gesture_detector_scale_start_threshold">10dp</dimen>
+    <dimen name="gesture_detector_rotation_start_threshold">10dp</dimen>
 </resources>

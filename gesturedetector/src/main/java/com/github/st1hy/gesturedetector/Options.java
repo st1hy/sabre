@@ -1,6 +1,5 @@
 package com.github.st1hy.gesturedetector;
 
-import android.content.Context;
 import android.content.res.Resources;
 
 import java.util.EnumMap;
@@ -8,6 +7,7 @@ import java.util.EnumSet;
 
 import static com.github.st1hy.gesturedetector.Options.Constant.DOUBLE_CLICK_TIME_LIMIT;
 import static com.github.st1hy.gesturedetector.Options.Constant.LONG_PRESS_TIME_MS;
+import static com.github.st1hy.gesturedetector.Options.Constant.ROTATION_START_THRESHOLD;
 import static com.github.st1hy.gesturedetector.Options.Constant.SCALE_START_THRESHOLD;
 import static com.github.st1hy.gesturedetector.Options.Constant.TRANSLATION_START_THRESHOLD;
 import static com.github.st1hy.gesturedetector.Options.Flag.TRANSLATION_STRICT_ONE_FINGER;
@@ -18,11 +18,11 @@ import static com.github.st1hy.gesturedetector.Options.Flag.TRANSLATION_STRICT_O
  * By default all {@link Options.Event events} are enabled and all {@link Flag flags} except {@link Flag#TRANSLATION_STRICT_ONE_FINGER} are set.
  */
 public class Options implements Cloneable {
-    private EnumSet<Event> enabledEvents = EnumSet.allOf(Event.class);
-    private EnumSet<Flag> flags = EnumSet.allOf(Flag.class);
+    private EnumSet<Event> enabledEvents = EnumSet.noneOf(Event.class);
+    private EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
     private EnumMap<Constant, Integer> constants = new EnumMap<>(Constant.class);
 
-    protected enum Event {
+    public enum Event {
         SCALE, ROTATE, TRANSLATE, CLICK, DOUBLE_CLICK, LONG_PRESS, FLING
     }
 
@@ -32,22 +32,32 @@ public class Options implements Cloneable {
          */
         IGNORE_CLICK_EVENT_ON_GESTURES,
         /**
-         * When multitouch gesture is detected use a middle point between fingers to calculate current translation.
-         */
-        TRANSLATION_MULTITOUCH,
-        /**
          * Restrict translation to using one finger only. When multitouch is detected end translations.
-         * <p/>
-         * If both {@link Flag#TRANSLATION_MULTITOUCH} and {@link Flag#TRANSLATION_STRICT_ONE_FINGER} are enabled {@link Flag#TRANSLATION_STRICT_ONE_FINGER} takes precedence.
          */
         TRANSLATION_STRICT_ONE_FINGER,
     }
 
     public enum Constant {
+        /**
+         * Hardcoded default: 500 ms
+         */
         LONG_PRESS_TIME_MS(500),
+        /**
+         * Hardcoded default: 400 ms
+         */
         DOUBLE_CLICK_TIME_LIMIT(400),
-        TRANSLATION_START_THRESHOLD(100),
-        SCALE_START_THRESHOLD(100),;
+        /**
+         * Hardcoded default: 20 px
+         */
+        TRANSLATION_START_THRESHOLD(20),
+        /**
+         * Hardcoded default: 20 px
+         */
+        ROTATION_START_THRESHOLD(20),
+        /**
+         * Hardcoded default: 20 px
+         */
+        SCALE_START_THRESHOLD(20),;
         private final int defaultValue;
 
         Constant(int defaultValue) {
@@ -55,20 +65,34 @@ public class Options implements Cloneable {
         }
     }
 
-    public Options(Context context) {
+    /**
+     * Creates default Options using provided {@link Resources}.
+     *
+     * @param resources Resources providing default values.
+     * @throws NullPointerException if resources are null.
+     */
+    public Options(Resources resources) {
+        if (resources == null) throw new NullPointerException("Resources cannot be null");
+        enabledEvents.addAll(EnumSet.allOf(Event.class));
+        flags.addAll(EnumSet.allOf(Flag.class));
+        flags.remove(TRANSLATION_STRICT_ONE_FINGER);
+
         for (Constant constant : Constant.values()) {
             constants.put(constant, constant.defaultValue);
         }
-        Resources resources = context.getResources();
         constants.put(LONG_PRESS_TIME_MS, resources.getInteger(R.integer.gesture_detector_long_press_time));
         constants.put(DOUBLE_CLICK_TIME_LIMIT, resources.getInteger(R.integer.gesture_detector_double_click_time_limit));
-        int translateStartThreshold = resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold);
-        constants.put(TRANSLATION_START_THRESHOLD, translateStartThreshold);
-        int scaleStartThreshold = resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold);
-        constants.put(SCALE_START_THRESHOLD, scaleStartThreshold);
+        constants.put(TRANSLATION_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold));
+        constants.put(SCALE_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold));
+        constants.put(ROTATION_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_rotation_start_threshold));
+    }
 
-        flags.remove(TRANSLATION_STRICT_ONE_FINGER);
-        enabledEvents.remove(Event.TRANSLATE);
+    /**
+     * Creates empty options.
+     * <p/>
+     * None of the {@link Event events} or {@link Flag flags} are set. Constants will return 0.
+     */
+    public Options() {
     }
 
     public boolean isEnabled(Event event, Event... events) {
@@ -106,7 +130,8 @@ public class Options implements Cloneable {
     }
 
     public int get(Constant constant) {
-        return constants.get(constant);
+        Integer value = constants.get(constant);
+        return value != null ? value : 0;
     }
 
     public void set(Constant constant, int value) {
@@ -116,8 +141,6 @@ public class Options implements Cloneable {
     public Options clone() {
         try {
             Object object = super.clone();
-            if (!object.getClass().equals(getClass()))
-                throw new IllegalStateException("Clone not the same class");
             Options clone = getClass().cast(object);
             clone.enabledEvents = EnumSet.copyOf(enabledEvents);
             clone.flags = EnumSet.copyOf(flags);

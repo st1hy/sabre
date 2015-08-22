@@ -1,13 +1,8 @@
 package com.github.st1hy.gesturedetector;
 
 import android.graphics.PointF;
-import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
-
-import com.github.st1hy.gesturedetector.GestureListener.State;
-
-import java.util.EnumSet;
 
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
@@ -15,38 +10,52 @@ import static android.view.MotionEvent.ACTION_POINTER_DOWN;
 import static android.view.MotionEvent.ACTION_POINTER_UP;
 import static android.view.MotionEvent.ACTION_UP;
 import static com.github.st1hy.gesturedetector.Options.Constant.SCALE_START_THRESHOLD;
-import static com.github.st1hy.gesturedetector.Options.Constant.TRANSLATION_START_THRESHOLD;
-import static com.github.st1hy.gesturedetector.Options.Flag.TRANSLATION_MULTITOUCH;
-import static com.github.st1hy.gesturedetector.Options.Flag.TRANSLATION_STRICT_ONE_FINGER;
 
 /**
- * Listens for scale events.
+ * Detects scaling events.
  * <p/>
- * Calls {@link GestureListener#onScale(State, PointF, float)} when appropriate.
+ * Calls {@link Listener#onScale(GestureEventState, PointF, float)} when appropriate.
  * <p/>
  * {@link Options.Event#SCALE} enables or disables this detector.
  */
-class ScaleDetector implements GestureDetector {
-    private final GestureListener listener;
-    private final Options options;
-    private final SparseArray<PointF> startFingerPositions = new SparseArray<>(); //Indexed by pointer id
-    private PointF centerPoint = new PointF();
-    private float scale;
-    private double distanceStart, currentDistance;
-    private boolean isEventValid = false;
-    private State currentState = State.ENDED;
+public class ScaleDetector implements GestureDetector {
+    protected final Listener listener;
+    protected final Options options;
+    protected PointF centerPoint = new PointF();
+    protected float scale;
+    protected double distanceStart, currentDistance;
+    protected boolean isEventValid = false, inProgress = false;
+    protected GestureEventState currentState = GestureEventState.ENDED;
 
-    ScaleDetector(GestureListener listener, Options options) {
+    /**
+     * Constructs new {@link ScaleDetector}.
+     *
+     * @param listener Listener to be called when events happen.
+     * @param options  Options for controlling behavior of this detector.
+     * @throws NullPointerException if listener of options are null.
+     */
+    public ScaleDetector(Listener listener, Options options) {
         this.listener = listener;
-        this.options = options;
+        this.options = options.clone();
+    }
+
+    public interface Listener {
+        /**
+         * Called when scaling is detected. Only received when {@link Options.Event#SCALE} is set in {@link Options}.
+         *
+         * @param state       state of event. Can be either {@link GestureEventState#STARTED} when {@link Options.Constant#SCALE_START_THRESHOLD} is first reached, {@link GestureEventState#ENDED} when scaling ends or {@link GestureEventState#IN_PROGRESS}.
+         * @param centerPoint center of the gesture from the moment of event start.
+         * @param scale       how much distance between points have grown since the beginning of this gesture
+         */
+        void onScale(GestureEventState state, PointF centerPoint, float scale);
     }
 
     @Override
     public void invalidate() {
         isEventValid = false;
-        startFingerPositions.clear();
-        if (!State.ENDED.equals(currentState)) {
-            notifyListener(State.ENDED);
+        inProgress = false;
+        if (!GestureEventState.ENDED.equals(currentState)) {
+            notifyListener(GestureEventState.ENDED);
         }
     }
 
@@ -68,56 +77,49 @@ class ScaleDetector implements GestureDetector {
         return false;
     }
 
-    private boolean onActionDown(MotionEvent event) {
-        registerStartingPoint(event);
+    protected boolean onActionDown(MotionEvent event) {
+        calculateCenter(event);
         isEventValid = true;
         return true;
     }
 
 
-    private boolean onActionPointerDown(MotionEvent event) {
-        if (!isEventValid ) return false;
-        registerStartingPoint(event);
-        if (startFingerPositions.size() > 2) {
-            notifyListener(State.ENDED);
-        }
-        calculateCenter();
+    protected boolean onActionPointerDown(MotionEvent event) {
+        if (!isEventValid) return false;
+        if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
+        calculateCenter(event);
         return true;
     }
 
-    private void registerStartingPoint(MotionEvent event) {
-        int pointerIndex = event.getActionIndex();
-        int pointerId = event.getPointerId(pointerIndex);
-        setStartAndGet(startFingerPositions, pointerId, event.getX(pointerIndex), event.getY(pointerIndex));
-    }
-
-    private boolean onActionUp(MotionEvent event) {
+    protected boolean onActionUp(MotionEvent event) {
         if (!isEventValid) return false;
         invalidate();
         return true;
     }
 
-    private boolean onActionMove(MotionEvent event) {
+    protected boolean onActionMove(MotionEvent event) {
         if (!isEventValid) return false;
         calculatePosition(event);
         if (!isEventValid) return false;
-        if (currentState == State.ENDED && currentDistance > options.get(SCALE_START_THRESHOLD)) {
-            notifyListener(State.STARTED);
-        } else if (currentState != State.ENDED) {
-            notifyListener(State.IN_PROGRESS);
+        if (currentState == GestureEventState.ENDED && (inProgress || currentDistance > options.get(SCALE_START_THRESHOLD))) {
+            inProgress = true;
+            notifyListener(GestureEventState.STARTED);
+        } else if (currentState != GestureEventState.ENDED) {
+            notifyListener(GestureEventState.IN_PROGRESS);
         }
         return true;
     }
 
-    private void notifyListener(State state) {
+    protected void notifyListener(GestureEventState state) {
         currentState = state;
         PointF point = new PointF();
         point.set(centerPoint);
         listener.onScale(currentState, point, scale);
     }
 
-    private void calculatePosition(MotionEvent event) {
-        if (startFingerPositions.size() < 2) {
+    protected void calculatePosition(MotionEvent event) {
+        if (event.getPointerCount() < 2) {
+            inProgress = false;
             currentDistance = 0;
             return;
         }
@@ -141,14 +143,13 @@ class ScaleDetector implements GestureDetector {
         scale = (float) (currentDistance / distanceStart);
     }
 
-    private void calculateCenter() {
+    protected void calculateCenter(MotionEvent event) {
         float centerX = 0;
         float centerY = 0;
-        int pointsCount = startFingerPositions.size();
+        int pointsCount = event.getPointerCount();
         for (int i = 0; i < pointsCount; i++) {
-            PointF point = startFingerPositions.valueAt(i);
-            centerX += point.x;
-            centerY += point.y;
+            centerX += event.getX(i);
+            centerY += event.getY(i);
         }
         centerX /= pointsCount;
         centerY /= pointsCount;
@@ -156,36 +157,21 @@ class ScaleDetector implements GestureDetector {
 
         double distance = 0;
         for (int i = 0; i < pointsCount; i++) {
-            PointF point = startFingerPositions.valueAt(i);
-            float dx = point.x - centerX;
-            float dy = point.y - centerY;
+            float dx = event.getX(i) - centerX;
+            float dy = event.getY(i) - centerY;
             distance += distance(dx, dy);
         }
-        this.distanceStart = distance / pointsCount;
+        distanceStart = distance / pointsCount;
     }
 
-    private static double distance(float a, float b) {
+    protected static double distance(float a, float b) {
         return Math.sqrt(a * a + b * b);
     }
 
-
-    private PointF setStartAndGet(SparseArray<PointF> consumer, int pointerId, float startX, float startY) {
-        PointF startPoint = consumer.get(pointerId);
-        if (startPoint == null) {
-            consumer.put(pointerId, new PointF(startX, startY));
-        } else {
-            startPoint.set(startX, startY);
-        }
-        return startPoint;
-    }
-
-    private boolean onActionPointerUp(MotionEvent event) {
+    protected boolean onActionPointerUp(MotionEvent event) {
         if (!isEventValid) return false;
-        notifyListener(State.ENDED);
-        int pointerIndex = event.getActionIndex();
-        int pointerId = event.getPointerId(pointerIndex);
-        startFingerPositions.remove(pointerId);
-        calculateCenter();
+        if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
+        calculateCenter(event);
         return true;
     }
 }

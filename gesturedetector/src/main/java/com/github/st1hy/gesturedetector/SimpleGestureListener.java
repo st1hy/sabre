@@ -4,17 +4,17 @@ import android.graphics.PointF;
 
 public class SimpleGestureListener implements GestureListener {
     @Override
-    public void onTranslate(State state, PointF startPoint, float dx, float dy, double distance) {
+    public void onTranslate(GestureEventState state, PointF startPoint, float dx, float dy, double distance) {
 
     }
 
     @Override
-    public void onRotate(State state, PointF centerPoint, float rotation) {
+    public void onRotate(GestureEventState state, PointF centerPoint, float rotation) {
 
     }
 
     @Override
-    public void onScale(State state, PointF centerPoint, float scale) {
+    public void onScale(GestureEventState state, PointF centerPoint, float scale) {
 
     }
 
@@ -34,7 +34,7 @@ public class SimpleGestureListener implements GestureListener {
     }
 
     @Override
-    public void onFling(PointF startPoint, float velocity, FlingDirection direction) {
+    public void onFling(PointF startPoint, float velocity, FlingDetector.Direction direction) {
 
     }
 }

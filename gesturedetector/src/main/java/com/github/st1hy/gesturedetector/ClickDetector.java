@@ -22,24 +22,27 @@ import static com.github.st1hy.gesturedetector.Options.Event.TRANSLATE;
 import static com.github.st1hy.gesturedetector.Options.Flag.IGNORE_CLICK_EVENT_ON_GESTURES;
 
 /**
- * Listens for click events.
- * Calls {@link GestureListener#onClick(PointF)}, {@link GestureListener#onLongPressed(PointF)} or {@link GestureListener#onDoubleClick(PointF)} when appropriate.
- * <p>
+ * Detects click events.
+ * <p/>
+ * Calls {@link Listener#onClick(PointF)}, {@link Listener#onLongPressed(PointF)} or {@link Listener#onDoubleClick(PointF)} when appropriate.
+ * <p/>
  * To control which events are being delivered use {@link Options}. If option {@link Flag#IGNORE_CLICK_EVENT_ON_GESTURES} is set it will filter out clicks that are part of more complicated gestures.
- * <p>
+ * <p/>
  * When listening also for double click events, adds delay for second press event to occur.
- * If it doesn't it triggers {@link GestureListener#onClick(PointF)}
+ * If it doesn't it triggers {@link Listener#onClick(PointF)}
+ * <p/>
+ * This implementation must receive events on {@link TranslationDetector.Listener#onTranslate(GestureEventState, PointF, float, float, double)} if both {@link Options.Event#TRANSLATE} and {@link Flag#IGNORE_CLICK_EVENT_ON_GESTURES} are enabled.
  */
-class ClickDetector extends SimpleGestureListener implements GestureDetector {
-    private final GestureListener listener;
-    private final Options options;
-    private long pressedTimestamp, previousClickTimestamp;
-    private int eventStartPointerId;
-    private PointF startPoint;
-    private boolean isEventValid = false;
-    private int clickCount = 0;
-    private final Handler handler;
-    private final Runnable delayedClick = new Runnable() {
+public class ClickDetector implements TranslationDetector.Listener, GestureDetector {
+    protected final Listener listener;
+    protected final Options options;
+    protected long pressedTimestamp, previousClickTimestamp;
+    protected int eventStartPointerId;
+    protected PointF startPoint;
+    protected boolean isEventValid = false;
+    protected int clickCount = 0;
+    protected final Handler handler;
+    protected final Runnable delayedClick = new Runnable() {
         @Override
         public void run() {
             if (options.isEnabled(CLICK)) {
@@ -48,7 +51,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
             }
         }
     };
-    private final Runnable delayedLongPress = new Runnable() {
+    protected final Runnable delayedLongPress = new Runnable() {
         @Override
         public void run() {
             if (options.isEnabled(LONG_PRESS)) {
@@ -57,7 +60,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
             }
         }
     };
-    private final Runnable doubleClickTimeout = new Runnable() {
+    protected final Runnable doubleClickTimeout = new Runnable() {
         @Override
         public void run() {
             if (options.isEnabled(DOUBLE_CLICK)) {
@@ -66,12 +69,47 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         }
     };
 
-    ClickDetector(GestureListener listener, Options options) {
+    /**
+     * Click detector provides listener information about click events on {@link Listener}
+     *
+     * @param listener Listener to be called when events happen.
+     * @param options  Options for controlling behavior of this detector.
+     * @throws NullPointerException if listener of options are null.
+     */
+    public ClickDetector(Listener listener, Options options) {
+        if (listener == null) throw new NullPointerException("Listener cannot be null");
+        if (options == null) throw new NullPointerException("Options cannot be null");
         this.listener = listener;
-        this.options = options;
+        this.options = options.clone();
         handler = new Handler(Looper.getMainLooper());
     }
 
+    public interface Listener {
+        /**
+         * Called when click event is detected.
+         *
+         * @param startPoint Point where click event was detected.
+         */
+        void onClick(PointF startPoint);
+
+        /**
+         * Called when long press event is detected.
+         *
+         * @param startPoint Point where long press event was detected.
+         */
+        void onLongPressed(PointF startPoint);
+
+        /**
+         * Called when double click event is detected.
+         *
+         * @param startPoint Point where double click event was detected.
+         */
+        void onDoubleClick(PointF startPoint);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void invalidate() {
         isEventValid = false;
@@ -81,6 +119,9 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         handler.removeCallbacks(doubleClickTimeout);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (!isListeningForSomething()) return false;
@@ -97,11 +138,11 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         return false;
     }
 
-    private boolean onActionDown(MotionEvent event) {
+    protected boolean onActionDown(MotionEvent event) {
         previousClickTimestamp = pressedTimestamp;
         pressedTimestamp = event.getEventTime();
-        eventStartPointerId = getPointerId(event);
         int pointerIndex = event.getActionIndex();
+        eventStartPointerId = event.getPointerId(pointerIndex);
         startPoint = new PointF(event.getX(pointerIndex), event.getY(pointerIndex));
         isEventValid = true;
         if (options.isEnabled(DOUBLE_CLICK)) clickCount++;
@@ -112,11 +153,11 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         return true;
     }
 
-    private boolean onActionUp(MotionEvent event) {
+    protected boolean onActionUp(MotionEvent event) {
         if (!isEventValid) return false;
         if (options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
             //Other finger is up than was down in the first place.
-            if (getPointerId(event) != eventStartPointerId) {
+            if (event.getPointerId(event.getActionIndex()) != eventStartPointerId) {
                 invalidate();
                 return false;
             }
@@ -149,14 +190,17 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void onTranslate(State state, PointF startPoint, float dx, float dy, double distance) {
-        if (isEventValid && State.STARTED.equals(state) && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
+    public void onTranslate(GestureEventState state, PointF startPoint, float dx, float dy, double distance) {
+        if (isEventValid && GestureEventState.STARTED.equals(state) && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
             invalidate();
         }
     }
 
-    private boolean onActionMove(MotionEvent event) {
+    protected boolean onActionMove(MotionEvent event) {
         //If translation detection is disabled we need to detect it ourselves unless we don't care
         if (isEventValid && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES) && !options.isEnabled(TRANSLATE)) {
             int pointerIndex = event.findPointerIndex(eventStartPointerId);
@@ -175,7 +219,7 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         return false;
     }
 
-    private boolean onActionPointerDown(MotionEvent event) {
+    protected boolean onActionPointerDown(MotionEvent event) {
         if (isEventValid && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
             //Multitouch gesture started.
             invalidate();
@@ -184,17 +228,13 @@ class ClickDetector extends SimpleGestureListener implements GestureDetector {
         return false;
     }
 
-    private static int getPointerId(MotionEvent event) {
-        return event.getPointerId(event.getActionIndex());
-    }
-
-    private static double getDistance(PointF startPoint, float endX, float endY) {
+    protected static double getDistance(PointF startPoint, float endX, float endY) {
         double a = endX - startPoint.x;
         double b = endY - startPoint.y;
         return Math.sqrt(a * a + b * b);
     }
 
-    private boolean isListeningForSomething() {
+    protected boolean isListeningForSomething() {
         return options.isEnabled(CLICK, DOUBLE_CLICK, LONG_PRESS);
     }
 }
