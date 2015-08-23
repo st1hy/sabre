@@ -10,11 +10,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.github.st1hy.sabre.image.surface.ImageSurfaceViewer;
 import com.github.st1hy.sabre.image.ImageViewer;
 import com.github.st1hy.sabre.image.ImageCache;
 import com.github.st1hy.sabre.util.SystemUIMode;
 
-public class MainActivity extends AppCompatActivity implements ImageViewer.ImageLoadingCallback {
+public class MainActivity extends AppCompatActivity implements ImageSurfaceViewer.ImageLoadingCallback {
     private static final int REQUEST_IMAGE = 0x16ed;
     private static final String SAVE_IMAGE_URI = "com.github.st1hy.sabre.IMAGE_URI";
     private Uri loadedImage;
@@ -121,8 +122,15 @@ public class MainActivity extends AppCompatActivity implements ImageViewer.Image
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        viewDelegate.getViewer().onResume();
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
+        viewDelegate.getViewer().onPause();
         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
@@ -130,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements ImageViewer.Image
             }
         });
     }
+
 
     @Override
     protected void onDestroy() {

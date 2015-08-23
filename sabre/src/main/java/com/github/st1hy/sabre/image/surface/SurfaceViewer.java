@@ -1,4 +1,4 @@
-package com.github.st1hy.sabre.image;
+package com.github.st1hy.sabre.image.surface;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -8,13 +8,12 @@ import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callback2 {
+public abstract class SurfaceViewer extends SurfaceView implements SurfaceHolder.Callback2 {
     protected volatile ScheduledExecutorService executor = newExecutor();
     protected volatile SurfaceHolder holder;
     protected volatile int width, height;
@@ -23,23 +22,23 @@ public abstract class Viewer extends SurfaceView implements SurfaceHolder.Callba
     private volatile DrawTask drawTask;
     private volatile boolean isSurfaceActive = false;
 
-    public Viewer(Context context) {
+    public SurfaceViewer(Context context) {
         super(context);
         init();
     }
 
-    public Viewer(Context context, AttributeSet attrs) {
+    public SurfaceViewer(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public Viewer(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SurfaceViewer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
 
     @TargetApi(22)
-    public Viewer(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public SurfaceViewer(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init();
     }

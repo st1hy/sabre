@@ -9,7 +9,7 @@ public class SimpleGestureListener implements GestureListener {
     }
 
     @Override
-    public void onRotate(GestureEventState state, PointF centerPoint, float rotation) {
+    public void onRotate(GestureEventState state, PointF centerPoint, double rotation, double delta) {
 
     }
 

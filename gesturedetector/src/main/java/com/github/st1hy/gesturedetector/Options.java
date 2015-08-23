@@ -53,7 +53,7 @@ public class Options implements Cloneable {
          */
         TRANSLATION_START_THRESHOLD(20),
         /**
-         * Hardcoded default: 20 px
+         * Hardcoded default: 10 deg
          */
         ROTATION_START_THRESHOLD(20),
         /**
@@ -61,9 +61,9 @@ public class Options implements Cloneable {
          */
         SCALE_START_THRESHOLD(20),
         /**
-         * Hardcoded default: 100 px / s
+         * Hardcoded default: 1000 px / s
          */
-        FLING_VELOCITY_THRESHOLD(100),
+        FLING_VELOCITY_THRESHOLD(1000),
         /**
          * How much pointer have to move to consider this a fling.
          *
@@ -93,13 +93,13 @@ public class Options implements Cloneable {
         for (Constant constant : Constant.values()) {
             constants.put(constant, constant.defaultValue);
         }
-        constants.put(LONG_PRESS_TIME_MS, resources.getInteger(R.integer.gesture_detector_long_press_time));
-        constants.put(DOUBLE_CLICK_TIME_LIMIT, resources.getInteger(R.integer.gesture_detector_double_click_time_limit));
-        constants.put(TRANSLATION_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold));
-        constants.put(SCALE_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold));
-        constants.put(ROTATION_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_rotation_start_threshold));
-        constants.put(FLING_VELOCITY_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_fling_velocity_threshold));
-        constants.put(FLING_TRANSLATION_THRESHOLD, resources.getInteger(R.integer.gesture_detector_fling_translation_threshold));
+        constants.put(LONG_PRESS_TIME_MS, resources.getInteger(R.integer.gesture_detector_long_press_time_ms));
+        constants.put(DOUBLE_CLICK_TIME_LIMIT, resources.getInteger(R.integer.gesture_detector_double_click_time_limit_ms));
+        constants.put(ROTATION_START_THRESHOLD, resources.getInteger(R.integer.gesture_detector_rotation_start_threshold_deg));
+        constants.put(TRANSLATION_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold_distance));
+        constants.put(SCALE_START_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_translation_start_threshold_distance));
+        constants.put(FLING_VELOCITY_THRESHOLD, resources.getDimensionPixelSize(R.dimen.gesture_detector_fling_threshold_velocity));
+        constants.put(FLING_TRANSLATION_THRESHOLD, resources.getInteger(R.integer.gesture_detector_fling_translation_threshold_percent));
     }
 
     /**

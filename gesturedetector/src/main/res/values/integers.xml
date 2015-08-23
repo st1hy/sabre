@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="gesture_detector_long_press_time">500</integer>
-    <integer name="gesture_detector_double_click_time_limit">400</integer>
-    <integer name="gesture_detector_fling_translation_threshold">50</integer>
+    <integer name="gesture_detector_long_press_time_ms">500</integer>
+    <integer name="gesture_detector_double_click_time_limit_ms">400</integer>
+    <integer name="gesture_detector_fling_translation_threshold_percent">50</integer>
+    <integer name="gesture_detector_rotation_start_threshold_deg">10</integer>
 </resources>

@@ -73,8 +73,9 @@ public class GestureDetectorImp implements GestureListener, GestureDetector {
     }
 
     @Override
-    public void onRotate(GestureEventState state, PointF centerPoint, float rotation) {
-        listener.onRotate(state, centerPoint, rotation);
+    public void onRotate(GestureEventState state, PointF centerPoint, double rotation, double delta) {
+
+        listener.onRotate(state, centerPoint, rotation, delta);
         if (inDebug) {
             Log.d(TAG, String.format("Rotation %s: x = %.1f, y = %.1f, rotation = %.2f", state.toString(), centerPoint.x, centerPoint.y, rotation));
         }
