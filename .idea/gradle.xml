@@ -11,6 +11,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/gesturedetector" />
+            <option value="$PROJECT_DIR$/grafika" />
             <option value="$PROJECT_DIR$/sabre" />
           </set>
         </option>

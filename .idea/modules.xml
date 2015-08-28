@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Sabre.iml" filepath="$PROJECT_DIR$/Sabre.iml" />
       <module fileurl="file://$PROJECT_DIR$/gesturedetector/gesturedetector.iml" filepath="$PROJECT_DIR$/gesturedetector/gesturedetector.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grafika/grafika.iml" filepath="$PROJECT_DIR$/grafika/grafika.iml" />
       <module fileurl="file://$PROJECT_DIR$/sabre/sabre.iml" filepath="$PROJECT_DIR$/sabre/sabre.iml" />
     </modules>
   </component>

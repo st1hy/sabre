@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.github.st1hy.sabre"
-        minSdkVersion 16
+        minSdkVersion 18
         targetSdkVersion 23
         versionCode 1
         versionName "0.1.0"
@@ -24,4 +24,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.0.0'
     compile 'com.google.guava:guava:18.0'
     compile project(':gesturedetector')
+    compile project(':grafika')
 }
