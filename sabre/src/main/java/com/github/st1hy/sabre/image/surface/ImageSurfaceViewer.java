@@ -18,7 +18,7 @@ import android.util.AttributeSet;
 
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
-import com.github.st1hy.gesturedetector.MultipleGestureDetector;
+import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 import com.github.st1hy.gesturedetector.MultipleGestureListener;
 import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.SimpleGestureListener;
@@ -102,11 +102,8 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer {
             }
         };
         Options options = new Options(getResources());
-//        options.setEnabled(Options.Event.TRANSLATE, false);
-//        options.setEnabled(Options.Event.SCALE, false);
-        options.setEnabled(Options.Event.MATRIX_TRANSFORMATION, false);
-//        options.setEnabled(Options.Event.FLING, false);
-        gestureDetector = new MultipleGestureDetector(gestureListener, options);
+        options.set(Options.Constant.MATRIX_MAX_POINTERS_COUNT, 2);
+        gestureDetector = new MatrixTransformationDetector(gestureListener, options);
         setOnTouchListener(gestureDetector);
     }
 

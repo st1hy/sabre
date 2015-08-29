@@ -120,7 +120,6 @@ public class MatrixTransformationDetector implements GestureDetector {
     }
 
     protected boolean onActionPointerDown(MotionEvent event) {
-        if (event.getPointerCount() > maxPointersCount) invalidate();
         if (!isEventValid) return false;
         if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
         setStartPoints(event);
@@ -152,9 +151,8 @@ public class MatrixTransformationDetector implements GestureDetector {
 
     protected void computeMatrix(MotionEvent event) {
         int pointsCount = event.getPointerCount();
-        if (pointsCount < 0 || pointsCount > maxPointersCount) {
-            matrix.reset();
-            return;
+        if (pointsCount > maxPointersCount) {
+            pointsCount = maxPointersCount;
         }
         int polySize = pointsCount * 2;
         for (int i = 0; i < pointsCount; i++) {

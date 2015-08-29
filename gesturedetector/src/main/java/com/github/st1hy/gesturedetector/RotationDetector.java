@@ -28,6 +28,7 @@ public class RotationDetector implements GestureDetector {
     protected double deltaRotation;
     protected boolean isEventValid = false;
     protected boolean inProgress = false;
+    protected int maxPointersCount = 2;
     protected GestureEventState currentState = GestureEventState.ENDED;
 
     /**
@@ -95,10 +96,6 @@ public class RotationDetector implements GestureDetector {
 
     protected boolean onActionPointerDown(MotionEvent event) {
         if (!isEventValid) return false;
-        if (event.getPointerCount() > 2) {
-            invalidate();
-            return false;
-        }
         if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
         calculateCenter(event);
         return true;
@@ -148,6 +145,7 @@ public class RotationDetector implements GestureDetector {
         float centerX = 0;
         float centerY = 0;
         int pointsCount = event.getPointerCount();
+        if (pointsCount > maxPointersCount) pointsCount = maxPointersCount;
         for (int i = 0; i < pointsCount; i++) {
             centerX += event.getX(i);
             centerY += event.getY(i);
@@ -175,26 +173,39 @@ public class RotationDetector implements GestureDetector {
     }
 
     protected void calculateCenter(MotionEvent event) {
+        calculateCenter(event, -1);
+    }
+
+    protected void calculateCenter(MotionEvent event, int discardPointerIndex ) {
         float centerX = 0;
         float centerY = 0;
-        int pointsCount = event.getPointerCount();
-        for (int i = 0; i < pointsCount; i++) {
-            centerX += event.getX(i);
-            centerY += event.getY(i);
+        final int pointsCount = event.getPointerCount();
+        {
+            int pointersAdded = 0;
+            for (int i = 0; i < pointsCount; i++) {
+                if (discardPointerIndex == i) continue;
+                else if (pointersAdded == maxPointersCount) break;
+                centerX += event.getX(i);
+                centerY += event.getY(i);
+                pointersAdded++;
+            }
+            centerX /= pointersAdded;
+            centerY /= pointersAdded;
         }
-        centerX /= pointsCount;
-        centerY /= pointsCount;
         centerPoint.set(centerX, centerY);
 
         double angleSum = 0;
+        int pointersAdded = 0;
         for (int i = 0; i < pointsCount; i++) {
+            if (discardPointerIndex == i) continue;
+            else if (pointersAdded == maxPointersCount) break;
             float dx = event.getX(i) - centerX;
             float dy = event.getY(i) - centerY;
             float tan = dy / dx;
             angleSum += Math.atan(tan);
+            pointersAdded++;
         }
-        angleSum /= pointsCount;
-        this.previousAngle = angleSum;
+        this.previousAngle = angleSum / pointersAdded;
         rotation = 0;
         deltaRotation = 0;
     }
@@ -202,7 +213,7 @@ public class RotationDetector implements GestureDetector {
     protected boolean onActionPointerUp(MotionEvent event) {
         if (!isEventValid) return false;
         if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
-        calculateCenter(event);
+        calculateCenter(event, event.getActionIndex());
         return true;
     }
 }
