@@ -14,17 +14,20 @@ import static com.github.st1hy.gesturedetector.Options.Constant.SCALE_START_THRE
 /**
  * Detects scaling events.
  * <p/>
- * Calls {@link Listener#onScale(GestureEventState, PointF, float)} when appropriate.
+ * Calls {@link Listener#onScale(GestureEventState, PointF, float, float)} when appropriate.
  * <p/>
  * {@link Options.Event#SCALE} enables or disables this detector.
  */
 public class ScaleDetector implements GestureDetector {
+    protected final boolean enabled;
+    protected final int scaleThreshold;
     protected final Listener listener;
-    protected final Options options;
-    protected PointF centerPoint = new PointF();
-    protected float scale;
-    protected double distanceStart, currentDistance;
-    protected boolean isEventValid = false, inProgress = false;
+    protected final PointF centerPoint = new PointF();
+    protected float scale, scaleRelative;
+    protected double distanceStart;
+    protected double currentDistance;
+    protected boolean isEventValid = false;
+    protected boolean inProgress = false;
     protected GestureEventState currentState = GestureEventState.ENDED;
 
     /**
@@ -36,18 +39,20 @@ public class ScaleDetector implements GestureDetector {
      */
     public ScaleDetector(Listener listener, Options options) {
         this.listener = listener;
-        this.options = options.clone();
+        this.enabled = options.isEnabled(Options.Event.SCALE);
+        this.scaleThreshold = options.get(SCALE_START_THRESHOLD);
     }
 
     public interface Listener {
         /**
          * Called when scaling is detected. Only called when {@link Options.Event#SCALE} is set in {@link Options}.
          *
-         * @param state       state of event. Can be either {@link GestureEventState#STARTED} when {@link Options.Constant#SCALE_START_THRESHOLD} is first reached, {@link GestureEventState#ENDED} when scaling ends or {@link GestureEventState#IN_PROGRESS}.
-         * @param centerPoint center of the gesture from the moment of event start.
-         * @param scale       how much distance between points have grown since the beginning of this gesture
+         * @param state         state of event. Can be either {@link GestureEventState#STARTED} when {@link Options.Constant#SCALE_START_THRESHOLD} is first reached, {@link GestureEventState#ENDED} when scaling ends or {@link GestureEventState#IN_PROGRESS}.
+         * @param centerPoint   center of the gesture from the moment of event start.
+         * @param scale         how much distance between points have grown since the beginning of this gesture
+         * @param scaleRelative relative scale change since last call
          */
-        void onScale(GestureEventState state, PointF centerPoint, float scale);
+        void onScale(GestureEventState state, PointF centerPoint, float scale, float scaleRelative);
     }
 
     @Override
@@ -61,7 +66,7 @@ public class ScaleDetector implements GestureDetector {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (!options.isEnabled(Options.Event.SCALE)) return false;
+        if (!enabled) return false;
         switch (event.getActionMasked()) {
             case ACTION_DOWN:
                 return onActionDown(event);
@@ -101,7 +106,7 @@ public class ScaleDetector implements GestureDetector {
         if (!isEventValid) return false;
         calculatePosition(event);
         if (!isEventValid) return false;
-        if (currentState == GestureEventState.ENDED && (inProgress || currentDistance > options.get(SCALE_START_THRESHOLD))) {
+        if (currentState == GestureEventState.ENDED && (inProgress || currentDistance > scaleThreshold)) {
             inProgress = true;
             notifyListener(GestureEventState.STARTED);
         } else if (currentState != GestureEventState.ENDED) {
@@ -114,7 +119,7 @@ public class ScaleDetector implements GestureDetector {
         currentState = state;
         PointF point = new PointF();
         point.set(centerPoint);
-        listener.onScale(currentState, point, scale);
+        listener.onScale(currentState, point, scale, scaleRelative);
     }
 
     protected void calculatePosition(MotionEvent event) {
@@ -140,27 +145,39 @@ public class ScaleDetector implements GestureDetector {
             distance += distance(dx, dy);
         }
         currentDistance = distance / pointsCount;
-        scale = (float) (currentDistance / distanceStart);
+        float scale = (float) (currentDistance / distanceStart);
+        scaleRelative = scale / this.scale;
+        this.scale = scale;
     }
 
     protected void calculateCenter(MotionEvent event) {
+        calculateCenter(event, -1);
+    }
+
+    protected void calculateCenter(MotionEvent event, int discardPointerIndex) {
         float centerX = 0;
         float centerY = 0;
         int pointsCount = event.getPointerCount();
         for (int i = 0; i < pointsCount; i++) {
+            if (discardPointerIndex == i) continue;
             centerX += event.getX(i);
             centerY += event.getY(i);
         }
+        if (discardPointerIndex != -1) pointsCount -= 1;
         centerX /= pointsCount;
         centerY /= pointsCount;
         centerPoint.set(centerX, centerY);
 
         double distance = 0;
+        pointsCount = event.getPointerCount();
         for (int i = 0; i < pointsCount; i++) {
+            if (discardPointerIndex == i) continue;
             float dx = event.getX(i) - centerX;
             float dy = event.getY(i) - centerY;
             distance += distance(dx, dy);
         }
+        if (discardPointerIndex != -1) pointsCount -= 1;
+        scale = 1f;
         distanceStart = distance / pointsCount;
     }
 
@@ -171,7 +188,7 @@ public class ScaleDetector implements GestureDetector {
     protected boolean onActionPointerUp(MotionEvent event) {
         if (!isEventValid) return false;
         if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
-        calculateCenter(event);
+        calculateCenter(event, event.getActionIndex());
         return true;
     }
 }

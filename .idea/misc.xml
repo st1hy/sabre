@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="EntryPointsManager">
-    <entry_points version="2.0" />
+    <entry_points version="2.0">
+      <entry_point TYPE="method" FQNAME="com.github.st1hy.gesturedetector.ClickDetector ClickDetector(com.github.st1hy.gesturedetector.ClickDetector.Listener listener, com.github.st1hy.gesturedetector.Options options)" />
+      <entry_point TYPE="method" FQNAME="com.github.st1hy.gesturedetector.FlingDetector FlingDetector(com.github.st1hy.gesturedetector.FlingDetector.Listener listener, com.github.st1hy.gesturedetector.Options options)" />
+      <entry_point TYPE="class" FQNAME="com.github.st1hy.gesturedetector.SimpleGestureListener" />
+      <entry_point TYPE="method" FQNAME="com.github.st1hy.gesturedetector.Options Options(android.content.res.Resources resources)" />
+    </entry_points>
   </component>
   <component name="NullableNotNullManager">
     <option name="myDefaultNullable" value="android.support.annotation.Nullable" />

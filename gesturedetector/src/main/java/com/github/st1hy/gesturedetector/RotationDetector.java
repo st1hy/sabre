@@ -1,7 +1,6 @@
 package com.github.st1hy.gesturedetector;
 
 import android.graphics.PointF;
-import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -12,26 +11,24 @@ import static android.view.MotionEvent.ACTION_POINTER_UP;
 import static android.view.MotionEvent.ACTION_UP;
 import static com.github.st1hy.gesturedetector.Options.Constant.ROTATION_START_THRESHOLD;
 
-//TODO
 /**
- * Listens for translation events.
+ * Provides rotation events to the {@link Listener}.
  * <p/>
  * Calls {@link Listener#onRotate(GestureEventState, PointF, double, double)} when appropriate.
  * <p/>
  * {@link Options.Event#TRANSLATE} enables or disables this detector.
  */
 public class RotationDetector implements GestureDetector {
+    protected final boolean enabled, degreesEnabled;
+    protected final double rotationThresholdRad;
     protected final Listener listener;
-    protected final Options options;
-    protected PointF centerPoint = new PointF();
+    protected final PointF centerPoint = new PointF();
     protected double rotation;
+    protected double previousAngle;
     protected double deltaRotation;
-    protected boolean isEventValid = false, inProgress = false;
+    protected boolean isEventValid = false;
+    protected boolean inProgress = false;
     protected GestureEventState currentState = GestureEventState.ENDED;
-    /**
-     * Indexed by pointer id.
-     */
-    protected final SparseArray<PointF> previousPoints = new SparseArray<>();
 
     /**
      * Constructs new {@link RotationDetector}.
@@ -44,17 +41,21 @@ public class RotationDetector implements GestureDetector {
         if (listener == null) throw new NullPointerException("Listener cannot be null");
         if (options == null) throw new NullPointerException("Options cannot be null");
         this.listener = listener;
-        this.options = options.clone();
+        this.enabled = options.isEnabled(Options.Event.ROTATE);
+        this.rotationThresholdRad = Math.toRadians(options.get(ROTATION_START_THRESHOLD));
+        this.degreesEnabled = options.getFlag(Options.Flag.ROTATION_DEGREES);
     }
 
     public interface Listener {
         /**
          * Called when rotation is detected. Only received when {@link Options.Event#ROTATE} is set in {@link Options}.
+         * <p/>
+         * Rotation is returned in radians unless {@link Options.Flag#ROTATION_DEGREES} is enabled.
          *
          * @param state       state of event. Can be either {@link GestureEventState#STARTED} when {@link Options.Constant#ROTATION_START_THRESHOLD} is first reached, {@link GestureEventState#ENDED} when rotation ends or {@link GestureEventState#IN_PROGRESS}.
          * @param centerPoint point of reference for rotation
-         * @param rotation    rotation in degrees since the beginning of the gesture in degrees.
-         * @param delta       Relative rotation since the last call of onRotate in degrees.
+         * @param rotation    rotation in degrees since the beginning of the gesture.
+         * @param delta       Relative rotation since the last call of onRotate.
          */
         void onRotate(GestureEventState state, PointF centerPoint, double rotation, double delta);
     }
@@ -70,7 +71,7 @@ public class RotationDetector implements GestureDetector {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (!options.isEnabled(Options.Event.ROTATE)) return false;
+        if (!enabled) return false;
         switch (event.getActionMasked()) {
             case ACTION_DOWN:
                 return onActionDown(event);
@@ -94,6 +95,10 @@ public class RotationDetector implements GestureDetector {
 
     protected boolean onActionPointerDown(MotionEvent event) {
         if (!isEventValid) return false;
+        if (event.getPointerCount() > 2) {
+            invalidate();
+            return false;
+        }
         if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
         calculateCenter(event);
         return true;
@@ -109,7 +114,7 @@ public class RotationDetector implements GestureDetector {
         if (!isEventValid) return false;
         calculateRotation(event);
         if (!isEventValid) return false;
-        if (currentState == GestureEventState.ENDED && (inProgress || rotation > options.get(ROTATION_START_THRESHOLD))) {
+        if (currentState == GestureEventState.ENDED && (inProgress || Math.abs(rotation) > rotationThresholdRad)) {
             inProgress = true;
             notifyListener(GestureEventState.STARTED);
         } else if (currentState != GestureEventState.ENDED) {
@@ -119,6 +124,14 @@ public class RotationDetector implements GestureDetector {
     }
 
     protected void notifyListener(GestureEventState state) {
+        if (degreesEnabled) {
+            notifyListener(state, Math.toDegrees(rotation), Math.toDegrees(deltaRotation));
+        } else {
+            notifyListener(state, rotation, deltaRotation);
+        }
+    }
+
+    protected void notifyListener(GestureEventState state, double rotation, double deltaRotation) {
         currentState = state;
         PointF point = new PointF();
         point.set(centerPoint);
@@ -143,17 +156,22 @@ public class RotationDetector implements GestureDetector {
         centerY /= pointsCount;
         centerPoint.set(centerX, centerY);
 
-        double distance = 0;
+        double angleSum = 0;
         for (int i = 0; i < pointsCount; i++) {
             float dx = event.getX(i) - centerX;
             float dy = event.getY(i) - centerY;
             float tan = dy / dx;
-            double angle = Math.atan(tan);
-
-            distance += distance(dx, dy);
+            double rad = Math.atan(tan);
+            angleSum += rad;
         }
-//        currentDistance = distance / pointsCount;
-//        scale = (float) (currentDistance / distanceStart);
+        angleSum /= pointsCount;
+        deltaRotation = angleSum - this.previousAngle;
+        this.previousAngle = angleSum;
+        if (Math.PI - Math.abs(deltaRotation) < 0.5d) {
+            //We are passing through the "danger zone"
+            deltaRotation = Math.PI - deltaRotation;
+        }
+        rotation += deltaRotation;
     }
 
     protected void calculateCenter(MotionEvent event) {
@@ -161,30 +179,24 @@ public class RotationDetector implements GestureDetector {
         float centerY = 0;
         int pointsCount = event.getPointerCount();
         for (int i = 0; i < pointsCount; i++) {
-            float x = event.getX(i);
-            float y = event.getY(i);
-            setPreviousPoint(i, x, y);
             centerX += event.getX(i);
             centerY += event.getY(i);
         }
         centerX /= pointsCount;
         centerY /= pointsCount;
         centerPoint.set(centerX, centerY);
-        rotation = 0;
-    }
 
-    protected void setPreviousPoint(int pointerIndex, float x, float y) {
-        PointF pointF = previousPoints.get(pointerIndex);
-        if (pointF == null) {
-            pointF = new PointF(x, y);
-            previousPoints.put(pointerIndex, pointF);
-        } else {
-            pointF.set(x,y);
+        double angleSum = 0;
+        for (int i = 0; i < pointsCount; i++) {
+            float dx = event.getX(i) - centerX;
+            float dy = event.getY(i) - centerY;
+            float tan = dy / dx;
+            angleSum += Math.atan(tan);
         }
-    }
-
-    protected static double distance(float a, float b) {
-        return Math.sqrt(a * a + b * b);
+        angleSum /= pointsCount;
+        this.previousAngle = angleSum;
+        rotation = 0;
+        deltaRotation = 0;
     }
 
     protected boolean onActionPointerUp(MotionEvent event) {

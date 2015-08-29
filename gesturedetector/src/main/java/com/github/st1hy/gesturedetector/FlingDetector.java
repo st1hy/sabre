@@ -19,8 +19,9 @@ import static android.view.MotionEvent.ACTION_UP;
  */
 public class FlingDetector implements GestureDetector {
     protected static final float MS_IN_SEC = 1e3f;
+    protected final boolean enabled;
+    protected final float flingThresholdPercent, flingVelocityThreshold;
     protected final Listener listener;
-    protected final Options options;
     protected float lastX, lastY;
     protected boolean isValid = false;
     protected float xThreshold = Float.NaN, yThreshold = Float.NaN;
@@ -37,7 +38,9 @@ public class FlingDetector implements GestureDetector {
         if (listener == null) throw new NullPointerException("Listener cannot be null");
         if (options == null) throw new NullPointerException("Options cannot be null");
         this.listener = listener;
-        this.options = options.clone();
+        this.enabled = options.isEnabled(Options.Event.FLING);
+        this.flingThresholdPercent = options.get(Options.Constant.FLING_TRANSLATION_THRESHOLD) / 100f;
+        this.flingVelocityThreshold = options.get(Options.Constant.FLING_VELOCITY_THRESHOLD);
     }
 
     public interface Listener {
@@ -66,7 +69,7 @@ public class FlingDetector implements GestureDetector {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (!options.isEnabled(Options.Event.FLING)) return false;
+        if (!enabled) return false;
         switch (event.getActionMasked()) {
             case ACTION_DOWN:
                 return onActionDown(v, event);
@@ -85,9 +88,8 @@ public class FlingDetector implements GestureDetector {
         lastX = event.getX();
         lastY = event.getY();
         startPoint = new PointF(lastX, lastY);
-        float percentageThreshold = options.get(Options.Constant.FLING_TRANSLATION_THRESHOLD) / 100f;
-        xThreshold = percentageThreshold * v.getWidth();
-        yThreshold = percentageThreshold * v.getHeight();
+        xThreshold = flingThresholdPercent * v.getWidth();
+        yThreshold = flingThresholdPercent * v.getHeight();
         return true;
     }
 
@@ -103,12 +105,12 @@ public class FlingDetector implements GestureDetector {
         float absVx = Math.abs(vx);
         float absVy = Math.abs(vy);
         if (absVx > absVy) {
-            if (absVx > options.get(Options.Constant.FLING_VELOCITY_THRESHOLD)) {
+            if (absVx > flingVelocityThreshold) {
                 notifyListener(absVx, vx > 0 ? Direction.RIGHT : Direction.LEFT);
                 return true;
             }
         } else {
-            if (absVy > options.get(Options.Constant.FLING_VELOCITY_THRESHOLD)) {
+            if (absVy > flingVelocityThreshold) {
                 notifyListener(absVy, vy > 0 ? Direction.DOWN : Direction.UP);
                 return true;
             }

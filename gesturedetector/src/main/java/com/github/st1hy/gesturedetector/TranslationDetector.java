@@ -15,17 +15,20 @@ import static com.github.st1hy.gesturedetector.Options.Flag.TRANSLATION_STRICT_O
 /**
  * Detects translation events.
  * <p/>
- * Calls {@link Listener#onTranslate(GestureEventState, PointF, float, float, double)} when appropriate.
+ * Calls {@link Listener#onTranslate(GestureEventState, PointF, float, float, float, float, double)} when appropriate.
  * <p/>
  * {@link Options.Event#TRANSLATE} enables or disables this detector.
  */
 public class TranslationDetector implements GestureDetector {
+    protected final boolean enabled, strictOneFinger;
+    protected final int translationThreshold;
     protected final Listener listener;
-    protected final Options options;
-    protected PointF centerPoint = new PointF();
-    protected float dx, dy;
+    protected final PointF centerPoint = new PointF();
+    protected float x, dx;
+    protected float y, dy;
     protected double currentDistance;
-    protected boolean isEventValid = false, inProgress = false;
+    protected boolean isEventValid = false;
+    protected boolean inProgress = false;
     protected GestureEventState currentState = GestureEventState.ENDED;
 
     /**
@@ -39,7 +42,9 @@ public class TranslationDetector implements GestureDetector {
         if (listener == null) throw new NullPointerException("Listener cannot be null");
         if (options == null) throw new NullPointerException("Options cannot be null");
         this.listener = listener;
-        this.options = options.clone();
+        this.enabled = options.isEnabled(Options.Event.TRANSLATE);
+        this.strictOneFinger = options.getFlag(TRANSLATION_STRICT_ONE_FINGER);
+        this.translationThreshold = options.get(TRANSLATION_START_THRESHOLD);
     }
 
     public interface Listener {
@@ -48,11 +53,13 @@ public class TranslationDetector implements GestureDetector {
          *
          * @param state      state of event. Can be either {@link GestureEventState#STARTED} when {@link Options.Constant#TRANSLATION_START_THRESHOLD} is first reached, {@link GestureEventState#ENDED} when translation ends or {@link GestureEventState#IN_PROGRESS}.
          * @param startPoint position on the finger when it was first pressed
-         * @param dx         initial translation on x axis when event was triggered
-         * @param dy         initial translation on y axis when event was triggered
+         * @param x          initial translation on x axis when event was triggered
+         * @param y          initial translation on y axis when event was triggered
+         * @param dx         relative translations since last call on x axis.
+         * @param dy         relative translation since last call on y axis
          * @param distance   distance between start point and current point that triggered translation. Must be above {@link Options.Constant#TRANSLATION_START_THRESHOLD}.
          */
-        void onTranslate(GestureEventState state, PointF startPoint, float dx, float dy, double distance);
+        void onTranslate(GestureEventState state, PointF startPoint, float x, float y, float dx, float dy, double distance);
     }
 
     /**
@@ -72,7 +79,7 @@ public class TranslationDetector implements GestureDetector {
      */
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (!options.isEnabled(Options.Event.TRANSLATE)) return false;
+        if (!enabled) return false;
         switch (event.getActionMasked()) {
             case ACTION_DOWN:
                 return onActionDown(event);
@@ -96,7 +103,7 @@ public class TranslationDetector implements GestureDetector {
 
     protected boolean onActionPointerDown(MotionEvent event) {
         if (!isEventValid) return false;
-        if (options.getFlag(TRANSLATION_STRICT_ONE_FINGER)) {
+        if (strictOneFinger) {
             invalidate();
         } else {
             if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
@@ -115,7 +122,7 @@ public class TranslationDetector implements GestureDetector {
         if (!isEventValid) return false;
         calculatePosition(event);
         if (!isEventValid) return false;
-        if (currentState == GestureEventState.ENDED && (inProgress || currentDistance > options.get(TRANSLATION_START_THRESHOLD))) {
+        if (currentState == GestureEventState.ENDED && (inProgress || currentDistance > translationThreshold)) {
             inProgress = true;
             notifyListener(GestureEventState.STARTED);
         } else if (currentState != GestureEventState.ENDED) {
@@ -128,7 +135,7 @@ public class TranslationDetector implements GestureDetector {
         currentState = state;
         PointF point = new PointF();
         point.set(centerPoint);
-        listener.onTranslate(state, point, dx, dy, currentDistance);
+        listener.onTranslate(state, point, x, y, dx, dy, currentDistance);
     }
 
     protected void calculatePosition(MotionEvent event) {
@@ -142,21 +149,33 @@ public class TranslationDetector implements GestureDetector {
         centerX /= pointsCount;
         centerY /= pointsCount;
 
-        dx = centerX - centerPoint.x;
-        dy = centerY - centerPoint.y;
-        currentDistance = distance(dx, dy);
+        float x = centerX - centerPoint.x;
+        float y = centerY - centerPoint.y;
+        currentDistance = distance(x, y);
+        dx = x - this.x;
+        dy = y - this.y;
+        this.x = x;
+        this.y = y;
     }
 
     protected void calculateCenter(MotionEvent event) {
+        calculateCenter(event, -1);
+    }
+
+    protected void calculateCenter(MotionEvent event, int discardPointerIndex) {
         float centerX = 0;
         float centerY = 0;
         int pointsCount = event.getPointerCount();
         for (int i = 0; i < pointsCount; i++) {
+            if (i == discardPointerIndex) continue;
             centerX += event.getX(i);
             centerY += event.getY(i);
         }
+        if (discardPointerIndex != -1) pointsCount -= 1;
         centerX /= pointsCount;
         centerY /= pointsCount;
+        x = 0;
+        y = 0;
         centerPoint.set(centerX, centerY);
     }
 
@@ -167,7 +186,7 @@ public class TranslationDetector implements GestureDetector {
     protected boolean onActionPointerUp(MotionEvent event) {
         if (!isEventValid) return false;
         if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
-        calculateCenter(event);
+        calculateCenter(event, event.getActionIndex());
         return true;
     }
 }

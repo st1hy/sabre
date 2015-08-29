@@ -1,10 +1,11 @@
 package com.github.st1hy.gesturedetector;
 
+import android.graphics.Matrix;
 import android.graphics.PointF;
 
-public class SimpleGestureListener implements GestureListener {
+public class SimpleGestureListener implements MultipleGestureListener {
     @Override
-    public void onTranslate(GestureEventState state, PointF startPoint, float dx, float dy, double distance) {
+    public void onTranslate(GestureEventState state, PointF startPoint, float x, float y, float dx, float dy, double distance) {
 
     }
 
@@ -14,7 +15,7 @@ public class SimpleGestureListener implements GestureListener {
     }
 
     @Override
-    public void onScale(GestureEventState state, PointF centerPoint, float scale) {
+    public void onScale(GestureEventState state, PointF centerPoint, float scale, float scaleRelative) {
 
     }
 
@@ -35,6 +36,11 @@ public class SimpleGestureListener implements GestureListener {
 
     @Override
     public void onFling(PointF startPoint, float velocity, FlingDetector.Direction direction) {
+
+    }
+
+    @Override
+    public void onMatrix(GestureEventState state, Matrix currentTransformation) {
 
     }
 }

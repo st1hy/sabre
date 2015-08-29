@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -17,7 +18,10 @@ import android.util.AttributeSet;
 
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
-import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
+import com.github.st1hy.gesturedetector.MultipleGestureDetector;
+import com.github.st1hy.gesturedetector.MultipleGestureListener;
+import com.github.st1hy.gesturedetector.Options;
+import com.github.st1hy.gesturedetector.SimpleGestureListener;
 import com.github.st1hy.sabre.image.ImageCache;
 import com.github.st1hy.sabre.image.ImageResizer;
 import com.github.st1hy.sabre.image.ImageViewer;
@@ -38,7 +42,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer {
     private volatile ImageLoadingCallback loadingCallback;
     private final ImageReceiver imageReceiver = new ImageReceiverImp();
     private GestureDetector gestureDetector;
-    private MatrixTransformationDetector.Listener gestureListener;
+    private MultipleGestureListener gestureListener;
 
     public ImageSurfaceViewer(Context context) {
         super(context);
@@ -61,7 +65,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer {
     @Override
     protected void init() {
         super.init();
-        gestureListener = new MatrixTransformationDetector.Listener() {
+        gestureListener = new SimpleGestureListener() {
             final Matrix startMatrix = new Matrix();
 
             @Override
@@ -77,8 +81,32 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer {
                 }
                 surfaceRedrawNeeded(holder);
             }
+
+            @Override
+            public void onRotate(GestureEventState state, PointF centerPoint, double rotation, double delta) {
+                matrix.postRotate((float) delta, centerPoint.x, centerPoint.y);
+                surfaceRedrawNeeded(holder);
+            }
+
+
+            @Override
+            public void onTranslate(GestureEventState state, PointF startPoint, float x, float y, float dx, float dy, double distance) {
+                matrix.postTranslate(dx, dy);
+                surfaceRedrawNeeded(holder);
+            }
+
+            @Override
+            public void onScale(GestureEventState state, PointF centerPoint, float scale, float scaleRelative) {
+                matrix.postScale(scaleRelative, scaleRelative, centerPoint.x, centerPoint.y);
+                surfaceRedrawNeeded(holder);
+            }
         };
-        gestureDetector = new MatrixTransformationDetector(gestureListener);
+        Options options = new Options(getResources());
+//        options.setEnabled(Options.Event.TRANSLATE, false);
+//        options.setEnabled(Options.Event.SCALE, false);
+        options.setEnabled(Options.Event.MATRIX_TRANSFORMATION, false);
+//        options.setEnabled(Options.Event.FLING, false);
+        gestureDetector = new MultipleGestureDetector(gestureListener, options);
         setOnTouchListener(gestureDetector);
     }
 
@@ -146,12 +174,11 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer {
 
     @Override
     public void onPause() {
-
+        gestureDetector.invalidate();
     }
 
     @Override
     public void onResume() {
-
     }
 
     private class ImageReceiverImp implements ImageReceiver, Drawable.Callback {

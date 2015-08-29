@@ -14,38 +14,90 @@ import static android.view.MotionEvent.ACTION_UP;
 
 /**
  * Calculates transformation matrix based on user touch input.
+ * <p/>
+ * Internally it uses {@link Matrix#setPolyToPoly(float[], int, float[], int, int)} with start points matching pointers when event started and ending points of the current pointers from {@link MotionEvent}.
+ * <p/>
+ * This implementation
  */
 public class MatrixTransformationDetector implements GestureDetector {
-    protected Listener listener;
-    protected boolean isEventValid = false, inProgress = false;
+    protected final boolean enabled;
+    protected final int maxPointersCount;
+    protected final Listener listener;
+    protected boolean isEventValid = false;
     protected GestureEventState currentState = GestureEventState.ENDED;
     /**
      * Indexed by pointer id.
      */
     protected final SparseArray<PointF> startPoints = new SparseArray<>();
-    protected Matrix matrix = new Matrix();
-    protected float[] poly = new float[16];
+    protected final Matrix matrix = new Matrix();
+    protected final float[] poly = new float[16];
 
+    /**
+     * Created transformation matrix detector with default values.
+     *
+     * @param listener Event listener that will receive computed matrix
+     * @throws NullPointerException if listener is null.
+     */
     public MatrixTransformationDetector(Listener listener) {
         if (listener == null) throw new NullPointerException("Listener cannot be null");
         this.listener = listener;
+        this.maxPointersCount = 4;
+        this.enabled = true;
+    }
+
+    /**
+     * Created transformation matrix detector.
+     *
+     * @param listener         Event listener that will receive computed matrix
+     * @param maxPointersCount Maximum pointers used to calculate transformation matrix.
+     * @throws NullPointerException     if listener is null.
+     * @throws IllegalArgumentException if maxPointersCount is greater than 4
+     */
+    public MatrixTransformationDetector(Listener listener, int maxPointersCount) {
+        if (listener == null) throw new NullPointerException("Listener cannot be null");
+        if (maxPointersCount > 4)
+            throw new IllegalArgumentException("Maximum pointers count cannot exceed 4");
+        this.listener = listener;
+        this.maxPointersCount = maxPointersCount;
+        this.enabled = true;
+    }
+
+    /**
+     * Created transformation matrix detector.
+     *
+     * @param listener Listener to be called when events happen.
+     * @param options  Options for controlling behavior of this detector.
+     * @throws NullPointerException if listener of options are null.
+     */
+    public MatrixTransformationDetector(Listener listener, Options options) {
+        if (listener == null) throw new NullPointerException("Listener cannot be null");
+        if (options == null) throw new NullPointerException("Options cannot be null");
+        this.listener = listener;
+        this.maxPointersCount = options.get(Options.Constant.MATRIX_MAX_POINTERS_COUNT);
+        this.enabled = options.isEnabled(Options.Event.MATRIX_TRANSFORMATION);
     }
 
     @Override
     public void invalidate() {
         isEventValid = false;
-        inProgress = false;
         if (!GestureEventState.ENDED.equals(currentState)) {
             notifyListener(GestureEventState.ENDED);
         }
     }
 
     public interface Listener {
+        /**
+         * Called when matrix transformation is detected.
+         *
+         * @param state                 Current state of event.
+         * @param currentTransformation Current matrix transformation. Its computed from the beginning of the gesture up to this point. Absolute values.
+         */
         void onMatrix(GestureEventState state, Matrix currentTransformation);
     }
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        if (!enabled) return false;
         switch (event.getActionMasked()) {
             case ACTION_DOWN:
                 return onActionDown(event);
@@ -68,7 +120,7 @@ public class MatrixTransformationDetector implements GestureDetector {
     }
 
     protected boolean onActionPointerDown(MotionEvent event) {
-        if (event.getPointerCount() > 4) invalidate();
+        if (event.getPointerCount() > maxPointersCount) invalidate();
         if (!isEventValid) return false;
         if (currentState != GestureEventState.ENDED) notifyListener(GestureEventState.ENDED);
         setStartPoints(event);
@@ -100,12 +152,11 @@ public class MatrixTransformationDetector implements GestureDetector {
 
     protected void computeMatrix(MotionEvent event) {
         int pointsCount = event.getPointerCount();
-        if (pointsCount < 0 || pointsCount > 4) {
-            inProgress = false;
+        if (pointsCount < 0 || pointsCount > maxPointersCount) {
             matrix.reset();
             return;
         }
-        int polySize =  pointsCount * 2;
+        int polySize = pointsCount * 2;
         for (int i = 0; i < pointsCount; i++) {
             int pointerId = event.getPointerId(i);
             PointF src = startPoints.get(pointerId);
@@ -116,7 +167,7 @@ public class MatrixTransformationDetector implements GestureDetector {
             poly[xIndex + polySize] = event.getX(i);
             poly[yIndex + polySize] = event.getY(i);
         }
-        matrix.setPolyToPoly(poly,0,poly,polySize, pointsCount);
+        matrix.setPolyToPoly(poly, 0, poly, polySize, pointsCount);
     }
 
     protected void setStartPoints(MotionEvent event) {
@@ -127,13 +178,13 @@ public class MatrixTransformationDetector implements GestureDetector {
         }
     }
 
-    protected void setStartPoint(int pointerIndex, float x, float y) {
-        PointF pointF = startPoints.get(pointerIndex);
+    protected void setStartPoint(int pointerID, float x, float y) {
+        PointF pointF = startPoints.get(pointerID);
         if (pointF == null) {
             pointF = new PointF(x, y);
-            startPoints.put(pointerIndex, pointF);
+            startPoints.put(pointerID, pointF);
         } else {
-            pointF.set(x,y);
+            pointF.set(x, y);
         }
     }
 

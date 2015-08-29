@@ -34,6 +34,9 @@ import static com.github.st1hy.gesturedetector.Options.Flag.IGNORE_CLICK_EVENT_O
  * This implementation must receive events on {@link TranslationDetector.Listener#onTranslate(GestureEventState, PointF, float, float, double)} if both {@link Options.Event#TRANSLATE} and {@link Flag#IGNORE_CLICK_EVENT_ON_GESTURES} are enabled.
  */
 public class ClickDetector implements TranslationDetector.Listener, GestureDetector {
+    protected final int longPressTime;
+    protected final int doubleClickTime;
+    protected final boolean clickEnabled, doubleClickEnabled, longPressEnabled, ignoreClickOnGestures;
     protected final Listener listener;
     protected final Options options;
     protected long pressedTimestamp, previousClickTimestamp;
@@ -45,7 +48,7 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
     protected final Runnable delayedClick = new Runnable() {
         @Override
         public void run() {
-            if (options.isEnabled(CLICK)) {
+            if (clickEnabled) {
                 listener.onClick(startPoint);
                 invalidate();
             }
@@ -54,7 +57,7 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
     protected final Runnable delayedLongPress = new Runnable() {
         @Override
         public void run() {
-            if (options.isEnabled(LONG_PRESS)) {
+            if (longPressEnabled) {
                 listener.onLongPressed(startPoint);
                 invalidate();
             }
@@ -63,14 +66,14 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
     protected final Runnable doubleClickTimeout = new Runnable() {
         @Override
         public void run() {
-            if (options.isEnabled(DOUBLE_CLICK)) {
+            if (doubleClickEnabled) {
                 invalidate();
             }
         }
     };
 
     /**
-     * Click detector provides listener information about click events on {@link Listener}
+     * Creates click detector that provides listener information about click events on {@link Listener}
      *
      * @param listener Listener to be called when events happen.
      * @param options  Options for controlling behavior of this detector.
@@ -82,6 +85,12 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
         this.listener = listener;
         this.options = options.clone();
         handler = new Handler(Looper.getMainLooper());
+        longPressTime = options.get(LONG_PRESS_TIME_MS);
+        doubleClickTime = options.get(DOUBLE_CLICK_TIME_LIMIT);
+        clickEnabled = options.isEnabled(CLICK);
+        doubleClickEnabled = options.isEnabled(DOUBLE_CLICK);
+        longPressEnabled = options.isEnabled(LONG_PRESS);
+        ignoreClickOnGestures = options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES);
     }
 
     public interface Listener {
@@ -145,9 +154,9 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
         eventStartPointerId = event.getPointerId(pointerIndex);
         startPoint = new PointF(event.getX(pointerIndex), event.getY(pointerIndex));
         isEventValid = true;
-        if (options.isEnabled(DOUBLE_CLICK)) clickCount++;
-        if (options.isEnabled(LONG_PRESS)) {
-            handler.postDelayed(delayedLongPress, options.get(LONG_PRESS_TIME_MS));
+        if (doubleClickEnabled) clickCount++;
+        if (longPressEnabled) {
+            handler.postDelayed(delayedLongPress, longPressTime);
         }
         handler.removeCallbacks(delayedClick);
         return true;
@@ -155,32 +164,32 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
 
     protected boolean onActionUp(MotionEvent event) {
         if (!isEventValid) return false;
-        if (options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
+        if (ignoreClickOnGestures) {
             //Other finger is up than was down in the first place.
             if (event.getPointerId(event.getActionIndex()) != eventStartPointerId) {
                 invalidate();
                 return false;
             }
         }
-        if (options.isEnabled(DOUBLE_CLICK)) {
+        if (doubleClickEnabled) {
             if (clickCount == 2) {
                 long timeSinceFirstClick = event.getEventTime() - previousClickTimestamp;
-                if (timeSinceFirstClick < options.get(DOUBLE_CLICK_TIME_LIMIT)) {
+                if (timeSinceFirstClick < doubleClickTime) {
                     listener.onDoubleClick(startPoint);
                 }
                 invalidate();
             } else {
                 long timePressed = event.getEventTime() - pressedTimestamp;
-                long delay = options.get(DOUBLE_CLICK_TIME_LIMIT) + 1 - timePressed;
-                if (options.isEnabled(CLICK)) {
+                long delay = doubleClickTime + 1 - timePressed;
+                if (clickEnabled) {
                     handler.postDelayed(delayedClick, delay);
                 } else {
                     handler.postDelayed(doubleClickTimeout, delay);
                 }
             }
-        } else if (options.isEnabled(CLICK)) {
+        } else if (clickEnabled) {
             long timePressed = event.getEventTime() - pressedTimestamp;
-            if (timePressed < options.get(LONG_PRESS_TIME_MS)) {
+            if (timePressed < longPressTime) {
                 listener.onClick(startPoint);
             }
             invalidate();
@@ -194,15 +203,15 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
      * {@inheritDoc}
      */
     @Override
-    public void onTranslate(GestureEventState state, PointF startPoint, float dx, float dy, double distance) {
-        if (isEventValid && GestureEventState.STARTED.equals(state) && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
+    public void onTranslate(GestureEventState state, PointF startPoint, float x, float y, float dx, float dy, double distance) {
+        if (isEventValid && GestureEventState.STARTED.equals(state) && ignoreClickOnGestures) {
             invalidate();
         }
     }
 
     protected boolean onActionMove(MotionEvent event) {
         //If translation detection is disabled we need to detect it ourselves unless we don't care
-        if (isEventValid && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES) && !options.isEnabled(TRANSLATE)) {
+        if (isEventValid && ignoreClickOnGestures && !options.isEnabled(TRANSLATE)) {
             int pointerIndex = event.findPointerIndex(eventStartPointerId);
             if (pointerIndex == -1) {
                 invalidate();
@@ -220,7 +229,7 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
     }
 
     protected boolean onActionPointerDown(MotionEvent event) {
-        if (isEventValid && options.getFlag(IGNORE_CLICK_EVENT_ON_GESTURES)) {
+        if (isEventValid && ignoreClickOnGestures) {
             //Multitouch gesture started.
             invalidate();
             return true;
@@ -235,6 +244,6 @@ public class ClickDetector implements TranslationDetector.Listener, GestureDetec
     }
 
     protected boolean isListeningForSomething() {
-        return options.isEnabled(CLICK) || options.isEnabled(DOUBLE_CLICK) || options.isEnabled(LONG_PRESS);
+        return clickEnabled || doubleClickEnabled || longPressEnabled;
     }
 }
