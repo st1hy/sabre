@@ -1,1 +1,1 @@
-include ':sabre'
+include ':android', ':core'
