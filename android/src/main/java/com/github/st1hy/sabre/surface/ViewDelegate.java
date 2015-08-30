@@ -1,16 +1,18 @@
-package com.github.st1hy.sabre;
+package com.github.st1hy.sabre.surface;
 
+import android.app.Activity;
 import android.view.View;
 
-import com.github.st1hy.sabre.image.ImageViewer;
+import com.github.st1hy.sabre.R;
+import com.github.st1hy.sabre.surface.image.ImageViewer;
 
 public class ViewDelegate {
-    private final MainActivity activity;
+    private final Activity activity;
     private View emptyView;
     private View loadingProgressBar;
     private ImageViewer viewer;
 
-    public ViewDelegate(MainActivity activity) {
+    public ViewDelegate(Activity activity) {
         this.activity = activity;
     }
 

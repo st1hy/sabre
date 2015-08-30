@@ -1,4 +1,4 @@
-package com.github.st1hy.sabre;
+package com.github.st1hy.sabre.surface;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -10,9 +10,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.github.st1hy.sabre.image.ImageCache;
-import com.github.st1hy.sabre.image.ImageViewer;
-import com.github.st1hy.sabre.image.surface.ImageSurfaceViewer;
+import com.github.st1hy.sabre.R;
+import com.github.st1hy.sabre.cache.ImageCache;
+import com.github.st1hy.sabre.surface.image.ImageViewer;
+import com.github.st1hy.sabre.surface.image.ImageSurfaceViewer;
 import com.github.st1hy.sabre.util.SystemUIMode;
 
 public class MainActivity extends AppCompatActivity implements ImageSurfaceViewer.ImageLoadingCallback {

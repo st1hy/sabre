@@ -1,29 +1,28 @@
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
-import com.github.st1hy.sabre.image.ImageCache;
+import com.github.st1hy.sabre.cache.ImageCache;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;
 
-class BitmapWorkerRunnable implements BitmapWorkerTask, Runnable {
+class BitmapWorkerRunnable<T> implements BitmapWorkerTask, Runnable {
     private static final String TAG = "BitmapWorkerRunnable";
     private final Object mPauseWorkLock;
     private final Uri uri;
     private final String cacheIndex;
-    private final WeakReference<ImageReceiver> imageViewReference;
+    private final WeakReference<ImageReceiver<T>> imageViewReference;
     private volatile boolean isCancelled = false;
-    private final BitmapWorkerTask.Callback callback;
+    private final BitmapWorkerTask.Callback<T> callback;
     private final ImageCache mImageCache;
 
-    public BitmapWorkerRunnable(Uri uri, ImageReceiver imageView, BitmapWorkerTask.Callback callback) {
+    public BitmapWorkerRunnable(Uri uri, ImageReceiver<T> imageView, BitmapWorkerTask.Callback<T> callback) {
         this.uri = uri;
-        cacheIndex = ImageWorkerImp.getCacheIndex(uri);
+        cacheIndex = AbstractImageWorker.getCacheIndex(uri);
         imageViewReference = new WeakReference<>(imageView);
         this.callback = callback;
         mImageCache = callback.getImageCache();
@@ -63,7 +62,7 @@ class BitmapWorkerRunnable implements BitmapWorkerTask, Runnable {
             Log.d(TAG, "runnable - starting work");
         }
         Bitmap bitmap = null;
-        BitmapDrawable drawable = null;
+        T image = null;
 
         // Wait here if work is paused and the task is not cancelled
         synchronized (mPauseWorkLock) {
@@ -100,27 +99,27 @@ class BitmapWorkerRunnable implements BitmapWorkerTask, Runnable {
         // bitmap to our cache as it might be used again in the future
         if (bitmap != null) {
             // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-            drawable = new BitmapDrawable(callback.getResources(), bitmap);
+            image = callback.createImage(bitmap);
             //drawable = new AsyncDrawable(mResources, bitmap, this);
         }
         if (mImageCache != null) {
-            mImageCache.addBitmapToCache(cacheIndex, drawable);
+            mImageCache.addBitmapToCache(cacheIndex, bitmap);
         }
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "finished work " + drawable + " " + bitmap);
+            Log.d(TAG, "finished work " + image + " " + bitmap);
         }
 
         if (isCancelled() || callback.isExitingTaskEarly()) {
-            drawable = null;
+            image = null;
         }
 
-        final ImageReceiver imageView = getAttachedImageView();
-        if (drawable != null && imageView != null) {
+        final ImageReceiver<T> imageView = getAttachedImageView();
+        if (image != null && imageView != null) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "setting bitmap");
             }
-            callback.setImageDrawable(imageView, drawable);
+            callback.setFinalImage(imageView, image);
         }
     }
 
@@ -128,9 +127,9 @@ class BitmapWorkerRunnable implements BitmapWorkerTask, Runnable {
      * Returns the ImageView associated with this task as long as the ImageView's task still
      * points to this task as well. Returns null otherwise.
      */
-    private ImageReceiver getAttachedImageView() {
-        final ImageReceiver imageView = imageViewReference.get();
-        final BitmapWorkerTask bitmapWorkerTask = ImageWorkerImp.getBitmapWorkerTask(imageView);
+    private ImageReceiver<T> getAttachedImageView() {
+        final ImageReceiver<T> imageView = imageViewReference.get();
+        final BitmapWorkerTask bitmapWorkerTask = callback.getBitmapWorkerTask(imageView);
         if (this == bitmapWorkerTask) {
             return imageView;
         }

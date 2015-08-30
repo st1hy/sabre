@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.st1hy.sabre.image;
+package com.github.st1hy.sabre.cache;
 
 import android.content.ContentResolver;
 import android.content.res.Resources;

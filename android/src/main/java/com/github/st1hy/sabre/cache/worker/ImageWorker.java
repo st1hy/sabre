@@ -1,15 +1,14 @@
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
 
 /**
- *
  * This interface wraps up completing some arbitrary long running work when loading a bitmap to an
  * ImageView. It handles things like using a memory and disk cache, running the work in a background
  * thread and setting a placeholder image.
  */
-public interface ImageWorker {
+public interface ImageWorker<T> {
     void setTaskOption(TaskOption taskOption);
 
     /**
@@ -19,7 +18,7 @@ public interface ImageWorker {
      * @param uri
      * @param imageView
      */
-    void loadImage(Uri uri, ImageReceiver imageView);
+    void loadImage(Uri uri, ImageReceiver<T> imageView);
 
     /**
      * Set placeholder bitmap that shows when the the background thread is running.
@@ -47,7 +46,7 @@ public interface ImageWorker {
      *
      * @param imageReceiver
      */
-    void cancelWork(ImageReceiver imageReceiver);
+    void cancelWork(ImageReceiver<T> imageReceiver);
 
     /**
      * Returns true if the current work has been canceled or if there was no work in
@@ -55,7 +54,7 @@ public interface ImageWorker {
      * Returns false if the work in progress deals with the same data. The work is not
      * stopped in that case.
      */
-    boolean cancelPotentialWork(Uri uri, ImageReceiver imageReceiver);
+    boolean cancelPotentialWork(Uri uri, ImageReceiver<T> imageReceiver);
 
     /**
      * Pause any ongoing background work. This can be used as a temporary

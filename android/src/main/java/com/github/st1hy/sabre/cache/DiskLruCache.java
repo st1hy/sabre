@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.st1hy.sabre.util;
+package com.github.st1hy.sabre.cache;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;

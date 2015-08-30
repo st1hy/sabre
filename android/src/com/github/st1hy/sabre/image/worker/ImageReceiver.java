@@ -1,4 +1,4 @@
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
 import android.graphics.drawable.Drawable;
 

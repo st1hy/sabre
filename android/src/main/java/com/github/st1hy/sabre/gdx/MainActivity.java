@@ -1,57 +1,41 @@
-package com.github.st1hy.sabre;
+package com.github.st1hy.sabre.gdx;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 
-import com.github.st1hy.sabre.surface.image.ImageSurfaceViewer;
-import com.github.st1hy.sabre.cache.ImageCache;
-import com.github.st1hy.sabre.surface.ViewDelegate;
-import com.github.st1hy.sabre.surface.image.ImageViewer;
+import com.badlogic.gdx.backends.android.AndroidApplication;
+import com.github.st1hy.sabre.R;
+import com.github.st1hy.sabre.gdx.image.ImageViewer;
+import com.github.st1hy.sabre.gdx.image.ImageViewerAdapter;
 import com.github.st1hy.sabre.util.SystemUIMode;
 
-public class MainActivity extends AppCompatActivity implements ImageSurfaceViewer.ImageLoadingCallback {
+public class MainActivity extends AndroidApplication implements ImageViewer.ImageLoadingCallback {
     private static final int REQUEST_IMAGE = 0x16ed;
     private static final String SAVE_IMAGE_URI = "com.github.st1hy.sabre.IMAGE_URI";
     private Uri loadedImage;
     private ViewDelegate viewDelegate;
-    private ImageCache imageCache;
+    private ImageViewer imageViewer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) {
             loadedImage = savedInstanceState.getParcelable(SAVE_IMAGE_URI);
-            if (loadedImage != null) switchUIMode(SystemUIMode.IMMERSIVE);
         }
-        initCache();
-        setContentView(R.layout.activity_main);
+        requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
+        setContentView(R.layout.activity_main_gdx);
         viewDelegate = new ViewDelegate(this);
-        viewDelegate.getViewer().setLoadingCallback(this);
-        viewDelegate.getViewer().addImageCache(imageCache);
+        imageViewer = new ImageViewerAdapter(this, viewDelegate.getViewerContainer());
+        imageViewer.setLoadingCallback(this);
         if (loadedImage != null) {
             onImageLoaded(loadedImage);
         }
-    }
-
-    private ImageCache initCache() {
-        ImageCache.ImageCacheParams params = new ImageCache.ImageCacheParams(this, "images");
-        params.diskCacheEnabled = false;
-        params.setMemCacheSizePercent(0.25f);
-        imageCache = ImageCache.getInstance(getSupportFragmentManager(), params);
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                imageCache.initDiskCache();
-            }
-        });
-        return imageCache;
     }
 
     @Override
@@ -106,8 +90,7 @@ public class MainActivity extends AppCompatActivity implements ImageSurfaceViewe
     }
 
     private void onImageLoaded(Uri loadedImage) {
-        ImageViewer viewer = viewDelegate.getViewer();
-        viewer.setImageURI(loadedImage);
+        imageViewer.setImageURI(loadedImage);
     }
 
     @Override
@@ -119,31 +102,7 @@ public class MainActivity extends AppCompatActivity implements ImageSurfaceViewe
     @Override
     public void onImageLoadingFinished() {
         viewDelegate.getLoadingProgressBar().setVisibility(View.GONE);
-        viewDelegate.getViewer().setVisibility(View.VISIBLE);
+//        imageViewer.setVisibility(View.VISIBLE);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        viewDelegate.getViewer().onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        viewDelegate.getViewer().onPause();
-        AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                imageCache.flush();
-            }
-        });
-    }
-
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        imageCache.close();
-    }
 }

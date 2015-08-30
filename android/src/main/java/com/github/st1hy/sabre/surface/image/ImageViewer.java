@@ -1,4 +1,4 @@
-package com.github.st1hy.sabre.image;
+package com.github.st1hy.sabre.surface.image;
 
 import android.net.Uri;
 

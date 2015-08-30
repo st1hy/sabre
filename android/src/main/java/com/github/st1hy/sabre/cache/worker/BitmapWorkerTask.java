@@ -1,20 +1,20 @@
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 
-import com.github.st1hy.sabre.image.ImageCache;
+import com.github.st1hy.sabre.cache.ImageCache;
 
 import java.util.concurrent.Executor;
 
 interface BitmapWorkerTask {
     String getCacheIndex();
+
     void cancelTask(boolean interruptIFRunning);
+
     void executeOnExecutor(Executor executor);
 
-    interface Callback {
+    interface Callback<T> {
         /**
          * Subclasses should override this to define any processing or work that must happen to produce
          * the final bitmap. This will be executed in a background thread and be long running. For
@@ -27,25 +27,27 @@ interface BitmapWorkerTask {
         Bitmap processBitmap(Uri uri);
 
         /**
-         * Called when the processing is complete and the final drawable should be
+         * Called when the processing is complete and the final image should be
          * set on the ImageView.
          *
          * @param imageView
-         * @param drawable
+         * @param image
          */
-        void setImageDrawable(ImageReceiver imageView, Drawable drawable);
+        void setFinalImage(ImageReceiver<T> imageView, T image);
 
         /**
          * @return The {@link ImageCache} object currently being used..
          */
         ImageCache getImageCache();
 
-        Resources getResources();
+        T createImage(Bitmap bitmap);
 
         Object getSharedWaitingLock();
 
         boolean isWaitingRequired();
 
         boolean isExitingTaskEarly();
+
+        BitmapWorkerTask getBitmapWorkerTask(ImageReceiver<T> imageReceiver);
     }
 }

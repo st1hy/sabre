@@ -1,25 +1,26 @@
-package com.github.st1hy.sabre;
+package com.github.st1hy.sabre.gdx;
 
+import android.app.Activity;
 import android.view.View;
+import android.view.ViewGroup;
 
-import com.github.st1hy.sabre.surface.MainActivity;
-import com.github.st1hy.sabre.surface.image.ImageViewer;
+import com.github.st1hy.sabre.R;
 
 public class ViewDelegate {
-    private final MainActivity activity;
+    private final Activity activity;
+    private ViewGroup viewerContainer;
     private View emptyView;
     private View loadingProgressBar;
-    private ImageViewer viewer;
 
-    public ViewDelegate(MainActivity activity) {
+    public ViewDelegate(Activity activity) {
         this.activity = activity;
     }
 
-    public ImageViewer getViewer() {
-        if (viewer == null) {
-            viewer = (ImageViewer) activity.findViewById(R.id.main_activity_image_viewer);
+    public ViewGroup getViewerContainer() {
+        if (viewerContainer == null) {
+            viewerContainer = (ViewGroup) activity.findViewById(R.id.main_activity_image_viewer);
         }
-        return viewer;
+        return viewerContainer;
     }
 
     public View getLoadingProgressBar() {

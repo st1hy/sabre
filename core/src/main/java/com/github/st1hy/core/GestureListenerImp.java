@@ -1,12 +1,14 @@
 package com.github.st1hy.core;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector2;
 
 public class GestureListenerImp implements GestureDetector.GestureListener {
-    private final SabreGDX sabreGDX;
-    public GestureListenerImp(SabreGDX sabreGDX) {
-        this.sabreGDX = sabreGDX;
+    private static final String TAG = "GestureListenerImp";
+    private final ImageGdxCore imageGdxCore;
+    public GestureListenerImp(ImageGdxCore imageGdxCore) {
+        this.imageGdxCore = imageGdxCore;
     }
 
     @Override
@@ -31,7 +33,8 @@ public class GestureListenerImp implements GestureDetector.GestureListener {
 
     @Override
     public boolean pan(float x, float y, float deltaX, float deltaY) {
-        sabreGDX.transformation.translate(deltaX, -deltaY, 0);
+        imageGdxCore.getTransformation().translate(deltaX, -deltaY, 0);
+        Gdx.app.log(TAG, imageGdxCore.getTransformation().toString());
         return true;
     }
 
@@ -43,7 +46,7 @@ public class GestureListenerImp implements GestureDetector.GestureListener {
     @Override
     public boolean zoom(float initialDistance, float distance) {
 //        float scale = distance / initialDistance;
-//        sabreGDX.transformation.(scale, -scale, 1);
+//        imageGdxCore.transformation.(scale, -scale, 1);
         return false;
     }
 

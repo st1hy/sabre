@@ -1,11 +1,13 @@
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 
-import com.github.st1hy.sabre.image.ImageCache;
+import com.github.st1hy.sabre.cache.ImageCache;
+import com.github.st1hy.sabre.image.bitmap.ImageReceiver;
+import com.github.st1hy.sabre.image.bitmap.ImageWorker;
 
 import java.util.concurrent.Executor;
 

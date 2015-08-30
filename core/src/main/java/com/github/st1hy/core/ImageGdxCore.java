@@ -8,20 +8,33 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Matrix4;
 
-public class SabreGDX extends ApplicationAdapter {
-    SpriteBatch batch;
-    Texture img;
-    int windowWidth, windowHeight;
-    Matrix4 transformation = new Matrix4();
-    int startX,startY, imgWidthOut, imgHeightOut;
-    GestureDetector.GestureListener inputProcessor = new GestureListenerImp(this);
+public class ImageGdxCore extends ApplicationAdapter {
+    private SpriteBatch batch;
+    private int windowWidth, windowHeight;
+    private final Matrix4 transformation = new Matrix4();
+    private int startX,startY, imgWidthOut, imgHeightOut;
+    private final GestureDetector.GestureListener inputProcessor = new GestureListenerImp(this);
+    private ImageTexture texture;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
-        img = new Texture("badlogic.jpg");
+//        texture = new ImageTexture(new Texture("badlogic.jpg"));
         Gdx.graphics.setContinuousRendering(false);
         Gdx.input.setInputProcessor(new GestureDetector(inputProcessor));
+    }
+
+    public void loadTexture(ImageTexture texture) {
+        this.texture = texture;
+        configureBounds();
+    }
+
+    public ImageTexture getTexture() {
+        return texture;
+    }
+
+    public Matrix4 getTransformation() {
+        return transformation;
     }
 
     @Override
@@ -33,6 +46,8 @@ public class SabreGDX extends ApplicationAdapter {
     }
 
     private void configureBounds() {
+        if (texture == null) return;
+        Texture img = texture.getTexture();
         int imgWidth = img.getWidth();
         int imgHeight = img.getHeight();
         float scale = Math.min((float) windowWidth / (float) imgWidth,
@@ -47,9 +62,10 @@ public class SabreGDX extends ApplicationAdapter {
     public void render() {
         Gdx.gl.glClearColor(0.5f, 0.5f, 0.5f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        if (texture == null) return;
         batch.begin();
         batch.setTransformMatrix(transformation);
-        batch.draw(img, startX, startY, imgWidthOut, imgHeightOut);
+        batch.draw(texture.getTexture(), startX, startY, imgWidthOut, imgHeightOut);
         batch.end();
     }
 

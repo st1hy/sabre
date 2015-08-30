@@ -52,5 +52,5 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:23.0.0'
     compile 'com.google.guava:guava:18.0'
-    compile(group: 'org.st1hy.android', name: 'gesture-detector', version: '1.0.0', ext: 'aar')
+    compile 'org.st1hy.android:gesture-detector:1.0.1@aar'
 }

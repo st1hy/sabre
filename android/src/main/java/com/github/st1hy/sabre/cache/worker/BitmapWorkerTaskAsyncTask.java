@@ -1,13 +1,12 @@
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
-import com.github.st1hy.sabre.image.ImageCache;
+import com.github.st1hy.sabre.cache.ImageCache;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;
@@ -15,19 +14,19 @@ import java.util.concurrent.Executor;
 /**
  * The actual AsyncTask that will asynchronously process the image.
  */
-class BitmapWorkerTaskAsyncTask extends AsyncTask<Void, Void, BitmapDrawable> implements BitmapWorkerTask {
+class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, T> implements BitmapWorkerTask {
     private static final String TAG = "BitmapWorkerAsyncTask";
     private final Object mPauseWorkLock;
 
     private final Uri uri;
     private final String cacheIndex;
-    private final WeakReference<ImageReceiver> imageViewReference;
-    private final BitmapWorkerTask.Callback callback;
+    private final WeakReference<ImageReceiver<T>> imageViewReference;
+    private final BitmapWorkerTask.Callback<T> callback;
     private final ImageCache mImageCache;
 
-    public BitmapWorkerTaskAsyncTask(Uri uri, ImageReceiver imageView, BitmapWorkerTask.Callback callback) {
+    public BitmapWorkerTaskAsyncTask(Uri uri, ImageReceiver<T> imageView, BitmapWorkerTask.Callback<T> callback) {
         this.uri = uri;
-        cacheIndex = ImageWorkerImp.getCacheIndex(uri);
+        cacheIndex = AbstractImageWorker.getCacheIndex(uri);
         imageViewReference = new WeakReference<>(imageView);
         this.callback = callback;
         mImageCache = callback.getImageCache();
@@ -38,12 +37,12 @@ class BitmapWorkerTaskAsyncTask extends AsyncTask<Void, Void, BitmapDrawable> im
      * Background processing.
      */
     @Override
-    protected BitmapDrawable doInBackground(Void... params) {
+    protected T doInBackground(Void... params) {
         if (BuildConfig.DEBUG) {
             Log.d(TAG, "starting work");
         }
         Bitmap bitmap = null;
-        BitmapDrawable drawable = null;
+        T image = null;
 
         // Wait here if work is paused and the task is not cancelled
         synchronized (mPauseWorkLock) {
@@ -80,41 +79,41 @@ class BitmapWorkerTaskAsyncTask extends AsyncTask<Void, Void, BitmapDrawable> im
         // bitmap to our cache as it might be used again in the future
         if (bitmap != null) {
             // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-            drawable = new BitmapDrawable(callback.getResources(), bitmap);
+            image =  callback.createImage(bitmap);
             //drawable = new AsyncDrawable(mResources, bitmap, this);
         }
         if (mImageCache != null) {
-            mImageCache.addBitmapToCache(cacheIndex, drawable);
+            mImageCache.addBitmapToCache(cacheIndex, bitmap);
         }
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "finished work " + drawable + " " + bitmap);
+            Log.d(TAG, "finished work " + image + " " + bitmap);
         }
 
-        return drawable;
+        return image;
     }
 
     /**
      * Once the image is processed, associates it to the imageView
      */
     @Override
-    protected void onPostExecute(BitmapDrawable drawable) {
+    protected void onPostExecute(T drawable) {
         // if cancel was called on this task or the "exit early" flag is set then we're done
         if (isCancelled() || callback.isExitingTaskEarly()) {
             drawable = null;
         }
 
-        final ImageReceiver imageView = getAttachedImageView();
+        final ImageReceiver<T> imageView = getAttachedImageView();
         if (drawable != null && imageView != null) {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "setting bitmap");
             }
-            callback.setImageDrawable(imageView, drawable);
+            callback.setFinalImage(imageView, drawable);
         }
     }
 
     @Override
-    protected void onCancelled(BitmapDrawable value) {
+    protected void onCancelled(T value) {
         super.onCancelled(value);
         synchronized (mPauseWorkLock) {
             mPauseWorkLock.notifyAll();
@@ -125,9 +124,9 @@ class BitmapWorkerTaskAsyncTask extends AsyncTask<Void, Void, BitmapDrawable> im
      * Returns the ImageView associated with this task as long as the ImageView's task still
      * points to this task as well. Returns null otherwise.
      */
-    private ImageReceiver getAttachedImageView() {
-        final ImageReceiver imageView = imageViewReference.get();
-        final BitmapWorkerTask bitmapWorkerTask = ImageWorkerImp.getBitmapWorkerTask(imageView);
+    private ImageReceiver<T> getAttachedImageView() {
+        final ImageReceiver<T> imageView = imageViewReference.get();
+        final BitmapWorkerTask bitmapWorkerTask = callback.getBitmapWorkerTask(imageView);
         if (this == bitmapWorkerTask) {
             return imageView;
         }

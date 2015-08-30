@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -30,8 +30,11 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
-import com.github.st1hy.sabre.image.ImageCache;
-import com.github.st1hy.sabre.image.ImageResizer;
+import com.github.st1hy.sabre.cache.ImageCache;
+import com.github.st1hy.sabre.cache.ImageResizer;
+import com.github.st1hy.sabre.image.bitmap.ImageReceiver;
+import com.github.st1hy.sabre.image.bitmap.ImageWorker;
+import com.github.st1hy.sabre.image.bitmap.TaskOption;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;

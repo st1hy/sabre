@@ -14,48 +14,44 @@
  * limitations under the License.
  */
 
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.TransitionDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
-import com.github.st1hy.sabre.image.ImageCache;
-import com.github.st1hy.sabre.image.ImageResizer;
+import com.github.st1hy.sabre.cache.ImageCache;
+import com.github.st1hy.sabre.cache.ImageResizer;
 
-import java.lang.ref.WeakReference;
+import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 
 /**
  * Taken from DisplayingBitmaps example.
  */
-public class ImageWorkerImp implements ImageWorker, BitmapWorkerTask.Callback{
+public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWorkerTask.Callback<T> {
     private static final String TAG = "ImageWorker";
-    private static final int FADE_IN_TIME = 250;
+    protected static final int FADE_IN_TIME = 250;
 
     private final ImageCache mImageCache;
     protected final Context context;
     protected final Resources mResources;
 
-    private Bitmap mLoadingBitmap;
+    protected Bitmap mLoadingBitmap;
     private boolean mFadeInBitmap = true;
     private TaskOption taskOption = TaskOption.RESULT_ON_MAIN_THREAD;
 
     private volatile boolean mExitTasksEarly = false;
     private volatile boolean mPauseWork = false;
     private final Object mPauseWorkLock = new Object();
+    protected WeakHashMap<ImageReceiver, BitmapWorkerTask> taskMap = new WeakHashMap<>();
 
-    public ImageWorkerImp(Context context, ImageCache imageCache) {
+    public AbstractImageWorker(Context context, ImageCache imageCache) {
         this.context = context;
         mImageCache = imageCache;
         mResources = context.getResources();
@@ -68,18 +64,19 @@ public class ImageWorkerImp implements ImageWorker, BitmapWorkerTask.Callback{
     }
 
     @Override
-    public void loadImage(Uri uri, ImageReceiver imageView) {
+    public void loadImage(Uri uri, ImageReceiver<T> imageView) {
         if (uri == null) {
             return;
         }
-        BitmapDrawable value = mImageCache.getBitmapFromMemCache(getCacheIndex(uri));
+        Bitmap value = mImageCache.getBitmapFromMemCache(getCacheIndex(uri));
         if (value != null) {
             // Bitmap found in memory cache
-            imageView.setImageDrawable(value);
+            T image = createImage(value);
+            imageView.setImage(image);
         } else if (cancelPotentialWork(uri, imageView)) {
             final BitmapWorkerTask task = taskOption.newTask(uri, imageView, this);
-            final AsyncDrawable asyncDrawable = new AsyncDrawable(mResources, mLoadingBitmap, task);
-            imageView.setImageDrawable(asyncDrawable);
+            taskMap.put(imageView, task);
+            imageView.setImage(createImage(mLoadingBitmap));
             task.executeOnExecutor(getExecutor());
         }
     }
@@ -116,7 +113,7 @@ public class ImageWorkerImp implements ImageWorker, BitmapWorkerTask.Callback{
     }
 
     @Override
-    public void cancelWork(ImageReceiver imageReceiver) {
+    public void cancelWork(ImageReceiver<T> imageReceiver) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageReceiver);
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancelTask(true);
@@ -127,7 +124,7 @@ public class ImageWorkerImp implements ImageWorker, BitmapWorkerTask.Callback{
     }
 
     @Override
-    public boolean cancelPotentialWork(Uri uri, ImageReceiver imageReceiver) {
+    public boolean cancelPotentialWork(Uri uri, ImageReceiver<T> imageReceiver) {
         final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageReceiver);
 
         if (bitmapWorkerTask != null) {
@@ -150,13 +147,9 @@ public class ImageWorkerImp implements ImageWorker, BitmapWorkerTask.Callback{
      * @return Retrieve the currently active work task (if any) associated with this imageReceiver.
      * null if there is no such task.
      */
-    static BitmapWorkerTask getBitmapWorkerTask(ImageReceiver imageReceiver) {
+    public BitmapWorkerTask getBitmapWorkerTask(ImageReceiver<T> imageReceiver) {
         if (imageReceiver != null) {
-            final Drawable drawable = imageReceiver.getDrawable();
-            if (drawable instanceof AsyncDrawable) {
-                final AsyncDrawable asyncDrawable = (AsyncDrawable) drawable;
-                return asyncDrawable.getBitmapWorkerTask();
-            }
+            return taskMap.get(imageReceiver);
         }
         return null;
     }
@@ -165,39 +158,18 @@ public class ImageWorkerImp implements ImageWorker, BitmapWorkerTask.Callback{
         return uri.getPath();
     }
 
-    /**
-     * A custom Drawable that will be attached to the imageView while the work is in progress.
-     * Contains a reference to the actual worker task, so that it can be stopped if a new binding is
-     * required, and makes sure that only the last started worker process can bind its result,
-     * independently of the finish order.
-     */
-    private static class AsyncDrawable extends BitmapDrawable {
-        private final WeakReference<BitmapWorkerTask> bitmapWorkerTaskReference;
-
-        public AsyncDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
-            super(res, bitmap);
-            bitmapWorkerTaskReference =
-                    new WeakReference<>(bitmapWorkerTask);
-        }
-
-        public BitmapWorkerTask getBitmapWorkerTask() {
-            return bitmapWorkerTaskReference.get();
-        }
-    }
-
     @Override
-    public void setImageDrawable(ImageReceiver imageView, Drawable drawable) {
+    public void setFinalImage(ImageReceiver<T> imageView, T image) {
         if (mFadeInBitmap) {
-            // Transition drawable with a transparent drawable and the final drawable
-            final TransitionDrawable td = new TransitionDrawable(new Drawable[]{new ColorDrawable(Color.TRANSPARENT), drawable});
             // Set background to loading bitmap
-            imageView.setBackground(new BitmapDrawable(mResources, mLoadingBitmap));
-            imageView.setImageDrawable(td);
-            td.startTransition(FADE_IN_TIME);
+            imageView.setBackground(createImage(mLoadingBitmap));
+            imageView.setImage(createImageFadingIn(image));
         } else {
-            imageView.setImageDrawable(drawable);
+            imageView.setImage(image);
         }
     }
+
+    public abstract T createImageFadingIn(T image);
 
     @Override
     public void setPauseWork(boolean pauseWork) {
@@ -241,11 +213,6 @@ public class ImageWorkerImp implements ImageWorker, BitmapWorkerTask.Callback{
 
     private Executor getExecutor() {
         return AsyncTask.THREAD_POOL_EXECUTOR;
-    }
-
-    @Override
-    public Resources getResources() {
-        return mResources;
     }
 
     @Override

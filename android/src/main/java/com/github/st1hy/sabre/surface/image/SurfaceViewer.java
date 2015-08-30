@@ -1,4 +1,4 @@
-package com.github.st1hy.sabre.image.surface;
+package com.github.st1hy.sabre.surface.image;
 
 import android.annotation.TargetApi;
 import android.content.Context;

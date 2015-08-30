@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.st1hy.sabre.image;
+package com.github.st1hy.sabre.cache;
 
 import android.annotation.TargetApi;
 import android.app.Fragment;
@@ -24,7 +24,6 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Environment;
@@ -32,8 +31,6 @@ import android.support.v4.util.LruCache;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
-import com.github.st1hy.sabre.image.worker.ImageWorkerImp;
-import com.github.st1hy.sabre.util.DiskLruCache;
 import com.github.st1hy.sabre.util.Utils;
 import com.google.common.hash.Hashing;
 
@@ -55,7 +52,7 @@ import java.util.Set;
  * <p/>
  * *****************************************************************************
  * This class handles disk and memory caching of bitmaps in conjunction with the
- * {@link ImageWorkerImp} class and its subclasses. Use
+ * {@link com.github.st1hy.sabre.cache.worker.AbstractImageWorker} class and its subclasses. Use
  * {@link ImageCache#getInstance(FragmentManager, ImageCacheParams)} to get an instance of this
  * class
  */
@@ -79,7 +76,7 @@ public class ImageCache {
     private static final boolean DEFAULT_INIT_DISK_CACHE_ON_CREATE = false;
 
     private DiskLruCache mDiskLruCache;
-    private LruCache<String, BitmapDrawable> mMemoryCache;
+    private LruCache<String, Bitmap> mMemoryCache;
     private ImageCacheParams mCacheParams;
     private final Object mDiskCacheLock = new Object();
     private boolean mDiskCacheStarting = true;
@@ -149,16 +146,16 @@ public class ImageCache {
             // be the upper bound (due to changes in how inBitmap can re-use bitmaps).
             mReusableBitmaps = Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
 
-            mMemoryCache = new LruCache<String, BitmapDrawable>(mCacheParams.memCacheSize) {
+            mMemoryCache = new LruCache<String, Bitmap>(mCacheParams.memCacheSize) {
 
                 /**
                  * Notify the removed entry that is no longer being cached
                  */
                 @Override
-                protected void entryRemoved(boolean evicted, String key, BitmapDrawable oldValue, BitmapDrawable newValue) {
+                protected void entryRemoved(boolean evicted, String key, Bitmap oldValue, Bitmap newValue) {
                     // We're running on Honeycomb or later, so add the bitmap
                     // to a SoftReference set for possible use with inBitmap later
-                    mReusableBitmaps.add(new SoftReference<Bitmap>(oldValue.getBitmap()));
+                    mReusableBitmaps.add(new SoftReference<>(oldValue));
                 }
 
                 /**
@@ -166,7 +163,7 @@ public class ImageCache {
                  * for a bitmap cache
                  */
                 @Override
-                protected int sizeOf(String key, BitmapDrawable value) {
+                protected int sizeOf(String key, Bitmap value) {
                     final int bitmapSize = getBitmapSize(value) / 1024;
                     return bitmapSize == 0 ? 1 : bitmapSize;
                 }
@@ -222,7 +219,7 @@ public class ImageCache {
      * @param data  Unique identifier for the bitmap to store
      * @param value The bitmap drawable to store
      */
-    public void addBitmapToCache(String data, BitmapDrawable value) {
+    public void addBitmapToCache(String data, Bitmap value) {
         //BEGIN_INCLUDE(add_bitmap_to_cache)
         if (data == null || value == null) {
             return;
@@ -245,7 +242,7 @@ public class ImageCache {
                         if (editor != null) {
                             try {
                                 out = editor.newOutputStream(DISK_CACHE_INDEX);
-                                value.getBitmap().compress(mCacheParams.compressFormat, mCacheParams.compressQuality, out);
+                                value.compress(mCacheParams.compressFormat, mCacheParams.compressQuality, out);
                                 editor.commit();
                             } finally {
                                 if (out != null) {
@@ -270,9 +267,9 @@ public class ImageCache {
      * @param data Unique identifier for which item to get
      * @return The bitmap drawable if found in cache, null otherwise
      */
-    public BitmapDrawable getBitmapFromMemCache(String data) {
+    public Bitmap getBitmapFromMemCache(String data) {
         //BEGIN_INCLUDE(get_bitmap_from_mem_cache)
-        BitmapDrawable memValue = null;
+        Bitmap memValue = null;
 
         if (mMemoryCache != null) {
             memValue = mMemoryCache.get(data);
@@ -585,12 +582,11 @@ public class ImageCache {
      * onward this returns the allocated memory size of the bitmap which can be larger than the
      * actual bitmap data byte count (in the case it was re-used).
      *
-     * @param value
+     * @param bitmap
      * @return size in bytes
      */
     @TargetApi(VERSION_CODES.KITKAT)
-    public static int getBitmapSize(BitmapDrawable value) {
-        Bitmap bitmap = value.getBitmap();
+    public static int getBitmapSize(Bitmap bitmap) {
         // From KitKat onward use getAllocationByteCount() as allocated bytes can potentially be
         // larger than bitmap byte count.
         if (Utils.hasKitKat()) {

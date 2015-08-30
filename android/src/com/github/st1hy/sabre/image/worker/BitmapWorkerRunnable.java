@@ -1,4 +1,4 @@
-package com.github.st1hy.sabre.image.worker;
+package com.github.st1hy.sabre.cache.worker;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -6,7 +6,9 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
-import com.github.st1hy.sabre.image.ImageCache;
+import com.github.st1hy.sabre.cache.ImageCache;
+import com.github.st1hy.sabre.image.bitmap.ImageReceiver;
+import com.github.st1hy.sabre.image.bitmap.ImageWorkerImp;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;
@@ -120,7 +122,7 @@ class BitmapWorkerRunnable implements BitmapWorkerTask, Runnable {
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "setting bitmap");
             }
-            callback.setImageDrawable(imageView, drawable);
+            callback.setFinalImage(imageView, drawable);
         }
     }
 

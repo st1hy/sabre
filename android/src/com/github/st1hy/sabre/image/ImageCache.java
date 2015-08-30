@@ -32,8 +32,10 @@ import android.support.v4.util.LruCache;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
-import com.github.st1hy.sabre.image.worker.ImageWorkerImp;
-import com.github.st1hy.sabre.util.DiskLruCache;
+import com.github.st1hy.sabre.cache.ImageResizer;
+import com.github.st1hy.sabre.image.bitmap.ImageWorkerImp;
+import com.github.st1hy.sabre.cache.worker.ImageWorkerImp;
+import com.github.st1hy.sabre.cache.DiskLruCache;
 import com.github.st1hy.sabre.util.Utils;
 import com.google.common.hash.Hashing;
 
