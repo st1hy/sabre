@@ -12,6 +12,8 @@ import android.view.View;
 
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.cache.ImageCache;
+import com.github.st1hy.sabre.cache.retainer.Retainer;
+import com.github.st1hy.sabre.cache.retainer.SupportRetainFragment;
 import com.github.st1hy.sabre.surface.image.ImageViewer;
 import com.github.st1hy.sabre.surface.image.ImageSurfaceViewer;
 import com.github.st1hy.sabre.util.SystemUIMode;
@@ -44,7 +46,8 @@ public class MainActivity extends AppCompatActivity implements ImageSurfaceViewe
         ImageCache.ImageCacheParams params = new ImageCache.ImageCacheParams(this, "images");
         params.diskCacheEnabled = false;
         params.setMemCacheSizePercent(0.25f);
-        imageCache = ImageCache.getInstance(getFragmentManager(), params);
+        Retainer retainer = SupportRetainFragment.findOrCreateRetainFragment(getSupportFragmentManager());
+        imageCache = ImageCache.getInstance(retainer, params);
         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {

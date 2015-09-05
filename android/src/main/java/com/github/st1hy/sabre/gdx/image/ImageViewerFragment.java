@@ -1,95 +1,74 @@
 package com.github.st1hy.sabre.gdx.image;
 
+import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
+import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.math.Matrix3;
 import com.github.st1hy.core.ImageGdxCore;
 import com.github.st1hy.core.ImageTexture;
 import com.github.st1hy.gesturedetector.Config;
-import com.github.st1hy.gesturedetector.GestureEventState;
-import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 import com.github.st1hy.gesturedetector.Options;
-import com.github.st1hy.gesturedetector.SimpleGestureListener;
 import com.github.st1hy.sabre.cache.ImageCache;
+import com.github.st1hy.sabre.cache.retainer.Retainer;
+import com.github.st1hy.sabre.cache.retainer.SupportRetainFragment;
 import com.github.st1hy.sabre.cache.worker.BitmapImageWorker;
 import com.github.st1hy.sabre.cache.worker.ImageReceiver;
 import com.github.st1hy.sabre.cache.worker.ImageWorker;
 import com.github.st1hy.sabre.cache.worker.TaskOption;
 import com.github.st1hy.sabre.util.DrawableImageReceiver;
 
-public class ImageViewerAdapter implements ImageViewer, DrawableImageReceiver.Callback {
-    private static final String TAG = "ImageViewerAdapter";
-    private final ImageGdxCore imageGdxCore;
-    private final View imageView;
+public class ImageViewerFragment extends AndroidFragmentApplication implements ImageViewer, DrawableImageReceiver.Callback {
+    private static final String TAG = "ImageViewerFragment";
+    private Context context;
+    private ImageGdxCore imageGdxCore;
+    private View imageView;
     private ImageLoadingCallback loadingCallback;
-    private final AndroidApplication activity;
-    private final ImageWorker<Bitmap> imageWorker;
-    private final ImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
+    private ImageWorker<Bitmap> imageWorker;
+    private ImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
+    private ImageOnTouchListener imageOnTouchListener;
 
-    public ImageViewerAdapter(AndroidApplication activity, ViewGroup viewContainer) {
-        this.activity = activity;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        this.context = getActivity();
         this.imageGdxCore = new ImageGdxCore();
-        this.imageView = initView(viewContainer);
-        imageWorker = new BitmapImageWorker(activity, initCache());
+        imageWorker = new BitmapImageWorker(getActivity(), initCache());
         imageWorker.setTaskOption(TaskOption.RUNNABLE);
+        imageOnTouchListener = new ImageOnTouchListener(imageGdxCore);
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        this.imageView = initializeForView(imageGdxCore, initConfig());
         Options options = new Options();
         options.set(Options.Constant.MATRIX_MAX_POINTERS_COUNT, 3);
         options.setFlag(Options.Flag.MATRIX_OPEN_GL_COMPATIBILITY, true);
         options.setEnabled(Options.Event.MATRIX_TRANSFORMATION, true);
-        imageView.setOnTouchListener(new MatrixTransformationDetector(new SimpleGestureListener() {
-            float[] valuesTemp = new float[9];
-            float[] valuesTempColumnMajor = new float[9];
-            Matrix3 startingMatrix = new Matrix3();
-            Matrix3 matrix3Temp = new Matrix3();
-            Matrix3 matrix3Multiplied = new Matrix3();
-
-            @Override
-            public void onMatrix(GestureEventState gestureEventState, Matrix matrix) {
-                if (gestureEventState.equals(GestureEventState.STARTED)) {
-                    startingMatrix.set(matrix3Multiplied);
-                }
-                matrix.getValues(valuesTemp);
-                changeMemoryOrder(valuesTemp, valuesTempColumnMajor);
-                matrix3Temp.set(valuesTempColumnMajor);
-                matrix3Multiplied.set(matrix3Temp);
-                matrix3Multiplied.mul(startingMatrix);
-                imageGdxCore.getTransformation().set(matrix3Multiplied);
-                Gdx.graphics.requestRendering();
-            }
-
-        }, options));
-    }
-
-    private static void changeMemoryOrder(float[] rowMajorInput, float[] columnMajorOutput) {
-        columnMajorOutput[0] = rowMajorInput[0];
-        columnMajorOutput[1] = rowMajorInput[3];
-        columnMajorOutput[2] = rowMajorInput[6];
-        columnMajorOutput[3] = rowMajorInput[1];
-        columnMajorOutput[4] = rowMajorInput[4];
-        columnMajorOutput[5] = rowMajorInput[7];
-        columnMajorOutput[6] = rowMajorInput[2];
-        columnMajorOutput[7] = rowMajorInput[5];
-        columnMajorOutput[8] = rowMajorInput[8];
+        imageView.setOnTouchListener(imageOnTouchListener);
+        return imageView;
     }
 
     private ImageCache initCache() {
-        ImageCache.ImageCacheParams params = new ImageCache.ImageCacheParams(activity, "images");
+        ImageCache.ImageCacheParams params = new ImageCache.ImageCacheParams(context, "images");
         params.diskCacheEnabled = false;
         params.setMemCacheSizePercent(0.25f);
-        final ImageCache imageCache = ImageCache.getInstance(activity.getFragmentManager(), params);
+        Retainer retainer = SupportRetainFragment.findOrCreateRetainFragment(getFragmentManager());
+        final ImageCache imageCache = ImageCache.getInstance(retainer, params);
         AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
@@ -110,13 +89,12 @@ public class ImageViewerAdapter implements ImageViewer, DrawableImageReceiver.Ca
         return config;
     }
 
-    private View initView(ViewGroup viewContainer) {
-        View view = activity.initializeForView(imageGdxCore, initConfig());
-        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        view.setLayoutParams(layoutParams);
-        viewContainer.addView(view);
-        return view;
-    }
+//    private View initView() {
+//        View view =
+//        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+//        view.setLayoutParams(layoutParams);
+//        return view;
+//    }
 
 
     @Override
@@ -137,7 +115,7 @@ public class ImageViewerAdapter implements ImageViewer, DrawableImageReceiver.Ca
 
     @Override
     public void onImageLoaded() {
-        activity.handler.post(new Runnable() {
+        handler.post(new Runnable() {
             @Override
             public void run() {
                 loadingCallback.onImageLoadingFinished();

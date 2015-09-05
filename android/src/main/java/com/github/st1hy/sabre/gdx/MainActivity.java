@@ -4,18 +4,17 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 
-import com.badlogic.gdx.backends.android.AndroidApplication;
+import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.gdx.image.ImageViewer;
-import com.github.st1hy.sabre.gdx.image.ImageViewerAdapter;
 import com.github.st1hy.sabre.util.SystemUIMode;
 
-public class MainActivity extends AndroidApplication implements ImageViewer.ImageLoadingCallback {
+public class MainActivity extends AppCompatActivity implements ImageViewer.ImageLoadingCallback, AndroidFragmentApplication.Callbacks {
     private static final int REQUEST_IMAGE = 0x16ed;
     private static final String SAVE_IMAGE_URI = "com.github.st1hy.sabre.IMAGE_URI";
     private Uri loadedImage;
@@ -28,10 +27,9 @@ public class MainActivity extends AndroidApplication implements ImageViewer.Imag
         if (savedInstanceState != null) {
             loadedImage = savedInstanceState.getParcelable(SAVE_IMAGE_URI);
         }
-        requestWindowFeature(Window.FEATURE_ACTION_BAR_OVERLAY);
         setContentView(R.layout.activity_main_gdx);
         viewDelegate = new ViewDelegate(this);
-        imageViewer = new ImageViewerAdapter(this, viewDelegate.getViewerContainer());
+        imageViewer = (ImageViewer) getSupportFragmentManager().findFragmentById(R.id.main_activity_image_viewer);
         imageViewer.setLoadingCallback(this);
         if (loadedImage != null) {
             onImageLoaded(loadedImage);
@@ -105,4 +103,8 @@ public class MainActivity extends AndroidApplication implements ImageViewer.Imag
 //        imageViewer.setVisibility(View.VISIBLE);
     }
 
+    @Override
+    public void exit() {
+        finish();
+    }
 }

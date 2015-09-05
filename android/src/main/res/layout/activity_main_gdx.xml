@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".gdx.MainActivity">
 
-    <FrameLayout
+    <fragment class="com.github.st1hy.sabre.gdx.image.ImageViewerFragment"
         android:id="@+id/main_activity_image_viewer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

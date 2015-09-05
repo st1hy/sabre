@@ -17,7 +17,6 @@
 package com.github.st1hy.sabre.cache;
 
 import android.annotation.TargetApi;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -25,12 +24,14 @@ import android.graphics.Bitmap.CompressFormat;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.os.Build.VERSION_CODES;
-import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.util.LruCache;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
+import com.github.st1hy.sabre.cache.retainer.RetainFragment;
+import com.github.st1hy.sabre.cache.retainer.Retainer;
+import com.github.st1hy.sabre.cache.retainer.SupportRetainFragment;
 import com.github.st1hy.sabre.util.Utils;
 import com.google.common.hash.Hashing;
 
@@ -86,7 +87,7 @@ public class ImageCache {
     /**
      * Create a new ImageCache object using the specified parameters. This should not be
      * called directly by other classes, instead use
-     * {@link ImageCache#getInstance(FragmentManager, ImageCacheParams)} to fetch an ImageCache
+     * {@link ImageCache#getInstance(Retainer, ImageCacheParams)} to fetch an ImageCache
      * instance.
      *
      * @param cacheParams The cache parameters to use to initialize the cache
@@ -96,25 +97,21 @@ public class ImageCache {
     }
 
     /**
-     * Return an {@link ImageCache} instance. A {@link RetainFragment} is used to retain the
+     * Return an {@link ImageCache} instance. A {@link Retainer} is used to retain the
      * ImageCache object across configuration changes such as a change in device orientation.
      *
-     * @param fragmentManager The fragment manager to use when dealing with the retained fragment.
+     * @param retainer The retainer instance to use when dealing with storing cache instance.
      * @param cacheParams     The cache parameters to use if the ImageCache needs instantiation.
      * @return An existing retained ImageCache object or a new one if one did not exist
      */
-    public static ImageCache getInstance(FragmentManager fragmentManager, ImageCacheParams cacheParams) {
-
-        // Search for, or create an instance of the non-UI RetainFragment
-        final RetainFragment mRetainFragment = RetainFragment.findOrCreateRetainFragment(fragmentManager);
-
+    public static ImageCache getInstance(Retainer retainer, ImageCacheParams cacheParams) {
         // See if we already have an ImageCache stored in RetainFragment
-        ImageCache imageCache = (ImageCache) mRetainFragment.getObject();
+        ImageCache imageCache = (ImageCache) retainer.get(TAG);
 
         // No existing ImageCache, create one and store it in RetainFragment
         if (imageCache == null) {
             imageCache = new ImageCache(cacheParams.clone());
-            mRetainFragment.setObject(imageCache);
+            retainer.put(TAG, imageCache);
         }
 
         return imageCache;
@@ -605,69 +602,5 @@ public class ImageCache {
         return path.getUsableSpace();
     }
 
-
-    /**
-     * A simple non-UI Fragment that stores a single Object and is retained over configuration
-     * changes. It will be used to retain the ImageCache object.
-     */
-    public static class RetainFragment extends Fragment {
-        private Object mObject;
-
-        /**
-         * Empty constructor as per the Fragment documentation
-         */
-        public RetainFragment() {
-        }
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            // Make sure this Fragment is retained over a configuration change
-            setRetainInstance(true);
-        }
-
-        /**
-         * Store a single object in this Fragment.
-         *
-         * @param object The object to store
-         */
-        public void setObject(Object object) {
-            mObject = object;
-        }
-
-        /**
-         * Get the stored object.
-         *
-         * @return The stored object
-         */
-        public Object getObject() {
-            return mObject;
-        }
-
-
-        /**
-         * Locate an existing instance of this Fragment or if not found, create and
-         * add it using FragmentManager.
-         *
-         * @param fm The FragmentManager manager to use.
-         * @return The existing instance of the Fragment or the new instance if just
-         * created.
-         */
-        private static RetainFragment findOrCreateRetainFragment(FragmentManager fm) {
-            //BEGIN_INCLUDE(find_create_retain_fragment)
-            // Check to see if we have retained the worker fragment.
-            RetainFragment mRetainFragment = (RetainFragment) fm.findFragmentByTag(TAG);
-
-            // If not retained (or first time running), we need to create and add it.
-            if (mRetainFragment == null) {
-                mRetainFragment = new RetainFragment();
-                fm.beginTransaction().add(mRetainFragment, TAG).commitAllowingStateLoss();
-            }
-
-            return mRetainFragment;
-            //END_INCLUDE(find_create_retain_fragment)
-        }
-    }
 
 }
