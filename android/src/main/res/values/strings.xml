@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Sabre</string>
+    <string name="app_name2">SabreGDX</string>
+
+    <string name="action_open">Open</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="welcome">Welcome.</string>
+    <string name="init_instructions_part_1">Press</string>
+    <string name="init_instructions_part_2">to start</string>
+</resources>
