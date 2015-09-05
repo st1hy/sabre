@@ -16,11 +16,11 @@ import com.github.st1hy.gesturedetector.SimpleGestureListener;
 public class ImageOnTouchListener extends SimpleGestureListener implements GestureDetector {
     private final GestureDetector dispatch;
     private final ImageGdxCore core;
-    private final float[] valuesTemp = new float[9];
-    private final float[] valuesTempColumnMajor = new float[9];
-    private final Matrix3 startingMatrix = new Matrix3();
-    private final Matrix3 matrix3Temp = new Matrix3();
-    private final Matrix3 matrix3Multiplied = new Matrix3();
+    private float[] valuesTemp = new float[9];
+    private float[] valuesTempColumnMajor = new float[9];
+    private Matrix3 startingMatrix = new Matrix3();
+    private Matrix3 matrix3Temp = new Matrix3();
+    private Matrix3 matrix3Multiplied = new Matrix3();
 
     public ImageOnTouchListener(ImageGdxCore core) {
         this.core = core;
@@ -29,6 +29,15 @@ public class ImageOnTouchListener extends SimpleGestureListener implements Gestu
         options.setFlag(Options.Flag.MATRIX_OPEN_GL_COMPATIBILITY, true);
         options.setEnabled(Options.Event.MATRIX_TRANSFORMATION, true);
         dispatch = new MatrixTransformationDetector(this, options);
+    }
+
+    public void reset() {
+        valuesTemp = new float[9];
+        valuesTempColumnMajor = new float[9];
+        startingMatrix = new Matrix3();
+        matrix3Temp = new Matrix3();
+        matrix3Multiplied = new Matrix3();
+        core.getTransformation().idt();
     }
 
     @Override

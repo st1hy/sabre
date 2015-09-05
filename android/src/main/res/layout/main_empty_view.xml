@@ -2,49 +2,29 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     tools:context=".MainActivity"
     android:padding="8dp">
-
-    <TextView
+    <com.rey.material.widget.TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="@string/welcome"
-        android:id="@+id/textView"
-        android:layout_gravity="center_horizontal"/>
-    <LinearLayout
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/start_instructions"
+        android:id="@+id/textView2"
+        android:textColor="@android:color/white"
+        android:layout_gravity="center"/>
+
+    <com.rey.material.widget.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="8dp">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/init_instructions_part_1"
-            android:id="@+id/textView2"
-            android:layout_gravity="center"/>
-
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/button"
-            android:src="@drawable/ic_open"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_gravity="center"
-            android:onClick="onActionOpen"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/init_instructions_part_2"
-            android:id="@+id/textView3"
-            android:layout_gravity="center"/>
-    </LinearLayout>
-
+        android:id="@+id/button"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_gravity="center"
+        android:onClick="onActionOpen"
+        app:fab_iconSrc="@drawable/ic_open"
+        app:fab_backgroundColor="@android:color/white"/>
 </LinearLayout>

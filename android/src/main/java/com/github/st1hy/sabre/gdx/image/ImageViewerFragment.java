@@ -33,6 +33,7 @@ import com.github.st1hy.sabre.util.DrawableImageReceiver;
 
 public class ImageViewerFragment extends AndroidFragmentApplication implements ImageViewer, DrawableImageReceiver.Callback {
     private static final String TAG = "ImageViewerFragment";
+    private static final String STORE_MATRIX = "transformation matrix";
     private Context context;
     private ImageGdxCore imageGdxCore;
     private View imageView;
@@ -49,6 +50,12 @@ public class ImageViewerFragment extends AndroidFragmentApplication implements I
         imageWorker = new BitmapImageWorker(getActivity(), initCache());
         imageWorker.setTaskOption(TaskOption.RUNNABLE);
         imageOnTouchListener = new ImageOnTouchListener(imageGdxCore);
+        if (savedInstanceState!= null) {
+            Object matrixSerialied = savedInstanceState.getSerializable(STORE_MATRIX);
+            if (matrixSerialied instanceof float[]) {
+                imageGdxCore.getTransformation().set((float[]) matrixSerialied);
+            }
+        }
     }
 
     @Nullable
@@ -78,6 +85,12 @@ public class ImageViewerFragment extends AndroidFragmentApplication implements I
         return imageCache;
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(STORE_MATRIX, imageGdxCore.getTransformation().getValues());
+    }
+
     private AndroidApplicationConfiguration initConfig() {
         AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
         config.disableAudio = true;
@@ -89,14 +102,6 @@ public class ImageViewerFragment extends AndroidFragmentApplication implements I
         return config;
     }
 
-//    private View initView() {
-//        View view =
-//        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-//        view.setLayoutParams(layoutParams);
-//        return view;
-//    }
-
-
     @Override
     public void setLoadingCallback(ImageLoadingCallback loadingCallback) {
         this.loadingCallback = loadingCallback;
@@ -106,6 +111,7 @@ public class ImageViewerFragment extends AndroidFragmentApplication implements I
     public void setImageURI(final Uri uri) {
         if (loadingCallback != null) loadingCallback.onImageLoadingStarted();
         imageWorker.loadImage(uri, imageReceiver);
+        imageOnTouchListener.reset();
     }
 
     @Override
@@ -115,12 +121,6 @@ public class ImageViewerFragment extends AndroidFragmentApplication implements I
 
     @Override
     public void onImageLoaded() {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                loadingCallback.onImageLoadingFinished();
-            }
-        });
     }
 
     private Bitmap lastDrawn;
@@ -150,6 +150,12 @@ public class ImageViewerFragment extends AndroidFragmentApplication implements I
                     GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
                     imageGdxCore.loadTexture(new ImageTexture(tex));
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadingCallback.onImageLoadingFinished();
+                        }
+                    });
                 }
             });
         }

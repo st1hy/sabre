@@ -22,10 +22,18 @@ public class MainActivity extends AppCompatActivity implements ImageViewer.Image
     private ImageViewer imageViewer;
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) {
             loadedImage = savedInstanceState.getParcelable(SAVE_IMAGE_URI);
+            if (loadedImage!= null) {
+                switchUIMode(SystemUIMode.IMMERSIVE);
+            }
         }
         setContentView(R.layout.activity_main_gdx);
         viewDelegate = new ViewDelegate(this);
@@ -34,6 +42,16 @@ public class MainActivity extends AppCompatActivity implements ImageViewer.Image
         if (loadedImage != null) {
             onImageLoaded(loadedImage);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     @Override
@@ -69,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements ImageViewer.Image
                 if (resultCode == RESULT_OK && null != data) {
                     loadedImage = data.getData();
                     onImageLoaded(loadedImage);
-                    switchUIMode(SystemUIMode.IMMERSIVE);
                 }
                 break;
             default:
@@ -99,8 +116,9 @@ public class MainActivity extends AppCompatActivity implements ImageViewer.Image
 
     @Override
     public void onImageLoadingFinished() {
+        switchUIMode(SystemUIMode.IMMERSIVE);
         viewDelegate.getLoadingProgressBar().setVisibility(View.GONE);
-//        imageViewer.setVisibility(View.VISIBLE);
+        imageViewer.setVisibility(View.VISIBLE);
     }
 
     @Override
