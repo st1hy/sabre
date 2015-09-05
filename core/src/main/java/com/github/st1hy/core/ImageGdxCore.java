@@ -5,7 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Matrix4;
 
 public class ImageGdxCore extends ApplicationAdapter {
@@ -13,15 +12,12 @@ public class ImageGdxCore extends ApplicationAdapter {
     private int windowWidth, windowHeight;
     private final Matrix4 transformation = new Matrix4();
     private int startX,startY, imgWidthOut, imgHeightOut;
-    private final GestureDetector.GestureListener inputProcessor = new GestureListenerImp(this);
     private ImageTexture texture;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
-//        texture = new ImageTexture(new Texture("badlogic.jpg"));
         Gdx.graphics.setContinuousRendering(false);
-        Gdx.input.setInputProcessor(new GestureDetector(inputProcessor));
     }
 
     public void loadTexture(ImageTexture texture) {
