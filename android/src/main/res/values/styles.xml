@@ -1,10 +1,11 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Base.Theme.AppCompat.Light">
-        <!-- Customize your theme here. -->
-    </style>
     <style name="AppTheme.CircularProgress" parent="Material.Drawable.CircularProgress">
-        <item name="cpd_strokeColor">@android:color/white</item>
+        <item name="cpd_strokeColor">@color/progress_bar_stroke</item>
+    </style>
+    <style name="AppTheme.FloatingButton">
+        <item name="fab_backgroundColor">@color/default_light</item>
+        <item name="rd_enable">true</item>
+        <item name="rd_style">@style/LightFABWave</item>
     </style>
 </resources>

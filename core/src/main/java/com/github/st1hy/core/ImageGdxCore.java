@@ -13,6 +13,15 @@ public class ImageGdxCore extends ApplicationAdapter {
     private final Matrix4 transformation = new Matrix4();
     private int startX,startY, imgWidthOut, imgHeightOut;
     private ImageTexture texture;
+    private final BackgroundColor background;
+
+    public ImageGdxCore(BackgroundColor backgroundColor) {
+        this.background = backgroundColor;
+    }
+
+    public ImageGdxCore() {
+        background = new BackgroundColor();
+    }
 
     @Override
     public void create() {
@@ -56,7 +65,7 @@ public class ImageGdxCore extends ApplicationAdapter {
 
     @Override
     public void render() {
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+        Gdx.gl.glClearColor(background.b, background.g, background.b, background.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         if (texture == null) return;
         batch.begin();

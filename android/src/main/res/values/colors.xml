@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="default_dark">@color/material_grey_800</color>
+    <color name="default_light">@color/material_grey_50</color>
+    <color name="progress_bar_stroke">@color/default_dark</color>
+    <color name="viewer_background">@color/default_light</color>
+    <color name="setting_separator">@color/material_grey_300</color>
+</resources>
