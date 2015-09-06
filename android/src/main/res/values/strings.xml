@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Sabre</string>
-    <string name="app_name2">SabreGDX</string>
 
     <string name="action_open">Open</string>
     <string name="action_settings">Settings</string>

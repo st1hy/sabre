@@ -1,5 +1,6 @@
 package com.github.st1hy.sabre.image.surface;
 
+import android.app.ActionBar;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -29,6 +30,15 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
         ImageCache imageCache = ((MainActivity) getActivity()).getDependencyDelegate().getCacheHandler().getCache();
         viewDelegate.getViewer().addImageCache(imageCache);
         return root;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        ActionBar actionBar = getActivity().getActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
     }
 
     @Override

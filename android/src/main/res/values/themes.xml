@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Base.Theme.AppCompat.Light">
+    <style name="AppTheme" parent="Base.Theme.AppCompat.Light.DarkActionBar">
         <item name="android:textColorPrimary">@color/default_dark</item>
         <item name="android:textColorSecondary">@color/default_dark</item>
-        <!-- Customize your theme here. -->
     </style>
 
     <style name="DarkFloatingActionButtonIcon" >
@@ -22,7 +21,7 @@
 
     <style name="LightFABWave" parent="Material.Drawable.Ripple.Wave.Light">
         <item name="fab_backgroundColor">#FFDFDFDF</item>
-        <item name="fab_elevation">4dp</item>
+        <item name="fab_elevation">1dp</item>
         <item name="fab_iconLineMorphing">@style/DarkFloatingActionButtonIcon</item>
         <item name="rd_delayClick">none</item>
     </style>

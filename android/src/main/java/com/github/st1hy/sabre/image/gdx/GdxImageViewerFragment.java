@@ -1,6 +1,8 @@
 package com.github.st1hy.sabre.image.gdx;
 
+import android.app.ActionBar;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
@@ -18,6 +20,7 @@ import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.github.st1hy.core.BackgroundColor;
 import com.github.st1hy.core.ImageGdxCore;
 import com.github.st1hy.core.ImageTexture;
 import com.github.st1hy.gesturedetector.Config;
@@ -30,6 +33,7 @@ import com.github.st1hy.sabre.core.cache.worker.ImageReceiver;
 import com.github.st1hy.sabre.core.cache.worker.ImageWorker;
 import com.github.st1hy.sabre.core.cache.worker.TaskOption;
 import com.github.st1hy.sabre.core.util.SystemUIMode;
+import com.github.st1hy.sabre.core.util.Utils;
 
 public class GdxImageViewerFragment extends AndroidFragmentApplication implements ImageReceiver.Callback {
     private static final String TAG = "GdxImageViewerFragment";
@@ -45,7 +49,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.imageGdxCore = new ImageGdxCore();
+        this.imageGdxCore = new ImageGdxCore(getBackground());
         ImageCache imageCache = ((MainActivity) getActivity()).getDependencyDelegate().getCacheHandler().getCache();
         imageWorker = new BitmapImageWorker(getActivity(), imageCache);
         imageWorker.setTaskOption(TaskOption.RUNNABLE);
@@ -57,6 +61,24 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
             }
         }
         SystemUIMode.LAYOUT_FULLSCREEN.apply(getApplicationWindow());
+    }
+
+    private BackgroundColor getBackground() {
+        int color = Utils.getColor(getActivity(), R.color.image_surface_background);
+        float r = Color.red(color) / 255f;
+        float g = Color.green(color) / 255f;
+        float b = Color.blue(color) / 255f;
+        float a = Color.alpha(color) / 255f;
+        return new BackgroundColor(r,g,b,a);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        ActionBar actionBar = getActivity().getActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
     }
 
     @Nullable
@@ -90,7 +112,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     private AndroidApplicationConfiguration initConfig() {
         AndroidApplicationConfiguration config = new AndroidApplicationConfiguration();
         config.disableAudio = true;
-        config.hideStatusBar = false;
+        config.hideStatusBar = true;
         config.useAccelerometer = false;
         config.useCompass = false;
         config.useGLSurfaceView20API18 = false;

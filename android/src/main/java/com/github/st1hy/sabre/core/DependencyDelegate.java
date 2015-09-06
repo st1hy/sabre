@@ -45,11 +45,9 @@ public class DependencyDelegate implements ComponentCallbacks2{
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
-
     }
 
     @Override
     public void onLowMemory() {
-
     }
 }

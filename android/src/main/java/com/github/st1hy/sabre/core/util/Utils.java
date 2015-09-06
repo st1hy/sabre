@@ -16,6 +16,10 @@
 
 package com.github.st1hy.sabre.core.util;
 
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 
@@ -30,5 +34,50 @@ public enum Utils {
 
     public static boolean hasKitKat() {
         return Build.VERSION.SDK_INT >= VERSION_CODES.KITKAT;
+    }
+
+    public static boolean hasMarshmallow() {
+        return Build.VERSION.SDK_INT >= VERSION_CODES.M;
+    }
+
+    public static boolean hasLolipop() {
+        return Build.VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP;
+    }
+
+    public static int getColor(Context context, int colorResId) {
+        Resources resources = context.getResources();
+        if (hasMarshmallow()) {
+            return getColorM(resources, context.getTheme(), colorResId);
+        } else {
+            return getColorDeprecated(resources, colorResId);
+        }
+    }
+
+    @TargetApi(23)
+    private static int getColorM(Resources resources, Resources.Theme theme, int colorResId) {
+        return resources.getColor(colorResId, theme);
+    }
+
+    private static int getColorDeprecated(Resources resources, int colorResId) {
+        return resources.getColor(colorResId);
+    }
+
+    public static Drawable getDrawable(Context context, int drawableResId) {
+        Resources resources = context.getResources();
+        int density = resources.getDisplayMetrics().densityDpi;
+        if (hasLolipop()) {
+            return getDrawableL(resources, context.getTheme(), drawableResId, density);
+        } else {
+            return getDrawableDeprecated(resources, drawableResId, density);
+        }
+    }
+
+    @TargetApi(21)
+    private static Drawable getDrawableL(Resources resources, Resources.Theme theme, int colorResId, int density) {
+        return resources.getDrawableForDensity(colorResId, density, theme);
+    }
+
+    private static Drawable getDrawableDeprecated(Resources resources, int colorResId, int density) {
+        return resources.getDrawableForDensity(colorResId, density);
     }
 }

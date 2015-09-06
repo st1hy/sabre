@@ -4,7 +4,6 @@ package com.github.st1hy.sabre.image.surface;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -20,12 +19,14 @@ import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 import com.github.st1hy.gesturedetector.MultipleGestureListener;
 import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.SimpleGestureListener;
+import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.cache.ImageCache;
 import com.github.st1hy.sabre.core.cache.ImageResizer;
 import com.github.st1hy.sabre.core.cache.worker.DrawableImageWorker;
 import com.github.st1hy.sabre.core.cache.worker.ImageReceiver;
 import com.github.st1hy.sabre.core.cache.worker.ImageWorker;
 import com.github.st1hy.sabre.core.cache.worker.TaskOption;
+import com.github.st1hy.sabre.core.util.Utils;
 
 public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, DrawableImageReceiver.Callback {
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -33,6 +34,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, Dr
     private volatile ImageLoadingCallback loadingCallback;
     private final ImageReceiver<Drawable> imageReceiver = new DrawableImageReceiver(this);
     private GestureDetector gestureDetector;
+    private int backgroundColor;
 
     public ImageSurfaceViewer(Context context) {
         super(context);
@@ -76,6 +78,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, Dr
         options.set(Options.Constant.MATRIX_MAX_POINTERS_COUNT, 2);
         gestureDetector = new MatrixTransformationDetector(gestureListener, options);
         setOnTouchListener(gestureDetector);
+        backgroundColor = Utils.getColor(getContext(), R.color.image_surface_background);
     }
 
     @Override
@@ -112,7 +115,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, Dr
 
     @Override
     public void drawContent(Canvas canvas) {
-        canvas.drawColor(Color.BLACK);
+        canvas.drawColor(backgroundColor);
         canvas.setMatrix(matrix);
         //drawDrawable(canvas, background);
         drawDrawable(canvas, imageReceiver.getImage());

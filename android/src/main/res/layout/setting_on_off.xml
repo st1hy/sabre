@@ -30,7 +30,7 @@
                 android:id="@+id/text_setting_subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="D"
+                style="?android:attr/textAppearanceSmall"
                 android:text="Subtitle"/>
         </LinearLayout>
         <FrameLayout
@@ -43,7 +43,8 @@
             <com.rey.material.widget.CheckBox
                 android:id="@+id/setting_checkbox"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                style="@style/AppTheme.Checkbox"/>
         </FrameLayout>
     </RelativeLayout>
     <View

@@ -65,7 +65,7 @@ public class ImageGdxCore extends ApplicationAdapter {
 
     @Override
     public void render() {
-        Gdx.gl.glClearColor(background.b, background.g, background.b, background.a);
+        Gdx.gl.glClearColor(background.r, background.g, background.b, background.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         if (texture == null) return;
         batch.begin();

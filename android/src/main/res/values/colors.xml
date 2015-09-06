@@ -5,4 +5,6 @@
     <color name="progress_bar_stroke">@color/default_dark</color>
     <color name="viewer_background">@color/default_light</color>
     <color name="setting_separator">@color/material_grey_300</color>
+    <color name="settings_ripple">@color/material_grey_300</color>
+    <color name="image_surface_background">@color/default_light</color>
 </resources>

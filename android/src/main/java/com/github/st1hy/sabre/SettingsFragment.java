@@ -12,7 +12,9 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 
+import com.balysv.materialripple.MaterialRippleLayout;
 import com.github.st1hy.sabre.core.util.SystemUIMode;
+import com.github.st1hy.sabre.core.util.Utils;
 import com.rey.material.widget.CheckBox;
 import com.rey.material.widget.TextView;
 
@@ -21,11 +23,24 @@ public class SettingsFragment extends Fragment {
     public static final boolean PREF_ENABLE_OPEN_GL_DEFAULT = true;
 
     private SharedPreferences preferences;
+    private int rippleColor;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         preferences = getPreferences(getActivity());
+        rippleColor = Utils.getColor(getActivity(), R.color.settings_ripple);
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        getActivity().setTitle(R.string.action_settings);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
     }
 
     @Override
@@ -65,6 +80,7 @@ public class SettingsFragment extends Fragment {
                 checkBox.setChecked(!checked);
             }
         });
+        MaterialRippleLayout.on(preference).rippleColor(rippleColor).rippleAlpha(1f).create();
     }
 
     public static void loadDefaultSettings(Context context, boolean overrideCurrentValues) {

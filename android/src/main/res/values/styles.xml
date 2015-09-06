@@ -4,8 +4,12 @@
         <item name="cpd_strokeColor">@color/progress_bar_stroke</item>
     </style>
     <style name="AppTheme.FloatingButton">
-        <item name="fab_backgroundColor">@color/default_light</item>
+        <item name="fab_backgroundColor">@color/default_dark</item>
         <item name="rd_enable">true</item>
         <item name="rd_style">@style/LightFABWave</item>
+        <item name="fab_elevation">3dp</item>
+    </style>
+    <style name="AppTheme.Checkbox">
+        <item name="cbd_strokeColor">@color/default_dark</item>
     </style>
 </resources>
