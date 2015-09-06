@@ -8,7 +8,7 @@
     android:layout_height="wrap_content"
     tools:context=".gdx.history.HistoryFragment"
     android:padding="8dp">
-    <com.rey.material.widget.TextView
+    <TextView
         android:id="@+id/text_open_image_help"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

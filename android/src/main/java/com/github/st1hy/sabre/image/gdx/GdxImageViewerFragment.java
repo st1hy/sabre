@@ -13,7 +13,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
@@ -24,43 +23,48 @@ import com.github.st1hy.core.BackgroundColor;
 import com.github.st1hy.core.ImageGdxCore;
 import com.github.st1hy.core.ImageTexture;
 import com.github.st1hy.gesturedetector.Config;
-import com.github.st1hy.sabre.MainActivity;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
+import com.github.st1hy.sabre.core.cache.CacheProvider;
 import com.github.st1hy.sabre.core.cache.ImageCache;
 import com.github.st1hy.sabre.core.cache.worker.BitmapImageWorker;
-import com.github.st1hy.sabre.core.cache.worker.ImageReceiver;
 import com.github.st1hy.sabre.core.cache.worker.ImageWorker;
-import com.github.st1hy.sabre.core.cache.worker.TaskOption;
-import com.github.st1hy.sabre.core.util.SystemUIMode;
+import com.github.st1hy.sabre.core.cache.worker.SimpleLoaderFactory;
+import com.github.st1hy.sabre.core.util.MissingInterfaceException;
+import com.github.st1hy.sabre.core.util.UiThreadHandler;
 import com.github.st1hy.sabre.core.util.Utils;
+import com.github.st1hy.sabre.image.AsyncImageReceiver;
 
-public class GdxImageViewerFragment extends AndroidFragmentApplication implements ImageReceiver.Callback {
+public class GdxImageViewerFragment extends AndroidFragmentApplication implements AsyncImageReceiver.Callback {
     private static final String TAG = "GdxImageViewerFragment";
     private static final String STORE_MATRIX = "com.github.st1hy.sabre.transformation.matrix";
-//    private static final String STORE_IMAGE_URI = "com.github.st1hy.sabre.IMAGE_URI";
 
     private ImageGdxCore imageGdxCore;
     private GdxViewDelegate viewDelegate;
     private ImageWorker<Bitmap> imageWorker;
-    private ImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
+    private AsyncImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
     private ImageOnTouchListener imageOnTouchListener;
+    private final UiThreadHandler handler = new UiThreadHandler();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sanityCheck();
         this.imageGdxCore = new ImageGdxCore(getBackground());
-        ImageCache imageCache = ((MainActivity) getActivity()).getDependencyDelegate().getCacheHandler().getCache();
+        ImageCache imageCache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
         imageWorker = new BitmapImageWorker(getActivity(), imageCache);
-        imageWorker.setTaskOption(TaskOption.RUNNABLE);
+        imageWorker.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
         imageOnTouchListener = new ImageOnTouchListener(imageGdxCore);
         if (savedInstanceState!= null) {
-            Object matrixSerialied = savedInstanceState.getSerializable(STORE_MATRIX);
-            if (matrixSerialied instanceof float[]) {
-                imageGdxCore.getTransformation().set((float[]) matrixSerialied);
+            Object matrixSerialised = savedInstanceState.getSerializable(STORE_MATRIX);
+            if (matrixSerialised instanceof float[]) {
+                imageGdxCore.getTransformation().set((float[]) matrixSerialised);
             }
         }
-        SystemUIMode.LAYOUT_FULLSCREEN.apply(getApplicationWindow());
+    }
+
+    private void sanityCheck() {
+        MissingInterfaceException.parentSanityCheck(this, CacheProvider.class);
     }
 
     private BackgroundColor getBackground() {
@@ -127,6 +131,26 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        imageWorker.setPauseWork(false);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        imageWorker.setPauseWork(true);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        imageWorker.setExitTasksEarly(true);
+        imageWorker.cancelWork(imageReceiver);
+        handler.removeAll();
+    }
+
+    @Override
     public void onImageLoaded() {
     }
 
@@ -176,8 +200,5 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     private void onLoadingFinished() {
         viewDelegate.getLoadingProgressBar().setVisibility(View.GONE);
         viewDelegate.getGlSurfaceContainer().setVisibility(View.VISIBLE);
-        SystemUIMode.IMMERSIVE.apply(getApplicationWindow());
-        getApplicationWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-        getApplicationWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 }

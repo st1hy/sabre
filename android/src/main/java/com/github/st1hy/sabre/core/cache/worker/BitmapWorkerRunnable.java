@@ -19,10 +19,11 @@ class BitmapWorkerRunnable<T> implements BitmapWorkerTask, Runnable {
     private volatile boolean isCancelled = false;
     private final BitmapWorkerTask.Callback<T> callback;
     private final ImageCache mImageCache;
+    private boolean cacheOnDisk = true;
 
     public BitmapWorkerRunnable(Uri uri, ImageReceiver<T> imageView, BitmapWorkerTask.Callback<T> callback) {
         this.uri = uri;
-        cacheIndex = AbstractImageWorker.getCacheIndex(uri);
+        cacheIndex = callback.getCacheIndex(uri);
         imageViewReference = new WeakReference<>(imageView);
         this.callback = callback;
         mImageCache = callback.getImageCache();
@@ -37,6 +38,11 @@ class BitmapWorkerRunnable<T> implements BitmapWorkerTask, Runnable {
         synchronized (mPauseWorkLock) {
             mPauseWorkLock.notifyAll();
         }
+    }
+
+    public BitmapWorkerRunnable<T> cacheOnDisk(boolean cacheOnDisk) {
+        this.cacheOnDisk = cacheOnDisk;
+        return this;
     }
 
     @Override
@@ -103,7 +109,7 @@ class BitmapWorkerRunnable<T> implements BitmapWorkerTask, Runnable {
             //drawable = new AsyncDrawable(mResources, bitmap, this);
         }
         if (mImageCache != null) {
-            mImageCache.addBitmapToCache(cacheIndex, bitmap);
+            mImageCache.addBitmapToCache(cacheIndex, bitmap, cacheOnDisk);
         }
 
         if (BuildConfig.DEBUG) {
@@ -129,7 +135,7 @@ class BitmapWorkerRunnable<T> implements BitmapWorkerTask, Runnable {
      */
     private ImageReceiver<T> getAttachedImageView() {
         final ImageReceiver<T> imageView = imageViewReference.get();
-        final BitmapWorkerTask bitmapWorkerTask = callback.getBitmapWorkerTask(imageView);
+        BitmapWorkerTask bitmapWorkerTask = callback.getBitmapWorkerTask(imageView);
         if (this == bitmapWorkerTask) {
             return imageView;
         }

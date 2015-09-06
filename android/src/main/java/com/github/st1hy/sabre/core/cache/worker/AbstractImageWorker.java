@@ -22,6 +22,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.github.st1hy.sabre.BuildConfig;
@@ -44,12 +45,14 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
 
     protected Bitmap mLoadingBitmap;
     private boolean mFadeInBitmap = true;
-    private TaskOption taskOption = TaskOption.RESULT_ON_MAIN_THREAD;
+    private LoaderFactory loaderFactory = SimpleLoaderFactory.RESULT_ON_MAIN_THREAD;
 
     private volatile boolean mExitTasksEarly = false;
     private volatile boolean mPauseWork = false;
     private final Object mPauseWorkLock = new Object();
-    protected WeakHashMap<ImageReceiver, BitmapWorkerTask> taskMap = new WeakHashMap<>();
+    protected final WeakHashMap<ImageReceiver, BitmapWorkerTask> taskMap = new WeakHashMap<>();
+    private int reqWidth = Integer.MAX_VALUE, reqHeight = Integer.MAX_VALUE;
+    private CacheEntryNameFactory cacheEntryNameFactory = new SimpleCacheEntryNameFactory();
 
     public AbstractImageWorker(Context context, ImageCache imageCache) {
         this.context = context;
@@ -58,23 +61,20 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
     }
 
     @Override
-    public void setTaskOption(TaskOption taskOption) {
-        if (taskOption == null) throw new NullPointerException();
-        this.taskOption = taskOption;
+    public void setLoaderFactory(LoaderFactory loaderFactory) {
+        if (loaderFactory == null) throw new NullPointerException();
+        this.loaderFactory = loaderFactory;
     }
 
     @Override
-    public void loadImage(Uri uri, ImageReceiver<T> imageView) {
-        if (uri == null) {
-            return;
-        }
+    public void loadImage(@NonNull Uri uri,@NonNull ImageReceiver<T> imageView) {
         Bitmap value = mImageCache.getBitmapFromMemCache(getCacheIndex(uri));
         if (value != null) {
             // Bitmap found in memory cache
             T image = createImage(value);
             imageView.setImage(image);
         } else if (cancelPotentialWork(uri, imageView)) {
-            final BitmapWorkerTask task = taskOption.newTask(uri, imageView, this);
+            final BitmapWorkerTask task = loaderFactory.newTask(uri, imageView, this);
             taskMap.put(imageView, task);
             imageView.setImage(createImage(mLoadingBitmap));
             task.executeOnExecutor(getExecutor());
@@ -104,7 +104,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
 
     @Override
     public Bitmap processBitmap(Uri uri) {
-        return ImageResizer.decodeUri(uri, Integer.MAX_VALUE, Integer.MAX_VALUE, mImageCache, context.getContentResolver());
+        return ImageResizer.decodeUri(uri, reqWidth, reqHeight, mImageCache, context.getContentResolver());
     }
 
     @Override
@@ -113,8 +113,8 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
     }
 
     @Override
-    public void cancelWork(ImageReceiver<T> imageReceiver) {
-        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageReceiver);
+    public void cancelWork(@NonNull ImageReceiver<T> imageReceiver) {
+        BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageReceiver);
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancelTask(true);
             if (BuildConfig.DEBUG) {
@@ -124,9 +124,8 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
     }
 
     @Override
-    public boolean cancelPotentialWork(Uri uri, ImageReceiver<T> imageReceiver) {
-        final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageReceiver);
-
+    public boolean cancelPotentialWork(@NonNull Uri uri, @NonNull ImageReceiver<T> imageReceiver) {
+        BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageReceiver);
         if (bitmapWorkerTask != null) {
             final String cacheIndex = bitmapWorkerTask.getCacheIndex();
             if (cacheIndex == null || !cacheIndex.equals(getCacheIndex(uri))) {
@@ -147,15 +146,14 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
      * @return Retrieve the currently active work task (if any) associated with this imageReceiver.
      * null if there is no such task.
      */
+    @Override
     public BitmapWorkerTask getBitmapWorkerTask(ImageReceiver<T> imageReceiver) {
-        if (imageReceiver != null) {
-            return taskMap.get(imageReceiver);
-        }
-        return null;
+        return taskMap.get(imageReceiver);
     }
 
-    static String getCacheIndex(Uri uri) {
-        return uri.getPath();
+    @Override
+    public String getCacheIndex(Uri uri) {
+        return cacheEntryNameFactory.getCacheIndex(uri);
     }
 
     @Override
@@ -228,5 +226,16 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
     @Override
     public boolean isExitingTaskEarly() {
         return mExitTasksEarly;
+    }
+
+    @Override
+    public void setRequestedSize(int reqWidth, int reqHeight) {
+        this.reqWidth = reqWidth;
+        this.reqHeight = reqHeight;
+    }
+
+    @Override
+    public void setCacheEntryNameFactory(@NonNull CacheEntryNameFactory cacheEntryNameFactory) {
+        this.cacheEntryNameFactory = cacheEntryNameFactory;
     }
 }

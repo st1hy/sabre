@@ -16,10 +16,11 @@
 
 package com.github.st1hy.sabre.core.cache;
 
-import java.io.BufferedInputStream;
+import com.google.common.base.Charsets;
+
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -208,34 +209,6 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Returns the ASCII characters up to but not including the next "\r\n", or
-     * "\n".
-     *
-     * @throws EOFException if the stream is exhausted before the next newline
-     *     character.
-     */
-    public static String readAsciiLine(InputStream in) throws IOException {
-        // TODO: support UTF-8 here instead
-
-        StringBuilder result = new StringBuilder(80);
-        while (true) {
-            int c = in.read();
-            if (c == -1) {
-                throw new EOFException();
-            } else if (c == '\n') {
-                break;
-            }
-
-            result.append((char) c);
-        }
-        int length = result.length();
-        if (length > 0 && result.charAt(length - 1) == '\r') {
-            result.setLength(length - 1);
-        }
-        return result.toString();
-    }
-
-    /**
      * Closes 'closeable', ignoring any checked exceptions. Does nothing if 'closeable' is null.
      */
     public static void closeQuietly(Closeable closeable) {
@@ -252,7 +225,6 @@ public final class DiskLruCache implements Closeable {
     /**
      * Recursively delete everything in {@code dir}.
      */
-    // TODO: this should specify paths as Strings rather than as Files
     public static void deleteContents(File dir) throws IOException {
         File[] files = dir.listFiles();
         if (files == null) {
@@ -339,13 +311,13 @@ public final class DiskLruCache implements Closeable {
     }
 
     private void readJournal() throws IOException {
-        InputStream in = new BufferedInputStream(new FileInputStream(journalFile), IO_BUFFER_SIZE);
+        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(journalFile), Charsets.UTF_8), IO_BUFFER_SIZE);
         try {
-            String magic = readAsciiLine(in);
-            String version = readAsciiLine(in);
-            String appVersionString = readAsciiLine(in);
-            String valueCountString = readAsciiLine(in);
-            String blank = readAsciiLine(in);
+            String magic = in.readLine();
+            String version = in.readLine();
+            String appVersionString = in.readLine();
+            String valueCountString = in.readLine();
+            String blank = in.readLine();
             if (!MAGIC.equals(magic)
                     || !VERSION_1.equals(version)
                     || !Integer.toString(appVersion).equals(appVersionString)
@@ -355,12 +327,9 @@ public final class DiskLruCache implements Closeable {
                         + magic + ", " + version + ", " + valueCountString + ", " + blank + "]");
             }
 
-            while (true) {
-                try {
-                    readJournalLine(readAsciiLine(in));
-                } catch (EOFException endOfJournal) {
-                    break;
-                }
+            String line;
+            while ((line = in.readLine()) != null ) {
+                readJournalLine(line);
             }
         } finally {
             closeQuietly(in);
@@ -430,7 +399,7 @@ public final class DiskLruCache implements Closeable {
             journalWriter.close();
         }
 
-        Writer writer = new BufferedWriter(new FileWriter(journalFileTmp), IO_BUFFER_SIZE);
+        Writer writer = createWriterFor(journalFileTmp, false);// new BufferedWriter(new OutputStreamWriter(new FileOutputStream(journalFileTmp), Charsets.UTF_8), IO_BUFFER_SIZE);
         writer.write(MAGIC);
         writer.write("\n");
         writer.write(VERSION_1);
@@ -451,7 +420,11 @@ public final class DiskLruCache implements Closeable {
 
         writer.close();
         journalFileTmp.renameTo(journalFile);
-        journalWriter = new BufferedWriter(new FileWriter(journalFile, true), IO_BUFFER_SIZE);
+        journalWriter = createWriterFor(journalFile, true);// new BufferedWriter(new FileWriter(journalFile, true), IO_BUFFER_SIZE);
+    }
+
+    public static Writer createWriterFor(File file, boolean append) throws FileNotFoundException {
+        return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, append), Charsets.UTF_8), IO_BUFFER_SIZE);
     }
 
     private static void deleteIfExists(File file) throws IOException {

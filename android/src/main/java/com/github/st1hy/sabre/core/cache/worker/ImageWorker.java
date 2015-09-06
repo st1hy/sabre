@@ -2,14 +2,15 @@ package com.github.st1hy.sabre.core.cache.worker;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 
 /**
  * This interface wraps up completing some arbitrary long running work when loading a bitmap to an
  * ImageView. It handles things like using a memory and disk cache, running the work in a background
  * thread and setting a placeholder image.
  */
-public interface ImageWorker<T> {
-    void setTaskOption(TaskOption taskOption);
+public interface ImageWorker<T> extends CacheEntryNameFactory {
+    void setLoaderFactory(LoaderFactory loaderFactory);
 
     /**
      * Loads image to imageView. If image exists in in-memory cache it will load image immediately.
@@ -18,7 +19,7 @@ public interface ImageWorker<T> {
      * @param uri
      * @param imageView
      */
-    void loadImage(Uri uri, ImageReceiver<T> imageView);
+    void loadImage(@NonNull Uri uri, @NonNull ImageReceiver<T> imageView);
 
     /**
      * Set placeholder bitmap that shows when the the background thread is running.
@@ -46,7 +47,7 @@ public interface ImageWorker<T> {
      *
      * @param imageReceiver
      */
-    void cancelWork(ImageReceiver<T> imageReceiver);
+    void cancelWork(@NonNull ImageReceiver<T> imageReceiver);
 
     /**
      * Returns true if the current work has been canceled or if there was no work in
@@ -54,7 +55,7 @@ public interface ImageWorker<T> {
      * Returns false if the work in progress deals with the same data. The work is not
      * stopped in that case.
      */
-    boolean cancelPotentialWork(Uri uri, ImageReceiver<T> imageReceiver);
+    boolean cancelPotentialWork(@NonNull Uri uri, @NonNull ImageReceiver<T> imageReceiver);
 
     /**
      * Pause any ongoing background work. This can be used as a temporary
@@ -84,4 +85,8 @@ public interface ImageWorker<T> {
      * Starts async task that closes cache. Returns immediately.
      */
     void closeCache();
+
+    void setRequestedSize(int maxWidth, int maxHeight);
+
+    void setCacheEntryNameFactory(@NonNull CacheEntryNameFactory cacheEntryNameFactory);
 }

@@ -9,8 +9,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.AttributeSet;
 
 import com.github.st1hy.gesturedetector.GestureDetector;
@@ -23,18 +21,19 @@ import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.cache.ImageCache;
 import com.github.st1hy.sabre.core.cache.ImageResizer;
 import com.github.st1hy.sabre.core.cache.worker.DrawableImageWorker;
-import com.github.st1hy.sabre.core.cache.worker.ImageReceiver;
 import com.github.st1hy.sabre.core.cache.worker.ImageWorker;
-import com.github.st1hy.sabre.core.cache.worker.TaskOption;
+import com.github.st1hy.sabre.core.cache.worker.SimpleLoaderFactory;
+import com.github.st1hy.sabre.core.util.UiThreadHandler;
 import com.github.st1hy.sabre.core.util.Utils;
+import com.github.st1hy.sabre.image.AsyncImageReceiver;
 
-public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, DrawableImageReceiver.Callback {
-    private final Handler handler = new Handler(Looper.getMainLooper());
+public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, AsyncImageReceiver.Callback {
     private ImageWorker<Drawable> imageWorker;
     private volatile ImageLoadingCallback loadingCallback;
-    private final ImageReceiver<Drawable> imageReceiver = new DrawableImageReceiver(this);
+    private final AsyncImageReceiver<Drawable> imageReceiver = new DrawableImageReceiver(this);
     private GestureDetector gestureDetector;
     private int backgroundColor;
+    private final UiThreadHandler handler = new UiThreadHandler();
 
     public ImageSurfaceViewer(Context context) {
         super(context);
@@ -84,7 +83,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, Dr
     @Override
     public void addImageCache(ImageCache cache) {
         imageWorker = new DrawableImageWorker(getContext(), cache);
-        imageWorker.setTaskOption(TaskOption.RUNNABLE);
+        imageWorker.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
     }
 
     @Override
@@ -150,6 +149,15 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, Dr
 
     @Override
     public void onResume() {
+    }
+
+    @Override
+    public void onDestroy() {
+        if (imageWorker != null) {
+            imageWorker.setExitTasksEarly(true);
+            imageWorker.cancelWork(imageReceiver);
+        }
+        handler.removeAll();
     }
 
     @Override

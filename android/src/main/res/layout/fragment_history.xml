@@ -7,6 +7,20 @@
     android:layout_height="match_parent"
     tools:context=".gdx.history.HistoryFragment">
 
+    <ListView
+        android:id="@+id/history_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:listitem="@layout/history_entry_layout">
+    </ListView>
+
+    <com.rey.material.widget.TextView
+        android:id="@+id/empty_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/history_empty_text"
+        android:layout_gravity="center"/>
 
     <include
         android:id="@+id/main_activity_empty_view"

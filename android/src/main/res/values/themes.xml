@@ -4,6 +4,15 @@
     <style name="AppTheme" parent="Base.Theme.AppCompat.Light.DarkActionBar">
         <item name="android:textColorPrimary">@color/default_dark</item>
         <item name="android:textColorSecondary">@color/default_dark</item>
+        <item name="windowActionBarOverlay">true</item>
+        <item name="actionBarStyle">@style/AppTheme.TranslucentDarkActionBar</item>
+    </style>
+    <style name="ImageAppTheme" parent="Base.Theme.AppCompat">
+        <item name="windowActionBarOverlay">true</item>
+        <item name="actionBarStyle">@style/AppTheme.TranslucentDarkActionBar</item>
+        <item name="android:textColorPrimary">@color/default_light</item>
+        <item name="android:textColorSecondary">@color/default_light</item>
+        <!--<item name="android:windowBackground">@color/image_surface_background</item>-->
     </style>
 
     <style name="DarkFloatingActionButtonIcon" >
@@ -24,6 +33,10 @@
         <item name="fab_elevation">1dp</item>
         <item name="fab_iconLineMorphing">@style/DarkFloatingActionButtonIcon</item>
         <item name="rd_delayClick">none</item>
+    </style>
+    <style name="AppTheme.TranslucentDarkActionBar" parent="Widget.AppCompat.ActionBar.Solid">
+        <item name="background">@color/actionBarBackground</item>
+
     </style>
 
 </resources>

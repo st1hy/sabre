@@ -14,7 +14,7 @@ interface BitmapWorkerTask {
 
     void executeOnExecutor(Executor executor);
 
-    interface Callback<T> {
+    interface Callback<T> extends CacheEntryNameFactory {
         /**
          * Subclasses should override this to define any processing or work that must happen to produce
          * the final bitmap. This will be executed in a background thread and be long running. For

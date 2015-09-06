@@ -3,7 +3,7 @@ package com.github.st1hy.sabre.image.surface;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 
-import com.github.st1hy.sabre.core.cache.worker.ImageReceiver;
+import com.github.st1hy.sabre.image.AsyncImageReceiver;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class DrawableImageReceiver implements ImageReceiver<Drawable>, Drawable.Callback {
+public class DrawableImageReceiver implements AsyncImageReceiver<Drawable>, Drawable.Callback {
     private Drawable background, image;
     private final Map<Drawable, Map<Runnable, Future<?>>> futureDrawingTasks = new HashMap<>();
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();

@@ -2,9 +2,9 @@ package com.github.st1hy.sabre.image.gdx;
 
 import android.graphics.Bitmap;
 
-import com.github.st1hy.sabre.core.cache.worker.ImageReceiver;
+import com.github.st1hy.sabre.image.AsyncImageReceiver;
 
-public class BitmapImageReceiver implements ImageReceiver<Bitmap> {
+public class BitmapImageReceiver implements AsyncImageReceiver<Bitmap> {
     private final Callback callback;
     private Bitmap image, background;
 

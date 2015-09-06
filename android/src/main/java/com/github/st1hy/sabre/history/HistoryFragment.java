@@ -1,41 +1,60 @@
 package com.github.st1hy.sabre.history;
 
-import android.app.ActionBar;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
 
+import com.github.st1hy.sabre.MainActivity;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.util.SystemUIMode;
+import com.github.st1hy.sabre.core.cache.CacheProvider;
+import com.github.st1hy.sabre.core.cache.ImageCache;
+import com.github.st1hy.sabre.core.util.MissingInterfaceException;
+import com.github.st1hy.sabre.history.content.HistoryTable;
 
 public class HistoryFragment extends Fragment {
     private HistoryViewDelegate viewDelegate;
     private static final String SAVE_ANIMATION_SHOW_FLAG = "animation shown";
     private boolean showHelp = true;
+    private HistoryAdapter historyAdapter;
+    private Animation fade_out;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sanityCheck();
         setHasOptionsMenu(true);
+        fade_out = AnimationUtils.loadAnimation(getActivity(), R.anim.fade_out);
         showHelp = needShowHelp(savedInstanceState);
+        ImageCache imageCache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
+        historyAdapter = new HistoryAdapter(getActivity(), imageCache);
+    }
+
+    private void sanityCheck() {
+        MissingInterfaceException.parentSanityCheck(this, CacheProvider.class);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        historyAdapter.onDestroy();
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         getActivity().setTitle(R.string.app_name);
-        ActionBar actionBar = getActivity().getActionBar();
-        if (actionBar != null) {
-            actionBar.show();
-        }
     }
 
     @Nullable
@@ -43,6 +62,40 @@ public class HistoryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_history, container, false);
         viewDelegate = new HistoryViewDelegate(root);
+        viewDelegate.getListView().setEmptyView(viewDelegate.getEmptyView());
+        viewDelegate.getListView().setAdapter(historyAdapter);
+        viewDelegate.getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Cursor cursor = historyAdapter.getCursor();
+                cursor.moveToPosition(position - historyAdapter.getNumColumns());
+                String uriString = cursor.getString(cursor.getColumnIndex(HistoryTable.COLUMN_URI));
+                Uri uri = Uri.parse(uriString);
+                ((MainActivity) getActivity()).openImage(uri);
+            }
+        });
+        getLoaderManager().initLoader(0, null, new LoaderManager.LoaderCallbacks<Cursor>() {
+            @Override
+            public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+                return historyAdapter.onCreateLoader(id, args);
+            }
+
+            @Override
+            public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+                if (data.getCount() > 0) {
+                    fade_out.cancel();
+                    fade_out.reset();
+                    showHelp = false;
+                    viewDelegate.getFloatingButtonText().setVisibility(View.GONE);
+                }
+                historyAdapter.onLoadFinished(loader, data);
+            }
+
+            @Override
+            public void onLoaderReset(Loader<Cursor> loader) {
+                historyAdapter.onLoaderReset(loader);
+            }
+        });
         return root;
     }
 
@@ -50,7 +103,6 @@ public class HistoryFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (showHelp) {
-            Animation fade_out = AnimationUtils.loadAnimation(getActivity(), R.anim.fade_out);
             fade_out.setDuration(2000);
             fade_out.setStartOffset(5000);
             fade_out.setAnimationListener(new Animation.AnimationListener() {
@@ -72,14 +124,6 @@ public class HistoryFragment extends Fragment {
         } else {
             viewDelegate.getFloatingButtonText().setVisibility(View.GONE);
         }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN, WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-        SystemUIMode.DEFAULT.apply(getActivity().getWindow());
     }
 
     @Override

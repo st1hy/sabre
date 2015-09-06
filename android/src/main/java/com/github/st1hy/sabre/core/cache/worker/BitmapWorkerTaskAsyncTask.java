@@ -26,7 +26,7 @@ class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, T> implements B
 
     public BitmapWorkerTaskAsyncTask(Uri uri, ImageReceiver<T> imageView, BitmapWorkerTask.Callback<T> callback) {
         this.uri = uri;
-        cacheIndex = AbstractImageWorker.getCacheIndex(uri);
+        cacheIndex = callback.getCacheIndex(uri);
         imageViewReference = new WeakReference<>(imageView);
         this.callback = callback;
         mImageCache = callback.getImageCache();
@@ -126,7 +126,7 @@ class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, T> implements B
      */
     private ImageReceiver<T> getAttachedImageView() {
         final ImageReceiver<T> imageView = imageViewReference.get();
-        final BitmapWorkerTask bitmapWorkerTask = callback.getBitmapWorkerTask(imageView);
+        BitmapWorkerTask bitmapWorkerTask = callback.getBitmapWorkerTask(imageView);
         if (this == bitmapWorkerTask) {
             return imageView;
         }

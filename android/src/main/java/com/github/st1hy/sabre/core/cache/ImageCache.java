@@ -17,7 +17,6 @@
 package com.github.st1hy.sabre.core.cache;
 
 import android.annotation.TargetApi;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
@@ -52,7 +51,7 @@ import java.util.Set;
  * *****************************************************************************
  * This class handles disk and memory caching of bitmaps in conjunction with the
  * {@link com.github.st1hy.sabre.core.cache.worker.AbstractImageWorker} class and its subclasses. Use
- * {@link ImageCache#getInstance(FragmentManager, ImageCacheParams)} to get an instance of this
+ * {@link ImageCache#getInstance(Retainer, ImageCacheParams)} to get an instance of this
  * class
  */
 public class ImageCache {
@@ -208,6 +207,7 @@ public class ImageCache {
         }
     }
 
+
     /**
      * Adds a bitmap to both memory and disk cache.
      *
@@ -215,7 +215,10 @@ public class ImageCache {
      * @param value The bitmap drawable to store
      */
     public void addBitmapToCache(String data, Bitmap value) {
-        //BEGIN_INCLUDE(add_bitmap_to_cache)
+        addBitmapToCache(data, value, true);
+    }
+
+    public void addBitmapToCache(String data, Bitmap value, boolean cacheOnDisk) {
         if (data == null || value == null) {
             return;
         }
@@ -225,35 +228,36 @@ public class ImageCache {
             mMemoryCache.put(data, value);
         }
 
-        synchronized (mDiskCacheLock) {
-            // Add to disk cache
-            if (mDiskLruCache != null) {
-                final String key = hashKeyForDisk(data);
-                OutputStream out = null;
-                try {
-                    DiskLruCache.Snapshot snapshot = mDiskLruCache.get(key);
-                    if (snapshot == null) {
-                        final DiskLruCache.Editor editor = mDiskLruCache.edit(key);
-                        if (editor != null) {
-                            try {
-                                out = editor.newOutputStream(DISK_CACHE_INDEX);
-                                value.compress(mCacheParams.compressFormat, mCacheParams.compressQuality, out);
-                                editor.commit();
-                            } finally {
-                                if (out != null) {
-                                    out.close();
+        if (cacheOnDisk) {
+            synchronized (mDiskCacheLock) {
+                // Add to disk cache
+                if (mDiskLruCache != null) {
+                    final String key = hashKeyForDisk(data);
+                    OutputStream out = null;
+                    try {
+                        DiskLruCache.Snapshot snapshot = mDiskLruCache.get(key);
+                        if (snapshot == null) {
+                            final DiskLruCache.Editor editor = mDiskLruCache.edit(key);
+                            if (editor != null) {
+                                try {
+                                    out = editor.newOutputStream(DISK_CACHE_INDEX);
+                                    value.compress(mCacheParams.compressFormat, mCacheParams.compressQuality, out);
+                                    editor.commit();
+                                } finally {
+                                    if (out != null) {
+                                        out.close();
+                                    }
                                 }
                             }
+                        } else {
+                            snapshot.getInputStream(DISK_CACHE_INDEX).close();
                         }
-                    } else {
-                        snapshot.getInputStream(DISK_CACHE_INDEX).close();
+                    } catch (Exception e) {
+                        Log.e(TAG, "addBitmapToCache - " + e);
                     }
-                } catch (Exception e) {
-                    Log.e(TAG, "addBitmapToCache - " + e);
                 }
             }
         }
-        //END_INCLUDE(add_bitmap_to_cache)
     }
 
     /**
@@ -468,7 +472,7 @@ public class ImageCache {
 
         /**
          * Create a set of image cache parameters that can be provided to
-         * {@link ImageCache#getInstance(FragmentManager, ImageCacheParams)}
+         * {@link ImageCache#getInstance(Retainer, ImageCacheParams)}
          *
          * @param context                A context to use.
          * @param diskCacheDirectoryName A unique subdirectory name that will be appended to the

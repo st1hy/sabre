@@ -2,6 +2,7 @@ package com.github.st1hy.sabre;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -9,11 +10,11 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.CompoundButton;
 
 import com.balysv.materialripple.MaterialRippleLayout;
-import com.github.st1hy.sabre.core.util.SystemUIMode;
+import com.github.st1hy.sabre.core.cache.CacheProvider;
+import com.github.st1hy.sabre.core.cache.ImageCache;
 import com.github.st1hy.sabre.core.util.Utils;
 import com.rey.material.widget.CheckBox;
 import com.rey.material.widget.TextView;
@@ -38,24 +39,12 @@ public class SettingsFragment extends Fragment {
         getActivity().setTitle(R.string.action_settings);
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN, WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-        SystemUIMode.DEFAULT.apply(getActivity().getWindow());
-    }
-
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_settings, container, false);
         setupEnableOpenGL(root);
+        setupClearCache(root);
         return root;
     }
 
@@ -78,6 +67,28 @@ public class SettingsFragment extends Fragment {
             public void onClick(View v) {
                 boolean checked = checkBox.isChecked();
                 checkBox.setChecked(!checked);
+            }
+        });
+        MaterialRippleLayout.on(preference).rippleColor(rippleColor).rippleAlpha(1f).create();
+    }
+
+    private void setupClearCache(View root) {
+        View preference = root.findViewById(R.id.setting_clear_cache);
+        TextView title = (TextView) preference.findViewById(R.id.text_setting_title);
+        title.setText(R.string.pref_clear_cache_title);
+        TextView subtitle = (TextView) preference.findViewById(R.id.text_setting_subtitle);
+        subtitle.setText(R.string.pref_clear_cache_desc);
+        preference.findViewById(R.id.setting_checkbox).setVisibility(View.GONE);
+        preference.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final ImageCache cache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
+                AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        cache.clearCache();
+                    }
+                });
             }
         });
         MaterialRippleLayout.on(preference).rippleColor(rippleColor).rippleAlpha(1f).create();

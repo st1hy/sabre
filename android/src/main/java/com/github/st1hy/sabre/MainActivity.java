@@ -1,6 +1,9 @@
 package com.github.st1hy.sabre;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
@@ -12,14 +15,19 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
+import com.github.st1hy.sabre.core.CacheHandler;
 import com.github.st1hy.sabre.core.DependencyDelegate;
+import com.github.st1hy.sabre.core.cache.CacheProvider;
 import com.github.st1hy.sabre.core.util.ArgumentChangedHandler;
 import com.github.st1hy.sabre.core.util.BacktrackAware;
+import com.github.st1hy.sabre.history.content.HistoryUtils;
+import com.github.st1hy.sabre.image.ImageActivity;
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks {
+public class MainActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks, CacheProvider {
     private static final int REQUEST_IMAGE = 0x16ed;
     private volatile boolean stopped = false;
     private final List<Runnable> afterRestore = new LinkedList<>();
@@ -154,10 +162,16 @@ public class MainActivity extends AppCompatActivity implements AndroidFragmentAp
         switch (requestCode) {
             case REQUEST_IMAGE:
                 if (resultCode == RESULT_OK && null != data) {
-                    final Bundle arguments = new Bundle();
-                    arguments.putParcelable(NavState.ARG_IMAGE_URI, data.getData());
-                    NavState state = SettingsFragment.isOpenGLEnabled(MainActivity.this) ? NavState.IMAGE_VIEWER_GL : NavState.IMAGE_VIEWER_SURFACE;
-                    setState(state, arguments);
+                    final Context context = getApplicationContext();
+                    final Uri uri = data.getData();
+                    final Date date = new Date();
+                    AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            HistoryUtils.updateDatabaseWithImage(context, uri, date, true);
+                        }
+                    });
+                    openImage(uri);
                 }
                 break;
             default:
@@ -165,8 +179,23 @@ public class MainActivity extends AppCompatActivity implements AndroidFragmentAp
         }
     }
 
+    public void openImage(Uri uri) {
+        final Bundle arguments = new Bundle();
+        arguments.putParcelable(NavState.ARG_IMAGE_URI, uri);
+        Intent intent = new Intent(this, ImageActivity.class);
+        intent.putExtras(arguments);
+        startActivity(intent);
+//        NavState state = SettingsFragment.isOpenGLEnabled(this) ? NavState.IMAGE_VIEWER_GL : NavState.IMAGE_VIEWER_SURFACE;
+//        setState(state, arguments);
+    }
+
     @Override
     public void exit() {
         finish();
+    }
+
+    @Override
+    public CacheHandler getCacheHandler() {
+        return getDependencyDelegate().getCacheHandler();
     }
 }

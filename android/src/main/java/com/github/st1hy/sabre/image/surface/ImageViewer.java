@@ -17,6 +17,8 @@ public interface ImageViewer {
 
     void onResume();
 
+    void onDestroy();
+
     interface ImageLoadingCallback {
         void onImageLoadingStarted();
 

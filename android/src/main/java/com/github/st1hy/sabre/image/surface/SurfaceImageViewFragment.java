@@ -9,17 +9,21 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 
-import com.github.st1hy.sabre.MainActivity;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
+import com.github.st1hy.sabre.core.cache.CacheProvider;
 import com.github.st1hy.sabre.core.cache.ImageCache;
-import com.github.st1hy.sabre.core.util.SystemUIMode;
+import com.github.st1hy.sabre.core.util.MissingInterfaceException;
 
 public class SurfaceImageViewFragment extends Fragment implements ImageViewer.ImageLoadingCallback {
     private SurfaceViewDelegate viewDelegate;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        sanityCheck();
+    }
 
     @Nullable
     @Override
@@ -27,9 +31,13 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
         View root = inflater.inflate(R.layout.fragment_image_surface, container, false);
         viewDelegate = new SurfaceViewDelegate(root);
         viewDelegate.getViewer().setLoadingCallback(this);
-        ImageCache imageCache = ((MainActivity) getActivity()).getDependencyDelegate().getCacheHandler().getCache();
+        ImageCache imageCache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
         viewDelegate.getViewer().addImageCache(imageCache);
         return root;
+    }
+
+    private void sanityCheck() {
+        MissingInterfaceException.parentSanityCheck(this, CacheProvider.class);
     }
 
     @Override
@@ -59,6 +67,12 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        viewDelegate.getViewer().onDestroy();
+    }
+
+    @Override
     public void onImageLoadingStarted() {
         viewDelegate.getViewer().setVisibility(View.INVISIBLE);
         viewDelegate.getLoadingProgressBar().setVisibility(View.VISIBLE);
@@ -68,10 +82,6 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
     public void onImageLoadingFinished() {
         viewDelegate.getViewer().setVisibility(View.VISIBLE);
         viewDelegate.getLoadingProgressBar().setVisibility(View.GONE);
-        Window window = getActivity().getWindow();
-        SystemUIMode.IMMERSIVE.apply(window);
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
 

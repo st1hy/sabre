@@ -8,8 +8,14 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:orientation="vertical">
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/actionBarHeight"/>
         <include
             android:id="@+id/settings_use_open_gl"
+            layout="@layout/setting_on_off"/>
+        <include
+            android:id="@+id/setting_clear_cache"
             layout="@layout/setting_on_off"/>
     </LinearLayout>
 </ScrollView>

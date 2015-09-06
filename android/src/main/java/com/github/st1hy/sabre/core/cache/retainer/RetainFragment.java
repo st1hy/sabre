@@ -4,17 +4,13 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.os.Bundle;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * A simple non-UI Fragment that stores a single Object and is retained over configuration
  * changes. It will be used to retain the ImageCache object.
  */
 public class RetainFragment extends Fragment implements Retainer{
     private static final String TAG = "RetainFragment";
-    private final Map<String,Object> map = Collections.synchronizedMap(new HashMap<String,Object>());
+    private final Retainer retainer = new ObjectRetainer();
 
     /**
      * Empty constructor as per the Fragment documentation
@@ -23,21 +19,21 @@ public class RetainFragment extends Fragment implements Retainer{
     }
 
     @Override
+    public Object get(String key) {
+        return retainer.get(key);
+    }
+
+    @Override
+    public void put(String key, Object value) {
+        retainer.put(key, value);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Make sure this Fragment is retained over a configuration change
         setRetainInstance(true);
-    }
-
-    @Override
-    public Object get(String key) {
-        return map.get(key);
-    }
-
-    @Override
-    public void put(String key, Object value) {
-        map.put(key, value);
     }
 
     /**
