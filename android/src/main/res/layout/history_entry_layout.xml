@@ -1,41 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.balysv.materialripple.MaterialRippleLayout
+<android.support.v7.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:mrl_rippleColor="@color/settings_ripple"
-    app:mrl_rippleInAdapter="true"
-    app:mrl_rippleAlpha="1">
-    <LinearLayout
-        android:orientation="vertical"
+    app:cardCornerRadius="4dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/card_background"
+    android:layout_marginStart="5dp"
+    android:layout_marginEnd="5dp"
+    android:layout_marginLeft="5dp"
+    android:layout_marginRight="5dp"
+    android:layout_marginTop="5dp">
+    <com.balysv.materialripple.MaterialRippleLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:id="@+id/history_material_frame"
+        app:mrl_rippleColor="@color/history_entry_ripple_foreground"
+        app:mrl_rippleInAdapter="false"
+        app:mrl_rippleOverlay="true"
+        app:mrl_rippleAlpha="0.1">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-            <FrameLayout
+            <com.github.st1hy.sabre.history.ImageReceiverView
+                android:id="@+id/entry_image"
+                android:layout_width="@dimen/history_thumb_size"
+                android:layout_height="@dimen/history_thumb_size"
+                android:scaleType="centerCrop"
+                />
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minWidth="@dimen/history_thumb_size">
-                <com.github.st1hy.sabre.history.ImageReceiverView
-                    android:id="@+id/entry_image"
+                android:orientation="vertical"
+                android:padding="8dp">
+                <com.rey.material.widget.TextView
+                    android:id="@+id/entry_resource"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    />
-            </FrameLayout>
-            <com.rey.material.widget.TextView
-                android:id="@+id/entry_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                style="?android:attr/textAppearanceSmall"
-                android:padding="16dp"
-                android:layout_gravity="center"/>
+                    style="?android:attr/textAppearanceSmall"
+                    android:layout_gravity="center"/>
+                <com.rey.material.widget.TextView
+                    android:id="@+id/entry_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="?android:attr/textAppearanceSmall"
+                    android:layout_gravity="center"/>
+            </LinearLayout>
         </LinearLayout>
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/setting_separator"/>
-    </LinearLayout>
-</com.balysv.materialripple.MaterialRippleLayout>
+    </com.balysv.materialripple.MaterialRippleLayout>
+</android.support.v7.widget.CardView>

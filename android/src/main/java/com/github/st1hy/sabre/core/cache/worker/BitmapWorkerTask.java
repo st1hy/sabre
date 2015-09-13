@@ -30,10 +30,11 @@ interface BitmapWorkerTask {
          * Called when the processing is complete and the final image should be
          * set on the ImageView.
          *
-         * @param imageView
-         * @param image
+         * @param imageView     target that should receive image
+         * @param image         image that should be received
+         * @param newBitmapUsed Reference to new bitmap linked to this receiver. Used for fine tuning caching.
          */
-        void setFinalImage(ImageReceiver<T> imageView, T image);
+        void setFinalImageAndReleasePrevious(ImageReceiver<T> imageView, T image, Bitmap newBitmapUsed);
 
         /**
          * @return The {@link ImageCache} object currently being used..

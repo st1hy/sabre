@@ -3,7 +3,6 @@ package com.github.st1hy.sabre;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
@@ -162,15 +161,7 @@ public class MainActivity extends AppCompatActivity implements AndroidFragmentAp
         switch (requestCode) {
             case REQUEST_IMAGE:
                 if (resultCode == RESULT_OK && null != data) {
-                    final Context context = getApplicationContext();
-                    final Uri uri = data.getData();
-                    final Date date = new Date();
-                    AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            HistoryUtils.updateDatabaseWithImage(context, uri, date, true);
-                        }
-                    });
+                    Uri uri = data.getData();
                     openImage(uri);
                 }
                 break;
@@ -179,14 +170,20 @@ public class MainActivity extends AppCompatActivity implements AndroidFragmentAp
         }
     }
 
-    public void openImage(Uri uri) {
+    public void openImage(final Uri uri) {
+        final Context context = getApplicationContext();
+        final Date date = new Date();
+        Application.CACHED_EXECUTOR_POOL.execute(new Runnable() {
+            @Override
+            public void run() {
+                HistoryUtils.updateDatabaseWithImage(context, uri, date, true);
+            }
+        });
         final Bundle arguments = new Bundle();
         arguments.putParcelable(NavState.ARG_IMAGE_URI, uri);
         Intent intent = new Intent(this, ImageActivity.class);
         intent.putExtras(arguments);
         startActivity(intent);
-//        NavState state = SettingsFragment.isOpenGLEnabled(this) ? NavState.IMAGE_VIEWER_GL : NavState.IMAGE_VIEWER_SURFACE;
-//        setState(state, arguments);
     }
 
     @Override

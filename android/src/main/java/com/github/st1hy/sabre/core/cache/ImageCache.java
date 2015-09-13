@@ -24,8 +24,8 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
-import android.support.v4.util.LruCache;
 import android.util.Log;
+import android.util.LruCache;
 
 import com.github.st1hy.sabre.BuildConfig;
 import com.github.st1hy.sabre.core.cache.retainer.Retainer;
@@ -74,12 +74,12 @@ public class ImageCache {
     private static final boolean DEFAULT_INIT_DISK_CACHE_ON_CREATE = false;
 
     private DiskLruCache mDiskLruCache;
-    private LruCache<String, Bitmap> mMemoryCache;
-    private ImageCacheParams mCacheParams;
+    private final LruCache<String, Bitmap> mMemoryCache;
+    private final ImageCacheParams mCacheParams;
     private final Object mDiskCacheLock = new Object();
     private boolean mDiskCacheStarting = true;
 
-    private Set<SoftReference<Bitmap>> mReusableBitmaps;
+    private final Set<SoftReference<Bitmap>> mReusableBitmaps;
 
     /**
      * Create a new ImageCache object using the specified parameters. This should not be
@@ -90,36 +90,6 @@ public class ImageCache {
      * @param cacheParams The cache parameters to use to initialize the cache
      */
     private ImageCache(ImageCacheParams cacheParams) {
-        init(cacheParams);
-    }
-
-    /**
-     * Return an {@link ImageCache} instance. A {@link Retainer} is used to retain the
-     * ImageCache object across configuration changes such as a change in device orientation.
-     *
-     * @param retainer The retainer instance to use when dealing with storing cache instance.
-     * @param cacheParams     The cache parameters to use if the ImageCache needs instantiation.
-     * @return An existing retained ImageCache object or a new one if one did not exist
-     */
-    public static ImageCache getInstance(Retainer retainer, ImageCacheParams cacheParams) {
-        // See if we already have an ImageCache stored in RetainFragment
-        ImageCache imageCache = (ImageCache) retainer.get(TAG);
-
-        // No existing ImageCache, create one and store it in RetainFragment
-        if (imageCache == null) {
-            imageCache = new ImageCache(cacheParams.clone());
-            retainer.put(TAG, imageCache);
-        }
-
-        return imageCache;
-    }
-
-    /**
-     * Initialize the cache, providing all parameters.
-     *
-     * @param cacheParams The cache parameters to initialize the cache
-     */
-    private void init(ImageCacheParams cacheParams) {
         mCacheParams = cacheParams;
 
         //BEGIN_INCLUDE(init_memory_cache)
@@ -147,9 +117,10 @@ public class ImageCache {
                  */
                 @Override
                 protected void entryRemoved(boolean evicted, String key, Bitmap oldValue, Bitmap newValue) {
-                    // We're running on Honeycomb or later, so add the bitmap
-                    // to a SoftReference set for possible use with inBitmap later
-                    mReusableBitmaps.add(new SoftReference<>(oldValue));
+                    synchronized (mReusableBitmaps) {
+                        Log.d(TAG, "Cache eviction: adding bitmap as reusable: " + key + " " + oldValue.hashCode());
+                        mReusableBitmaps.add(new SoftReference<>(oldValue));
+                    }
                 }
 
                 /**
@@ -162,6 +133,9 @@ public class ImageCache {
                     return bitmapSize == 0 ? 1 : bitmapSize;
                 }
             };
+        } else {
+            mMemoryCache = null;
+            mReusableBitmaps = null;
         }
         //END_INCLUDE(init_memory_cache)
 
@@ -172,6 +146,28 @@ public class ImageCache {
             initDiskCache();
         }
     }
+
+    /**
+     * Return an {@link ImageCache} instance. A {@link Retainer} is used to retain the
+     * ImageCache object across configuration changes such as a change in device orientation.
+     *
+     * @param retainer The retainer instance to use when dealing with storing cache instance.
+     * @param cacheParams     The cache parameters to use if the ImageCache needs instantiation.
+     * @return An existing retained ImageCache object or a new one if one did not exist
+     */
+    public static ImageCache getInstance(Retainer retainer, ImageCacheParams cacheParams) {
+        // See if we already have an ImageCache stored in RetainFragment
+        ImageCache imageCache = (ImageCache) retainer.get(TAG);
+
+        // No existing ImageCache, create one and store it in RetainFragment
+        if (imageCache == null) {
+            imageCache = new ImageCache(cacheParams.clone());
+            retainer.put(TAG, imageCache);
+        }
+
+        return imageCache;
+    }
+
 
     /**
      * Initializes the disk cache.  Note that this includes disk access so this should not be
@@ -275,7 +271,7 @@ public class ImageCache {
         }
 
         if (BuildConfig.DEBUG && memValue != null) {
-            Log.d(TAG, "Memory cache hit");
+            Log.d(TAG, "Memory cache hit "+ data + " bitmap "+ memValue.toString() );
         }
 
         return memValue;
@@ -345,6 +341,7 @@ public class ImageCache {
 
         if (mReusableBitmaps != null && !mReusableBitmaps.isEmpty()) {
             synchronized (mReusableBitmaps) {
+                Log.d(TAG, "Searching for reusable bitmap.");
                 final Iterator<SoftReference<Bitmap>> iterator = mReusableBitmaps.iterator();
                 Bitmap item;
 
@@ -365,6 +362,7 @@ public class ImageCache {
                         iterator.remove();
                     }
                 }
+                Log.d(TAG, "Search complete. Found: " + (bitmap != null ? bitmap.hashCode() : "null"));
             }
         }
 

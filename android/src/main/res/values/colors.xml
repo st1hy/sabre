@@ -7,5 +7,7 @@
     <color name="viewer_background">@color/default_light</color>
     <color name="setting_separator">@color/material_grey_300</color>
     <color name="settings_ripple">@color/material_grey_300</color>
+    <color name="history_entry_ripple_foreground">#08111111</color>
     <color name="image_surface_background">@color/material_grey_900</color>
+    <color name="card_background">#fff1f1f1</color>
 </resources>

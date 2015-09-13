@@ -21,14 +21,16 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.BuildConfig;
 import com.github.st1hy.sabre.core.cache.ImageCache;
 import com.github.st1hy.sabre.core.cache.ImageResizer;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 
@@ -50,7 +52,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
     private volatile boolean mExitTasksEarly = false;
     private volatile boolean mPauseWork = false;
     private final Object mPauseWorkLock = new Object();
-    protected final WeakHashMap<ImageReceiver, BitmapWorkerTask> taskMap = new WeakHashMap<>();
+    protected final Map<ImageReceiver, BitmapWorkerTask> taskMap = Collections.synchronizedMap(new WeakHashMap<ImageReceiver, BitmapWorkerTask>());
     private int reqWidth = Integer.MAX_VALUE, reqHeight = Integer.MAX_VALUE;
     private CacheEntryNameFactory cacheEntryNameFactory = new SimpleCacheEntryNameFactory();
 
@@ -72,11 +74,11 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
         if (value != null) {
             // Bitmap found in memory cache
             T image = createImage(value);
-            imageView.setImage(image);
+            setImageAndRegister(imageView, image, value);
         } else if (cancelPotentialWork(uri, imageView)) {
             final BitmapWorkerTask task = loaderFactory.newTask(uri, imageView, this);
             taskMap.put(imageView, task);
-            imageView.setImage(createImage(mLoadingBitmap));
+            setImageAndRegister(imageView, createImage(mLoadingBitmap), mLoadingBitmap);
             task.executeOnExecutor(getExecutor());
         }
     }
@@ -157,14 +159,17 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
     }
 
     @Override
-    public void setFinalImage(ImageReceiver<T> imageView, T image) {
+    public void setFinalImageAndReleasePrevious(ImageReceiver<T> imageView, T image, Bitmap newBitmapUsed) {
         if (mFadeInBitmap) {
             // Set background to loading bitmap
             imageView.setBackground(createImage(mLoadingBitmap));
-            imageView.setImage(createImageFadingIn(image));
-        } else {
-            imageView.setImage(image);
+            image = createImageFadingIn(image);
         }
+        setImageAndRegister(imageView, image, newBitmapUsed);
+    }
+
+    private void setImageAndRegister(ImageReceiver<T> imageView, T image, Bitmap newBitmapUsed) {
+        imageView.setImage(image);
     }
 
     public abstract T createImageFadingIn(T image);
@@ -210,7 +215,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
     }
 
     private Executor getExecutor() {
-        return AsyncTask.THREAD_POOL_EXECUTOR;
+        return Application.CACHED_EXECUTOR_POOL;
     }
 
     @Override

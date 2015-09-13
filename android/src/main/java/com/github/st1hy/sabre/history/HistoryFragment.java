@@ -1,12 +1,12 @@
 package com.github.st1hy.sabre.history;
 
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -14,20 +14,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.AdapterView;
 
-import com.github.st1hy.sabre.MainActivity;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.cache.CacheProvider;
 import com.github.st1hy.sabre.core.cache.ImageCache;
 import com.github.st1hy.sabre.core.util.MissingInterfaceException;
-import com.github.st1hy.sabre.history.content.HistoryTable;
 
 public class HistoryFragment extends Fragment {
     private HistoryViewDelegate viewDelegate;
     private static final String SAVE_ANIMATION_SHOW_FLAG = "animation shown";
     private boolean showHelp = true;
-    private HistoryAdapter historyAdapter;
+    private HistoryRecyclerAdapter historyAdapter;
     private Animation fade_out;
 
     @Override
@@ -38,7 +35,7 @@ public class HistoryFragment extends Fragment {
         fade_out = AnimationUtils.loadAnimation(getActivity(), R.anim.fade_out);
         showHelp = needShowHelp(savedInstanceState);
         ImageCache imageCache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
-        historyAdapter = new HistoryAdapter(getActivity(), imageCache);
+        historyAdapter = new HistoryRecyclerAdapter(getActivity(), imageCache);
     }
 
     private void sanityCheck() {
@@ -62,18 +59,9 @@ public class HistoryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_history, container, false);
         viewDelegate = new HistoryViewDelegate(root);
-        viewDelegate.getListView().setEmptyView(viewDelegate.getEmptyView());
-        viewDelegate.getListView().setAdapter(historyAdapter);
-        viewDelegate.getListView().setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Cursor cursor = historyAdapter.getCursor();
-                cursor.moveToPosition(position - historyAdapter.getNumColumns());
-                String uriString = cursor.getString(cursor.getColumnIndex(HistoryTable.COLUMN_URI));
-                Uri uri = Uri.parse(uriString);
-                ((MainActivity) getActivity()).openImage(uri);
-            }
-        });
+        viewDelegate.getRecyclerView().setAdapter(historyAdapter);
+        viewDelegate.getRecyclerView().setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
+        viewDelegate.getFloatingButtonText().setVisibility(View.GONE);
         getLoaderManager().initLoader(0, null, new LoaderManager.LoaderCallbacks<Cursor>() {
             @Override
             public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -82,12 +70,7 @@ public class HistoryFragment extends Fragment {
 
             @Override
             public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-                if (data.getCount() > 0) {
-                    fade_out.cancel();
-                    fade_out.reset();
-                    showHelp = false;
-                    viewDelegate.getFloatingButtonText().setVisibility(View.GONE);
-                }
+                onDataLoaded(data);
                 historyAdapter.onLoadFinished(loader, data);
             }
 
@@ -102,7 +85,14 @@ public class HistoryFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (showHelp) {
+    }
+
+    private void onDataLoaded(Cursor data) {
+        if (data.getCount() > 0) {
+            showHelp = false;
+            viewDelegate.getEmptyView().setVisibility(View.GONE);
+        } else if (showHelp) {
+            viewDelegate.getFloatingButtonText().setVisibility(View.VISIBLE);
             fade_out.setDuration(2000);
             fade_out.setStartOffset(5000);
             fade_out.setAnimationListener(new Animation.AnimationListener() {
@@ -121,8 +111,6 @@ public class HistoryFragment extends Fragment {
                 }
             });
             viewDelegate.getFloatingButtonText().startAnimation(fade_out);
-        } else {
-            viewDelegate.getFloatingButtonText().setVisibility(View.GONE);
         }
     }
 

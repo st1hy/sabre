@@ -4,6 +4,9 @@ import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.sabre.core.cache.retainer.ObjectRetainer;
 import com.github.st1hy.sabre.core.cache.retainer.Retainer;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 public class Application extends android.app.Application implements Retainer {
     private final ObjectRetainer retainer = new ObjectRetainer();
 
@@ -22,4 +25,7 @@ public class Application extends android.app.Application implements Retainer {
     public void put(String key, Object value) {
         retainer.put(key, value);
     }
+
+    public static final Executor CACHED_EXECUTOR_POOL = Executors.newCachedThreadPool();
+
 }

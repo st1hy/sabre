@@ -2,9 +2,9 @@ package com.github.st1hy.sabre.core;
 
 import android.app.Activity;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 
+import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.core.cache.ImageCache;
 import com.github.st1hy.sabre.core.cache.retainer.RetainFragment;
 import com.github.st1hy.sabre.core.cache.retainer.Retainer;
@@ -14,7 +14,7 @@ import java.util.concurrent.Executor;
 
 public class CacheHandler {
     private final ImageCache cache;
-    private final Executor executor = AsyncTask.THREAD_POOL_EXECUTOR;
+    private final Executor executor = Application.CACHED_EXECUTOR_POOL;
 
     private CacheHandler(Activity activity) {
         this.cache = initCacheFromRetainFragment(activity);

@@ -8,7 +8,6 @@ import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.util.AttributeSet;
 
 import com.github.st1hy.gesturedetector.GestureDetector;
@@ -17,6 +16,7 @@ import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 import com.github.st1hy.gesturedetector.MultipleGestureListener;
 import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.SimpleGestureListener;
+import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.cache.ImageCache;
 import com.github.st1hy.sabre.core.cache.ImageResizer;
@@ -102,7 +102,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
         if (imageWorker != null) {
             imageWorker.loadImage(uri, imageReceiver);
         } else {
-            AsyncTask.THREAD_POOL_EXECUTOR.execute(new Runnable() {
+            Application.CACHED_EXECUTOR_POOL.execute(new Runnable() {
                 @Override
                 public void run() {
                     Bitmap bitmap = ImageResizer.decodeUri(uri, Integer.MAX_VALUE, Integer.MAX_VALUE, null, getContext().getContentResolver());

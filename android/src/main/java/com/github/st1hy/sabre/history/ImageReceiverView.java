@@ -31,4 +31,5 @@ public class ImageReceiverView extends ImageView implements ImageReceiver<Drawab
     public void setImage(Drawable image) {
         setImageDrawable(image);
     }
+
 }
