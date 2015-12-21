@@ -154,16 +154,17 @@ public enum ImageResizer {
         //BEGIN_INCLUDE(add_bitmap_options)
         // inBitmap only works with mutable bitmaps so force the decoder to
         // return mutable bitmaps.
-        options.inMutable = true;
+        options.inMutable = false;
 
-        if (cache != null) {
-            // Try and find a bitmap to use for inBitmap
-            Bitmap inBitmap = cache.getBitmapFromReusableSet(options);
-
-            if (inBitmap != null) {
-                options.inBitmap = inBitmap;
-            }
-        }
+        //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
+//        if (cache != null) {
+//            // Try and find a bitmap to use for inBitmap
+//            Bitmap inBitmap = cache.getBitmapFromReusableSet(options);
+//
+//            if (inBitmap != null) {
+//                options.inBitmap = inBitmap;
+//            }
+//        }
         //END_INCLUDE(add_bitmap_options)
     }
 

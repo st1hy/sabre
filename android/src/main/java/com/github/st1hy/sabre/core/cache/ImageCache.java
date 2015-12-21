@@ -38,12 +38,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ref.SoftReference;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Taken from DisplayingBitmaps example.
@@ -79,7 +74,7 @@ public class ImageCache {
     private final Object mDiskCacheLock = new Object();
     private boolean mDiskCacheStarting = true;
 
-    private final Set<SoftReference<Bitmap>> mReusableBitmaps;
+//    private final Set<SoftReference<Bitmap>> mReusableBitmaps;
 
     /**
      * Create a new ImageCache object using the specified parameters. This should not be
@@ -108,7 +103,8 @@ public class ImageCache {
             // require knowledge of the expected size of the bitmaps. From Honeycomb to JellyBean
             // the size would need to be precise, from KitKat onward the size would just need to
             // be the upper bound (due to changes in how inBitmap can re-use bitmaps).
-            mReusableBitmaps = Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
+            //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
+//            mReusableBitmaps = Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
 
             mMemoryCache = new LruCache<String, Bitmap>(mCacheParams.memCacheSize) {
 
@@ -117,10 +113,11 @@ public class ImageCache {
                  */
                 @Override
                 protected void entryRemoved(boolean evicted, String key, Bitmap oldValue, Bitmap newValue) {
-                    synchronized (mReusableBitmaps) {
-                        Log.d(TAG, "Cache eviction: adding bitmap as reusable: " + key + " " + oldValue.hashCode());
-                        mReusableBitmaps.add(new SoftReference<>(oldValue));
-                    }
+                    //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
+//                    synchronized (mReusableBitmaps) {
+//                        Log.d(TAG, "Cache eviction: adding bitmap as reusable: " + key + " " + oldValue.hashCode());
+//                        mReusableBitmaps.add(new SoftReference<>(oldValue));
+//                    }
                 }
 
                 /**
@@ -135,7 +132,8 @@ public class ImageCache {
             };
         } else {
             mMemoryCache = null;
-            mReusableBitmaps = null;
+            //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
+//            mReusableBitmaps = null;
         }
         //END_INCLUDE(init_memory_cache)
 
@@ -331,44 +329,45 @@ public class ImageCache {
         //END_INCLUDE(get_bitmap_from_disk_cache)
     }
 
-    /**
-     * @param options - BitmapFactory.Options with out* options populated
-     * @return Bitmap that case be used for inBitmap
-     */
-    protected Bitmap getBitmapFromReusableSet(BitmapFactory.Options options) {
-        //BEGIN_INCLUDE(get_bitmap_from_reusable_set)
-        Bitmap bitmap = null;
-
-        if (mReusableBitmaps != null && !mReusableBitmaps.isEmpty()) {
-            synchronized (mReusableBitmaps) {
-                Log.d(TAG, "Searching for reusable bitmap.");
-                final Iterator<SoftReference<Bitmap>> iterator = mReusableBitmaps.iterator();
-                Bitmap item;
-
-                while (iterator.hasNext()) {
-                    item = iterator.next().get();
-
-                    if (null != item && item.isMutable()) {
-                        // Check to see it the item can be used for inBitmap
-                        if (canUseForInBitmap(item, options)) {
-                            bitmap = item;
-
-                            // Remove from reusable set so it can't be used again
-                            iterator.remove();
-                            break;
-                        }
-                    } else {
-                        // Remove from the set if the reference has been cleared.
-                        iterator.remove();
-                    }
-                }
-                Log.d(TAG, "Search complete. Found: " + (bitmap != null ? bitmap.hashCode() : "null"));
-            }
-        }
-
-        return bitmap;
-        //END_INCLUDE(get_bitmap_from_reusable_set)
-    }
+    //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
+//    /**
+//     * @param options - BitmapFactory.Options with out* options populated
+//     * @return Bitmap that case be used for inBitmap
+//     */
+//    protected Bitmap getBitmapFromReusableSet(BitmapFactory.Options options) {
+//        //BEGIN_INCLUDE(get_bitmap_from_reusable_set)
+//        Bitmap bitmap = null;
+//
+//        if (mReusableBitmaps != null && !mReusableBitmaps.isEmpty()) {
+//            synchronized (mReusableBitmaps) {
+//                Log.d(TAG, "Searching for reusable bitmap.");
+//                final Iterator<SoftReference<Bitmap>> iterator = mReusableBitmaps.iterator();
+//                Bitmap item;
+//
+//                while (iterator.hasNext()) {
+//                    item = iterator.next().get();
+//
+//                    if (null != item && item.isMutable()) {
+//                        // Check to see it the item can be used for inBitmap
+//                        if (canUseForInBitmap(item, options)) {
+//                            bitmap = item;
+//
+//                            // Remove from reusable set so it can't be used again
+//                            iterator.remove();
+//                            break;
+//                        }
+//                    } else {
+//                        // Remove from the set if the reference has been cleared.
+//                        iterator.remove();
+//                    }
+//                }
+//                Log.d(TAG, "Search complete. Found: " + (bitmap != null ? bitmap.hashCode() : "null"));
+//            }
+//        }
+//
+//        return bitmap;
+//        //END_INCLUDE(get_bitmap_from_reusable_set)
+//    }
 
     public void clearMemory() {
         if (mMemoryCache != null) {
