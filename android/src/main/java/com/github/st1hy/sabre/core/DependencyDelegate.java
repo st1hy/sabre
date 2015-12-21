@@ -2,18 +2,21 @@ package com.github.st1hy.sabre.core;
 
 import android.content.ComponentCallbacks2;
 import android.content.res.Configuration;
+import android.support.annotation.NonNull;
 
+import com.github.st1hy.imagecache.CacheHandler;
+import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.MainActivity;
 import com.github.st1hy.sabre.SettingsFragment;
-import com.github.st1hy.sabre.core.cache.retainer.Retainer;
 
-public class DependencyDelegate implements ComponentCallbacks2{
+public class DependencyDelegate implements ComponentCallbacks2 {
     private final MainActivity mainActivity;
     private final CacheHandler cacheHandler;
 
     public DependencyDelegate(MainActivity mainActivity) {
         this.mainActivity = mainActivity;
-        cacheHandler = CacheHandler.getInstance(mainActivity.getApplicationContext(), (Retainer) mainActivity.getApplication());
+        Application app = (Application) mainActivity.getApplication();
+        cacheHandler = CacheHandler.getInstance(app, app);
         SettingsFragment.loadDefaultSettings(mainActivity, false);
         mainActivity.getApplication().registerComponentCallbacks(this);
     }
@@ -30,6 +33,7 @@ public class DependencyDelegate implements ComponentCallbacks2{
         cacheHandler.onDestroy();
     }
 
+    @NonNull
     public CacheHandler getCacheHandler() {
         return cacheHandler;
     }

@@ -10,11 +10,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.cache.CacheProvider;
-import com.github.st1hy.sabre.core.cache.ImageCache;
-import com.github.st1hy.sabre.core.util.MissingInterfaceException;
+import com.github.st1hy.core.utils.MissingInterfaceException;
 
 public class SurfaceImageViewFragment extends Fragment implements ImageViewer.ImageLoadingCallback {
     private SurfaceViewDelegate viewDelegate;

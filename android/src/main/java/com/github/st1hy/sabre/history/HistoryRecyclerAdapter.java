@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -14,13 +15,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.imagecache.worker.CacheEntryNameFactory;
+import com.github.st1hy.imagecache.worker.DrawableImageWorker;
+import com.github.st1hy.imagecache.worker.ImageWorker;
+import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.sabre.MainActivity;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.cache.ImageCache;
-import com.github.st1hy.sabre.core.cache.worker.CacheEntryNameFactory;
-import com.github.st1hy.sabre.core.cache.worker.DrawableImageWorker;
-import com.github.st1hy.sabre.core.cache.worker.ImageWorker;
-import com.github.st1hy.sabre.core.cache.worker.SimpleLoaderFactory;
 import com.github.st1hy.sabre.history.content.HistoryContentProvider;
 import com.github.st1hy.sabre.history.content.HistoryTable;
 
@@ -41,7 +42,8 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         this.imageWorker = new DrawableImageWorker(context, imageCache);
         imageWorker.setCacheEntryNameFactory(new CacheEntryNameFactory() {
             @Override
-            public String getCacheIndex(Uri uri) {
+            @NonNull
+            public String getCacheIndex(@NonNull Uri uri) {
                 return uri.getPath().concat(".thumb");
             }
         });

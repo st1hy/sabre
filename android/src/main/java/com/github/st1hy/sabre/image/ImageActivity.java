@@ -6,13 +6,13 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
+import com.github.st1hy.imagecache.CacheHandler;
+import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.retainer.Retainer;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.SettingsFragment;
-import com.github.st1hy.sabre.core.CacheHandler;
-import com.github.st1hy.sabre.core.cache.CacheProvider;
-import com.github.st1hy.sabre.core.cache.retainer.Retainer;
-import com.github.st1hy.sabre.core.util.SystemUIMode;
+import com.github.st1hy.core.utils.SystemUIMode;
 
 public class ImageActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks, CacheProvider {
     private CacheHandler cacheHandler;

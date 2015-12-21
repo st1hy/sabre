@@ -13,9 +13,9 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 
 import com.balysv.materialripple.MaterialRippleLayout;
-import com.github.st1hy.sabre.core.cache.CacheProvider;
-import com.github.st1hy.sabre.core.cache.ImageCache;
-import com.github.st1hy.sabre.core.util.Utils;
+import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.core.utils.Utils;
 import com.rey.material.widget.CheckBox;
 import com.rey.material.widget.TextView;
 

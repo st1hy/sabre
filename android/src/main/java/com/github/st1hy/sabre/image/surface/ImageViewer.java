@@ -2,7 +2,7 @@ package com.github.st1hy.sabre.image.surface;
 
 import android.net.Uri;
 
-import com.github.st1hy.sabre.core.cache.ImageCache;
+import com.github.st1hy.imagecache.ImageCache;
 
 public interface ImageViewer {
     void addImageCache(ImageCache cache);

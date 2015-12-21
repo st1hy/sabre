@@ -1,14 +1,19 @@
 package com.github.st1hy.sabre;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
+import com.github.st1hy.retainer.ObjectRetainer;
+import com.github.st1hy.retainer.Retainer;
 import com.github.st1hy.gesturedetector.Config;
-import com.github.st1hy.sabre.core.cache.retainer.ObjectRetainer;
-import com.github.st1hy.sabre.core.cache.retainer.Retainer;
+import com.github.st1hy.core.utils.Utils;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class Application extends android.app.Application implements Retainer {
     private final ObjectRetainer retainer = new ObjectRetainer();
+
+    public static final Executor CACHED_EXECUTOR_POOL = Utils.CACHED_EXECUTOR_POOL;
 
     @Override
     public void onCreate() {
@@ -17,15 +22,14 @@ public class Application extends android.app.Application implements Retainer {
     }
 
     @Override
-    public Object get(String key) {
+    @Nullable
+    public Object get(@NonNull String key) {
         return retainer.get(key);
     }
 
     @Override
-    public void put(String key, Object value) {
+    public void put(@NonNull String key, @Nullable Object value) {
         retainer.put(key, value);
     }
-
-    public static final Executor CACHED_EXECUTOR_POOL = Executors.newCachedThreadPool();
 
 }

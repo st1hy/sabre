@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -14,13 +15,13 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
-import com.github.st1hy.sabre.core.CacheHandler;
+import com.github.st1hy.imagecache.CacheHandler;
+import com.github.st1hy.imagecache.CacheProvider;
 import com.github.st1hy.sabre.core.DependencyDelegate;
-import com.github.st1hy.sabre.core.cache.CacheProvider;
-import com.github.st1hy.sabre.core.util.ArgumentChangedHandler;
-import com.github.st1hy.sabre.core.util.BacktrackAware;
 import com.github.st1hy.sabre.history.content.HistoryUtils;
 import com.github.st1hy.sabre.image.ImageActivity;
+import com.github.st1hy.core.utils.ArgumentChangedHandler;
+import com.github.st1hy.core.utils.BacktrackAware;
 
 import java.util.Date;
 import java.util.LinkedList;
@@ -192,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements AndroidFragmentAp
     }
 
     @Override
+    @NonNull
     public CacheHandler getCacheHandler() {
         return getDependencyDelegate().getCacheHandler();
     }

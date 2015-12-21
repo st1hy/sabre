@@ -10,6 +10,11 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.AttributeSet;
 
+import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.imagecache.ImageResizer;
+import com.github.st1hy.imagecache.worker.DrawableImageWorker;
+import com.github.st1hy.imagecache.worker.ImageWorker;
+import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
@@ -18,14 +23,9 @@ import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.SimpleGestureListener;
 import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.cache.ImageCache;
-import com.github.st1hy.sabre.core.cache.ImageResizer;
-import com.github.st1hy.sabre.core.cache.worker.DrawableImageWorker;
-import com.github.st1hy.sabre.core.cache.worker.ImageWorker;
-import com.github.st1hy.sabre.core.cache.worker.SimpleLoaderFactory;
-import com.github.st1hy.sabre.core.util.UiThreadHandler;
-import com.github.st1hy.sabre.core.util.Utils;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
+import com.github.st1hy.core.utils.UiThreadHandler;
+import com.github.st1hy.core.utils.Utils;
 
 public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, AsyncImageReceiver.Callback {
     private ImageWorker<Drawable> imageWorker;

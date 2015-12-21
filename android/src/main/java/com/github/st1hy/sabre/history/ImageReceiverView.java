@@ -6,7 +6,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
-import com.github.st1hy.sabre.core.cache.worker.ImageReceiver;
+import com.github.st1hy.imagecache.worker.ImageReceiver;
 
 public class ImageReceiverView extends ImageView implements ImageReceiver<Drawable> {
 

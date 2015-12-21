@@ -15,10 +15,10 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
+import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.cache.CacheProvider;
-import com.github.st1hy.sabre.core.cache.ImageCache;
-import com.github.st1hy.sabre.core.util.MissingInterfaceException;
+import com.github.st1hy.core.utils.MissingInterfaceException;
 
 public class HistoryFragment extends Fragment {
     private HistoryViewDelegate viewDelegate;
