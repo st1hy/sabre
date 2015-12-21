@@ -10,7 +10,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -91,7 +90,6 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         cursor.moveToPosition(position);
         String uriAsString = cursor.getString(cursor.getColumnIndexOrThrow(HistoryTable.COLUMN_URI));
         long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(HistoryTable.COLUMN_DATE_TIMESTAMP));
-        Log.d("HIST_ADAPTER", "Setting view image " + uriAsString);
         final Uri uri = Uri.parse(uriAsString);
         imageWorker.loadImage(uri, holder.getImage());
         holder.getLastAccess().setText(DateFormat.getDateTimeInstance().format(new Date(timestamp)));
@@ -106,7 +104,6 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        Log.d("HIST_ADAPTER", "Creating loader");
         String[] projection = {HistoryTable.COLUMN_ID, HistoryTable.COLUMN_DATE_TIMESTAMP, HistoryTable.COLUMN_URI};
         String sortingOrder = HistoryTable.COLUMN_DATE_TIMESTAMP + " DESC";
         return new CursorLoader(context, HistoryContentProvider.CONTENT_URI, projection, null, null, sortingOrder);
