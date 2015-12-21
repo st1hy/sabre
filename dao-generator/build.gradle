@@ -1,0 +1,8 @@
+apply plugin: 'java'
+apply plugin:'application'
+
+mainClassName = "com.github.st1hy.dao.SabreDaoGenerator"
+
+dependencies {
+    compile 'de.greenrobot:greendao-generator:2.0.0'
+}
