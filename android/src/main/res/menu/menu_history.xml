@@ -6,7 +6,6 @@
         android:id="@+id/action_open"
         android:title="@string/action_open"
         android:icon="@drawable/ic_open"
-        android:onClick="onActionOpen"
         app:showAsAction="ifRoom|collapseActionView" />
     <item
         android:id="@+id/action_settings"

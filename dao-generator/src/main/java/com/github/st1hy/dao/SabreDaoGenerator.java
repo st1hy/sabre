@@ -1,5 +1,6 @@
 package com.github.st1hy.dao;
 
+import de.greenrobot.daogenerator.ContentProvider;
 import de.greenrobot.daogenerator.DaoGenerator;
 import de.greenrobot.daogenerator.Entity;
 import de.greenrobot.daogenerator.Schema;
@@ -17,8 +18,10 @@ public class SabreDaoGenerator {
     private static void addOpenedImage(Schema schema) {
         Entity openedImage = schema.addEntity("OpenedImage");
         openedImage.addIdProperty();
-        openedImage.addContentProvider();
-        openedImage.addStringProperty("url").notNull();
+        openedImage.addStringProperty("uri").notNull();
         openedImage.addDateProperty("date").notNull();
+
+        ContentProvider contentProvider = openedImage.addContentProvider();
+        contentProvider.setBasePath("imageHistory");
     }
 }

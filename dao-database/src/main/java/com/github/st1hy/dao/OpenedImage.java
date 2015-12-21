@@ -8,7 +8,7 @@ public class OpenedImage {
 
     private Long id;
     /** Not-null value. */
-    private String url;
+    private String uri;
     /** Not-null value. */
     private java.util.Date date;
 
@@ -19,9 +19,9 @@ public class OpenedImage {
         this.id = id;
     }
 
-    public OpenedImage(Long id, String url, java.util.Date date) {
+    public OpenedImage(Long id, String uri, java.util.Date date) {
         this.id = id;
-        this.url = url;
+        this.uri = uri;
         this.date = date;
     }
 
@@ -34,13 +34,13 @@ public class OpenedImage {
     }
 
     /** Not-null value. */
-    public String getUrl() {
-        return url;
+    public String getUri() {
+        return uri;
     }
 
     /** Not-null value; ensure this value is available before it is saved to the database. */
-    public void setUrl(String url) {
-        this.url = url;
+    public void setUri(String uri) {
+        this.uri = uri;
     }
 
     /** Not-null value. */

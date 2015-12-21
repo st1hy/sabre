@@ -1,10 +1,6 @@
 package com.github.st1hy.sabre;
 
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -12,23 +8,18 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
+import com.github.st1hy.core.utils.ArgumentChangedHandler;
+import com.github.st1hy.core.utils.BacktrackAware;
 import com.github.st1hy.imagecache.CacheHandler;
 import com.github.st1hy.imagecache.CacheProvider;
 import com.github.st1hy.sabre.core.DependencyDelegate;
-import com.github.st1hy.sabre.history.content.HistoryUtils;
-import com.github.st1hy.sabre.image.ImageActivity;
-import com.github.st1hy.core.utils.ArgumentChangedHandler;
-import com.github.st1hy.core.utils.BacktrackAware;
 
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks, CacheProvider {
-    private static final int REQUEST_IMAGE = 0x16ed;
     private volatile boolean stopped = false;
     private final List<Runnable> afterRestore = new LinkedList<>();
     private DependencyDelegate dependencyDelegate;
@@ -141,50 +132,6 @@ public class MainActivity extends AppCompatActivity implements AndroidFragmentAp
     //Called using menu_history.xml
     public void onActionSettings(final MenuItem item) {
         setState(NavState.SETTINGS, null);
-    }
-
-    //Called using menu_history.xml
-    public void onActionOpen(final MenuItem item) {
-        onActionOpen();
-    }
-
-    //Called using history_open_floating_button.xml
-    public void onActionOpen(final View view) {
-        onActionOpen();
-    }
-
-    private void onActionOpen() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(intent, REQUEST_IMAGE);
-    }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case REQUEST_IMAGE:
-                if (resultCode == RESULT_OK && null != data) {
-                    Uri uri = data.getData();
-                    openImage(uri);
-                }
-                break;
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
-    public void openImage(final Uri uri) {
-        final Context context = getApplicationContext();
-        final Date date = new Date();
-        Application.CACHED_EXECUTOR_POOL.execute(new Runnable() {
-            @Override
-            public void run() {
-                HistoryUtils.updateDatabaseWithImage(context, uri, date, true);
-            }
-        });
-        final Bundle arguments = new Bundle();
-        arguments.putParcelable(NavState.ARG_IMAGE_URI, uri);
-        Intent intent = new Intent(this, ImageActivity.class);
-        intent.putExtras(arguments);
-        startActivity(intent);
     }
 
     @Override

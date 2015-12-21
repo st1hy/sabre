@@ -9,6 +9,7 @@ public class HistoryViewDelegate {
     private final View root;
     private View floatingButtonContainer;
     private View floatingButtonText;
+    private View floatingButton;
     private RecyclerView recyclerView;
     private View emptyView;
 
@@ -29,6 +30,15 @@ public class HistoryViewDelegate {
         }
         return floatingButtonText;
     }
+
+
+    public View getFloatingButton() {
+        if (floatingButton == null) {
+            floatingButton = getFloatingButtonContainer().findViewById(R.id.open_image_button);
+        }
+        return floatingButton;
+    }
+
 
     public RecyclerView getRecyclerView() {
         if (recyclerView == null) {

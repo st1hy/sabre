@@ -23,7 +23,7 @@ import de.greenrobot.dao.DaoLog;
 public class OpenedImageContentProvider extends ContentProvider {
 
     public static final String AUTHORITY = "com.github.st1hy.dao.provider";
-    public static final String BASE_PATH = "";
+    public static final String BASE_PATH = "imageHistory";
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + BASE_PATH);
     public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE
             + "/" + BASE_PATH;

@@ -6,7 +6,7 @@
     android:orientation="horizontal"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    tools:context=".gdx.history.HistoryFragment"
+    tools:context=".history.HistoryFragment"
     android:padding="8dp">
     <TextView
         android:id="@+id/text_open_image_help"
@@ -24,6 +24,5 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_gravity="center"
-        android:onClick="onActionOpen"
         app:fab_iconSrc="@drawable/ic_open"/>
 </LinearLayout>

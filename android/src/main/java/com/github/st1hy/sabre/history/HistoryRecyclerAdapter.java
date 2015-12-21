@@ -14,15 +14,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.github.st1hy.dao.OpenedImageContentProvider;
+import com.github.st1hy.dao.OpenedImageDao;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.worker.CacheEntryNameFactory;
 import com.github.st1hy.imagecache.worker.DrawableImageWorker;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
-import com.github.st1hy.sabre.MainActivity;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.history.content.HistoryContentProvider;
-import com.github.st1hy.sabre.history.content.HistoryTable;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -33,11 +32,13 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
 
     private final Context context;
     private final ImageWorker<Drawable> imageWorker;
+    private final OnImageClicked onImageClicked;
     private int numColumns = 1;
     private Cursor cursor;
 
-    public HistoryRecyclerAdapter(Context context, ImageCache imageCache) {
+    public HistoryRecyclerAdapter(Context context, ImageCache imageCache, OnImageClicked onImageClicked) {
         this.context = context;
+        this.onImageClicked = onImageClicked;
         this.imageWorker = new DrawableImageWorker(context, imageCache);
         imageWorker.setCacheEntryNameFactory(new CacheEntryNameFactory() {
             @Override
@@ -88,8 +89,8 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         if (position < numColumns) return;
         position -= numColumns;
         cursor.moveToPosition(position);
-        String uriAsString = cursor.getString(cursor.getColumnIndexOrThrow(HistoryTable.COLUMN_URI));
-        long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(HistoryTable.COLUMN_DATE_TIMESTAMP));
+        String uriAsString = cursor.getString(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Uri.columnName));
+        long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Date.columnName));
         final Uri uri = Uri.parse(uriAsString);
         imageWorker.loadImage(uri, holder.getImage());
         holder.getLastAccess().setText(DateFormat.getDateTimeInstance().format(new Date(timestamp)));
@@ -97,16 +98,16 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         holder.getMaterialRippleLayout().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) context).openImage(uri);
+                onImageClicked.openImage(uri);
             }
         });
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String[] projection = {HistoryTable.COLUMN_ID, HistoryTable.COLUMN_DATE_TIMESTAMP, HistoryTable.COLUMN_URI};
-        String sortingOrder = HistoryTable.COLUMN_DATE_TIMESTAMP + " DESC";
-        return new CursorLoader(context, HistoryContentProvider.CONTENT_URI, projection, null, null, sortingOrder);
+        String[] projection = {OpenedImageDao.Properties.Id.columnName, OpenedImageDao.Properties.Uri.columnName, OpenedImageDao.Properties.Date.columnName};
+        String sortingOrder = OpenedImageDao.Properties.Date.columnName + " DESC";
+        return new CursorLoader(context, OpenedImageContentProvider.CONTENT_URI, projection, null, null, sortingOrder);
     }
 
     @Override
@@ -119,5 +120,9 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     public void onLoaderReset(Loader<Cursor> loader) {
         cursor = null;
         notifyDataSetChanged();
+    }
+
+    public interface OnImageClicked {
+        void openImage(Uri uri);
     }
 }
