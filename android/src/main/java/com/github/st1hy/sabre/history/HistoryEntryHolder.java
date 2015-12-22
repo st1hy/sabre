@@ -6,47 +6,31 @@ import android.widget.TextView;
 
 import com.github.st1hy.sabre.R;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 public class HistoryEntryHolder extends RecyclerView.ViewHolder {
-    private final boolean empty;
-    private final ImageReceiverView image;
-    private final TextView imageName;
-    private final TextView lastAccess;
-
-    private final View materialRippleLayout;
-
-    private final View root;
+    @Bind(R.id.entry_image)
+    ImageReceiverView image;
+    @Bind(R.id.entry_resource)
+    TextView imageName;
+    @Bind(R.id.entry_date)
+    TextView lastAccess;
+    @Bind(R.id.history_material_frame)
+    View materialRippleLayout;
 
     private HistoryEntryHolder(View itemView) {
-        this(itemView, false);
-    }
-
-    private HistoryEntryHolder(View itemView, boolean isEmpty) {
         super(itemView);
-        this.root = itemView;
-        empty = isEmpty;
-        if (!isEmpty) {
-            materialRippleLayout = itemView.findViewById(R.id.history_material_frame);
-            image = (ImageReceiverView) itemView.findViewById(R.id.entry_image);
-            imageName = (TextView) itemView.findViewById(R.id.entry_resource);
-            lastAccess = (TextView) itemView.findViewById(R.id.entry_date);
-        } else {
-            materialRippleLayout = null;
-            image = null;
-            imageName = null;
-            lastAccess = null;
-        }
     }
 
     public static HistoryEntryHolder newHistoryItem(View itemView) {
-        return new HistoryEntryHolder(itemView);
+        HistoryEntryHolder holder = new HistoryEntryHolder(itemView);
+        ButterKnife.bind(holder, itemView);
+        return holder;
     }
 
     public static HistoryEntryHolder newEmptyItem(View itemView) {
-        return new HistoryEntryHolder(itemView, true);
-    }
-
-    public View getRoot() {
-        return root;
+        return new HistoryEntryHolder(itemView);
     }
 
     public TextView getLastAccess() {
@@ -59,10 +43,6 @@ public class HistoryEntryHolder extends RecyclerView.ViewHolder {
 
     public ImageReceiverView getImage() {
         return image;
-    }
-
-    public boolean isEmpty() {
-        return empty;
     }
 
     public View getMaterialRippleLayout() {

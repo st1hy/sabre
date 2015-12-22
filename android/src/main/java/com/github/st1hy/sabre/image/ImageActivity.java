@@ -51,12 +51,4 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
         }
         return cacheHandler;
     }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-//            SystemUIMode.IMMERSIVE_STICKY.apply(getWindow());
-        }
-    }
 }

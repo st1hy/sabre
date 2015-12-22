@@ -40,11 +40,13 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     private static final String STORE_MATRIX = "com.github.st1hy.sabre.transformation.matrix";
 
     private ImageGdxCore imageGdxCore;
-    private GdxViewDelegate viewDelegate;
+    private GdxViewHolder viewHolder;
     private ImageWorker<Bitmap> imageWorker;
     private AsyncImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
     private ImageOnTouchListener imageOnTouchListener;
     private final UiThreadHandler handler = new UiThreadHandler();
+
+    private Bitmap lastDrawn;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,8 +93,14 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         View root = inflater.inflate(R.layout.fragment_image_gl, container, false);
         View glSurface = initializeForView(imageGdxCore, initConfig());
         glSurface.setOnTouchListener(imageOnTouchListener);
-        viewDelegate = new GdxViewDelegate(root, glSurface);
+        viewHolder = new GdxViewHolder(glSurface).bind(root);
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        viewHolder.unbind();
     }
 
     @Override
@@ -154,8 +162,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     public void onImageLoaded() {
     }
 
-    private Bitmap lastDrawn;
-
     @Override
     public void redrawNeeded() {
         final Bitmap bitmap = imageReceiver.getImage();
@@ -193,12 +199,12 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     }
 
     private void onLoadingStarted() {
-        viewDelegate.getLoadingProgressBar().setVisibility(View.VISIBLE);
-        viewDelegate.getGlSurfaceContainer().setVisibility(View.INVISIBLE);
+        viewHolder.getLoadingProgressBar().setVisibility(View.VISIBLE);
+        viewHolder.getGlSurfaceContainer().setVisibility(View.INVISIBLE);
     }
 
     private void onLoadingFinished() {
-        viewDelegate.getLoadingProgressBar().setVisibility(View.GONE);
-        viewDelegate.getGlSurfaceContainer().setVisibility(View.VISIBLE);
+        viewHolder.getLoadingProgressBar().setVisibility(View.GONE);
+        viewHolder.getGlSurfaceContainer().setVisibility(View.VISIBLE);
     }
 }

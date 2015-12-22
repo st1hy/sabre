@@ -17,7 +17,7 @@ import com.github.st1hy.sabre.R;
 import com.github.st1hy.core.utils.MissingInterfaceException;
 
 public class SurfaceImageViewFragment extends Fragment implements ImageViewer.ImageLoadingCallback {
-    private SurfaceViewDelegate viewDelegate;
+    private final SurfaceViewHolder viewHolder = new SurfaceViewHolder();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,11 +29,17 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_image_surface, container, false);
-        viewDelegate = new SurfaceViewDelegate(root);
-        viewDelegate.getViewer().setLoadingCallback(this);
+        viewHolder.bind(root);
+        viewHolder.getViewer().setLoadingCallback(this);
         ImageCache imageCache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
-        viewDelegate.getViewer().addImageCache(imageCache);
+        viewHolder.getViewer().addImageCache(imageCache);
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        viewHolder.unbind();
     }
 
     private void sanityCheck() {
@@ -62,39 +68,33 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
     }
 
     private void setImageURI(Uri loadedImage) {
-        ImageViewer viewer = viewDelegate.getViewer();
+        ImageViewer viewer = viewHolder.getViewer();
         viewer.setImageURI(loadedImage);
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        viewDelegate.getViewer().onDestroy();
-    }
-
-    @Override
     public void onImageLoadingStarted() {
-        viewDelegate.getViewer().setVisibility(View.INVISIBLE);
-        viewDelegate.getLoadingProgressBar().setVisibility(View.VISIBLE);
+        viewHolder.getViewer().setVisibility(View.INVISIBLE);
+        viewHolder.getLoadingProgressBar().setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onImageLoadingFinished() {
-        viewDelegate.getViewer().setVisibility(View.VISIBLE);
-        viewDelegate.getLoadingProgressBar().setVisibility(View.GONE);
+        viewHolder.getViewer().setVisibility(View.VISIBLE);
+        viewHolder.getLoadingProgressBar().setVisibility(View.GONE);
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
-        viewDelegate.getViewer().onResume();
+        viewHolder.getViewer().onResume();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        viewDelegate.getViewer().onPause();
+        viewHolder.getViewer().onPause();
     }
 
 }

@@ -16,6 +16,7 @@ public abstract class ViewBinder {
 
     public ViewBinder unbind() {
         ButterKnife.unbind(this);
+        root = null;
         return this;
     }
 

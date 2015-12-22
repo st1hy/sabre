@@ -37,7 +37,7 @@ import java.util.Date;
 
 public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.OnImageClicked {
     private static final int REQUEST_IMAGE = 0x16ed;
-    private HistoryViewDelegate viewDelegate;
+    private final HistoryViewHolder viewHolder =  new HistoryViewHolder();
     private static final String SAVE_ANIMATION_SHOW_FLAG = "animation shown";
     private boolean showHelp = true;
     private HistoryRecyclerAdapter historyAdapter;
@@ -83,10 +83,10 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_history, container, false);
-        viewDelegate = new HistoryViewDelegate(root);
-        viewDelegate.getRecyclerView().setAdapter(historyAdapter);
-        viewDelegate.getRecyclerView().setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
-        viewDelegate.getFloatingButtonText().setVisibility(View.GONE);
+        viewHolder.bind(root);
+        viewHolder.getRecyclerView().setAdapter(historyAdapter);
+        viewHolder.getRecyclerView().setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
+        viewHolder.getFloatingButtonText().setVisibility(View.GONE);
         getLoaderManager().initLoader(0, null, new LoaderManager.LoaderCallbacks<Cursor>() {
             @Override
             public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -104,13 +104,19 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
                 historyAdapter.onLoaderReset(loader);
             }
         });
-        viewDelegate.getFloatingButton().setOnClickListener(new View.OnClickListener() {
+        viewHolder.getFloatingButton().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onActionOpen();
             }
         });
         return root;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        viewHolder.unbind();
     }
 
     private void onActionOpen() {
@@ -122,9 +128,9 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
     private void onDataLoaded(Cursor data) {
         if (data.getCount() > 0) {
             showHelp = false;
-            viewDelegate.getEmptyView().setVisibility(View.GONE);
+            viewHolder.getEmptyView().setVisibility(View.GONE);
         } else if (showHelp) {
-            viewDelegate.getFloatingButtonText().setVisibility(View.VISIBLE);
+            viewHolder.getFloatingButtonText().setVisibility(View.VISIBLE);
             fade_out.setDuration(2000);
             fade_out.setStartOffset(5000);
             fade_out.setAnimationListener(new Animation.AnimationListener() {
@@ -135,14 +141,14 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
                 @Override
                 public void onAnimationEnd(Animation animation) {
                     showHelp = false;
-                    viewDelegate.getFloatingButtonText().setVisibility(View.GONE);
+                    viewHolder.getFloatingButtonText().setVisibility(View.GONE);
                 }
 
                 @Override
                 public void onAnimationRepeat(Animation animation) {
                 }
             });
-            viewDelegate.getFloatingButtonText().startAnimation(fade_out);
+            viewHolder.getFloatingButtonText().startAnimation(fade_out);
         }
     }
 
