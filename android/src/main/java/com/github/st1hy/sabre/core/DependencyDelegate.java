@@ -7,7 +7,7 @@ import android.support.annotation.NonNull;
 import com.github.st1hy.imagecache.CacheHandler;
 import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.MainActivity;
-import com.github.st1hy.sabre.SettingsFragment;
+import com.github.st1hy.sabre.settings.SettingsFragment;
 
 public class DependencyDelegate implements ComponentCallbacks2 {
     private final MainActivity mainActivity;

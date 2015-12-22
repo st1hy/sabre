@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import com.github.st1hy.sabre.image.gdx.GdxImageViewerFragment;
 import com.github.st1hy.sabre.history.HistoryFragment;
 import com.github.st1hy.sabre.image.surface.SurfaceImageViewFragment;
+import com.github.st1hy.sabre.settings.SettingsFragment;
 
 public enum NavState {
     HISTORY(HistoryFragment.class),

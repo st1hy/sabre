@@ -46,6 +46,7 @@ dependencies {
     compile 'org.st1hy.android:gesture-detector:1.0.1@aar'
     compile 'com.github.rey5137:material:1.2.2'
     compile 'com.balysv:material-ripple:1.0.2'
+    compile 'com.jakewharton:butterknife:7.0.1'
 
     compile "com.badlogicgames.gdx:gdx-backend-android:$rootProject.ext.gdxVersion"
     natives "com.badlogicgames.gdx:gdx-platform:$rootProject.ext.gdxVersion:natives-armeabi"
