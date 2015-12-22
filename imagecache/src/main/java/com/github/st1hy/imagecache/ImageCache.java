@@ -24,11 +24,10 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
-import android.util.Log;
 import android.util.LruCache;
 
-import com.github.st1hy.retainer.Retainer;
 import com.github.st1hy.core.utils.Utils;
+import com.github.st1hy.retainer.Retainer;
 import com.google.common.hash.Hashing;
 
 import java.io.File;
@@ -38,6 +37,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+
+import timber.log.Timber;
 
 /**
  * Taken from DisplayingBitmaps example.
@@ -49,7 +50,7 @@ import java.nio.charset.Charset;
  * class
  */
 public class ImageCache {
-    private static final String TAG = "ImageCache";
+    private static final String TAG = ImageCache.class.getCanonicalName();
 
     // Default memory cache size in kilobytes
     private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 5; // 5MB
@@ -86,11 +87,10 @@ public class ImageCache {
     private ImageCache(ImageCacheParams cacheParams) {
         mCacheParams = cacheParams;
 
-        //BEGIN_INCLUDE(init_memory_cache)
         // Set up memory cache
         if (mCacheParams.memoryCacheEnabled) {
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Memory cache created (size = " + mCacheParams.memCacheSize + ")");
+                Timber.d("Memory cache created (size = %d )", mCacheParams.memCacheSize);
             }
 
             // If we're running on Honeycomb or newer, create a set of reusable bitmaps that can be
@@ -114,7 +114,7 @@ public class ImageCache {
                 protected void entryRemoved(boolean evicted, String key, Bitmap oldValue, Bitmap newValue) {
                     //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
 //                    synchronized (mReusableBitmaps) {
-//                        Log.d(TAG, "Cache eviction: adding bitmap as reusable: " + key + " " + oldValue.hashCode());
+//                        Timber.d("Cache eviction: adding bitmap as reusable: " + key + " " + oldValue.hashCode());
 //                        mReusableBitmaps.add(new SoftReference<>(oldValue));
 //                    }
                 }
@@ -134,7 +134,6 @@ public class ImageCache {
             //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
 //            mReusableBitmaps = null;
         }
-        //END_INCLUDE(init_memory_cache)
 
         // By default the disk cache is not initialized here as it should be initialized
         // on a separate thread due to disk access.
@@ -186,11 +185,11 @@ public class ImageCache {
                             mDiskLruCache = DiskLruCache.open(
                                     diskCacheDir, 1, 1, mCacheParams.diskCacheSize);
                             if (BuildConfig.DEBUG) {
-                                Log.d(TAG, "Disk cache initialized");
+                                Timber.d("Disk cache initialized");
                             }
                         } catch (final IOException e) {
                             mCacheParams.diskCacheDir = null;
-                            Log.e(TAG, "initDiskCache - " + e);
+                            Timber.e(e, "initDiskCache failed");
                         }
                     }
                 }
@@ -246,7 +245,7 @@ public class ImageCache {
                             snapshot.getInputStream(DISK_CACHE_INDEX).close();
                         }
                     } catch (Exception e) {
-                        Log.e(TAG, "addBitmapToCache - " + e);
+                        Timber.e(e, "addBitmapToCache failed");
                     }
                 }
             }
@@ -260,7 +259,6 @@ public class ImageCache {
      * @return The bitmap drawable if found in cache, null otherwise
      */
     public Bitmap getBitmapFromMemCache(String data) {
-        //BEGIN_INCLUDE(get_bitmap_from_mem_cache)
         Bitmap memValue = null;
 
         if (mMemoryCache != null) {
@@ -268,11 +266,10 @@ public class ImageCache {
         }
 
         if (BuildConfig.DEBUG && memValue != null) {
-            Log.d(TAG, "Memory cache hit "+ data + " bitmap "+ memValue.toString() );
+            Timber.d("Memory cache hit %s bitmap %s", data, memValue.toString());
         }
 
         return memValue;
-        //END_INCLUDE(get_bitmap_from_mem_cache)
     }
 
     /**
@@ -282,7 +279,6 @@ public class ImageCache {
      * @return The bitmap if found in cache, null otherwise
      */
     public Bitmap getBitmapFromDiskCache(String data) {
-        //BEGIN_INCLUDE(get_bitmap_from_disk_cache)
         if (!mCacheParams.diskCacheEnabled) return null;
         final String key = hashKeyForDisk(data);
         Bitmap bitmap = null;
@@ -300,7 +296,7 @@ public class ImageCache {
                     final DiskLruCache.Snapshot snapshot = mDiskLruCache.get(key);
                     if (snapshot != null) {
                         if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "Disk cache hit");
+                            Timber.d("Disk cache hit");
                         }
                         inputStream = snapshot.getInputStream(DISK_CACHE_INDEX);
                         if (inputStream != null) {
@@ -313,19 +309,19 @@ public class ImageCache {
                         }
                     }
                 } catch (final IOException e) {
-                    Log.e(TAG, "getBitmapFromDiskCache - " + e);
+                    Timber.e(e, "getBitmapFromDiskCache failed");
                 } finally {
                     try {
                         if (inputStream != null) {
                             inputStream.close();
                         }
                     } catch (IOException e) {
+                        Timber.e(e, "getBitmapFromDiskCache failed closing stream");
                     }
                 }
             }
             return bitmap;
         }
-        //END_INCLUDE(get_bitmap_from_disk_cache)
     }
 
     //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
@@ -334,12 +330,11 @@ public class ImageCache {
 //     * @return Bitmap that case be used for inBitmap
 //     */
 //    protected Bitmap getBitmapFromReusableSet(BitmapFactory.Options options) {
-//        //BEGIN_INCLUDE(get_bitmap_from_reusable_set)
 //        Bitmap bitmap = null;
 //
 //        if (mReusableBitmaps != null && !mReusableBitmaps.isEmpty()) {
 //            synchronized (mReusableBitmaps) {
-//                Log.d(TAG, "Searching for reusable bitmap.");
+//                Timber.d("Searching for reusable bitmap.");
 //                final Iterator<SoftReference<Bitmap>> iterator = mReusableBitmaps.iterator();
 //                Bitmap item;
 //
@@ -360,19 +355,18 @@ public class ImageCache {
 //                        iterator.remove();
 //                    }
 //                }
-//                Log.d(TAG, "Search complete. Found: " + (bitmap != null ? bitmap.hashCode() : "null"));
+//                Timber.d("Search complete. Found: " + (bitmap != null ? bitmap.hashCode() : "null"));
 //            }
 //        }
 //
 //        return bitmap;
-//        //END_INCLUDE(get_bitmap_from_reusable_set)
 //    }
 
     public void clearMemory() {
         if (mMemoryCache != null) {
             mMemoryCache.evictAll();
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Memory cache cleared");
+                Timber.d("Memory cache cleared");
             }
         }
     }
@@ -390,10 +384,10 @@ public class ImageCache {
                 try {
                     mDiskLruCache.delete();
                     if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Disk cache cleared");
+                        Timber.d("Disk cache cleared");
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "clearCache - " + e);
+                    Timber.e(e, "clearCache failed");
                 }
                 mDiskLruCache = null;
                 initDiskCache();
@@ -411,10 +405,10 @@ public class ImageCache {
                 try {
                     mDiskLruCache.flush();
                     if (BuildConfig.DEBUG) {
-                        Log.d(TAG, "Disk cache flushed");
+                        Timber.d("Disk cache flushed");
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "flush - " + e);
+                    Timber.e(e, "Disk cache flush failed");
                 }
             }
         }
@@ -432,11 +426,11 @@ public class ImageCache {
                         mDiskLruCache.close();
                         mDiskLruCache = null;
                         if (BuildConfig.DEBUG) {
-                            Log.d(TAG, "Disk cache closed");
+                            Timber.d("Disk cache closed");
                         }
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "close - " + e);
+                    Timber.e(e, "closing disk cache failed");
                 }
             }
         }

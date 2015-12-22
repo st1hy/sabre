@@ -23,4 +23,5 @@ dependencies {
     compile project(':utils')
     compile 'com.android.support:appcompat-v7:23.1.1'
     compile 'com.google.guava:guava:18.0'
+    compile 'com.jakewharton.timber:timber:4.1.0'
 }

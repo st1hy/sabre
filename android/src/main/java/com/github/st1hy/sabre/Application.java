@@ -10,6 +10,8 @@ import com.github.st1hy.core.utils.Utils;
 
 import java.util.concurrent.Executor;
 
+import timber.log.Timber;
+
 public class Application extends android.app.Application implements Retainer {
     private final ObjectRetainer retainer = new ObjectRetainer();
 
@@ -18,6 +20,9 @@ public class Application extends android.app.Application implements Retainer {
     @Override
     public void onCreate() {
         super.onCreate();
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
         Config.DEBUG = BuildConfig.DEBUG;
     }
 
@@ -31,5 +36,4 @@ public class Application extends android.app.Application implements Retainer {
     public void put(@NonNull String key, @Nullable Object value) {
         retainer.put(key, value);
     }
-
 }

@@ -9,7 +9,6 @@ import android.opengl.GLUtils;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,24 +18,25 @@ import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.github.st1hy.core.BackgroundColor;
+import com.github.st1hy.core.ImageGdxCore;
+import com.github.st1hy.core.ImageTexture;
+import com.github.st1hy.core.utils.MissingInterfaceException;
+import com.github.st1hy.core.utils.UiThreadHandler;
+import com.github.st1hy.core.utils.Utils;
+import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.imagecache.CacheProvider;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.worker.BitmapImageWorker;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
-import com.github.st1hy.core.BackgroundColor;
-import com.github.st1hy.core.ImageGdxCore;
-import com.github.st1hy.core.ImageTexture;
-import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
-import com.github.st1hy.core.utils.MissingInterfaceException;
-import com.github.st1hy.core.utils.UiThreadHandler;
-import com.github.st1hy.core.utils.Utils;
+
+import timber.log.Timber;
 
 public class GdxImageViewerFragment extends AndroidFragmentApplication implements AsyncImageReceiver.Callback {
-    private static final String TAG = "GdxImageViewerFragment";
     private static final String STORE_MATRIX = "com.github.st1hy.sabre.transformation.matrix";
 
     private ImageGdxCore imageGdxCore;
@@ -167,12 +167,12 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         final Bitmap bitmap = imageReceiver.getImage();
         if (bitmap == null) {
             if (Config.DEBUG) {
-                Log.e(TAG, "Nothing to draw despite caller says otherwise!");
+                Timber.w("Nothing to draw despite caller says otherwise!");
             }
             return;
         }
         if (Config.DEBUG) {
-            Log.v(TAG, "Redrawing bitmap");
+            Timber.v("Redrawing bitmap");
         }
         if (bitmap != lastDrawn) {
             lastDrawn = bitmap;
@@ -180,7 +180,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                 @Override
                 public void run() {
                     if (Config.DEBUG) {
-                        Log.v(TAG, "Loading texture");
+                        Timber.v("Loading texture");
                     }
                     Texture tex = new Texture(bitmap.getWidth(), bitmap.getHeight(), Pixmap.Format.RGBA8888);
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex.getTextureObjectHandle());

@@ -4,7 +4,6 @@ package com.github.st1hy.imagecache.worker;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import com.github.st1hy.imagecache.BuildConfig;
 import com.github.st1hy.imagecache.ImageCache;
@@ -12,11 +11,12 @@ import com.github.st1hy.imagecache.ImageCache;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
 
+import timber.log.Timber;
+
 /**
  * Common bitmap worker behavior for every worker
  */
 public class BitmapWorkerDelegate<T> implements Callable<T> {
-    private static final String TAG = "BitmapWorkerDelegate";
     private final Object mPauseWorkLock;
     private final Uri uri;
     private final String cacheIndex;
@@ -60,7 +60,7 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
     @Override
     public T call() {
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "runnable - starting work");
+            Timber.d("runnable - starting work");
         }
         Bitmap bitmap = null;
         T image = null;
@@ -108,7 +108,7 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
         }
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "finished work " + image + " " + bitmap);
+            Timber.d("finished work " + image + " " + bitmap);
         }
         this.bitmap = bitmap;
         return image;
@@ -122,7 +122,7 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
         final ImageReceiver<T> imageView = getAttachedImageView();
         if (image != null && imageView != null) {
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "setting bitmap");
+                Timber.d("setting bitmap");
             }
             callback.setFinalImageAndReleasePrevious(imageView, image, bitmap);
         }

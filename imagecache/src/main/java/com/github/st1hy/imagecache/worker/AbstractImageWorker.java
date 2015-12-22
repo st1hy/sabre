@@ -22,23 +22,23 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.util.Log;
 
+import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.imagecache.BuildConfig;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.ImageResizer;
-import com.github.st1hy.core.utils.Utils;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 
+import timber.log.Timber;
+
 /**
  * Taken from DisplayingBitmaps example.
  */
 public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWorkerTask.Callback<T> {
-    private static final String TAG = "ImageWorker";
     protected static final int FADE_IN_TIME = 250;
 
     private final ImageCache mImageCache;
@@ -120,7 +120,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancelTask(true);
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "cancelWork - cancelled work for " + bitmapWorkerTask.getCacheIndex());
+                Timber.d("cancelWork - cancelled work for %d", bitmapWorkerTask.getCacheIndex());
             }
         }
     }
@@ -133,7 +133,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
             if (cacheIndex == null || !cacheIndex.equals(getCacheIndex(uri))) {
                 bitmapWorkerTask.cancelTask(true);
                 if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "cancelPotentialWork - cancelled work for " + cacheIndex);
+                    Timber.d("cancelPotentialWork - cancelled work for %d", cacheIndex);
                 }
             } else {
                 // The same work is already in progress.
@@ -154,7 +154,8 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
     }
 
     @Override
-    public String getCacheIndex(Uri uri) {
+    @NonNull
+    public String getCacheIndex(@NonNull Uri uri) {
         return cacheEntryNameFactory.getCacheIndex(uri);
     }
 
