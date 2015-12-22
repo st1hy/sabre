@@ -53,7 +53,6 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     }
 
     public void onDestroy() {
-        if (cursor != null) cursor.close();
         imageWorker.setExitTasksEarly(true);
     }
 
