@@ -44,6 +44,7 @@
                 android:id="@+id/setting_checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:saveEnabled="false"
                 style="@style/AppTheme.Checkbox"/>
         </FrameLayout>
     </RelativeLayout>
