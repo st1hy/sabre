@@ -3,12 +3,11 @@ package com.github.st1hy.retainer;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ObjectRetainer implements Retainer {
-    private final Map<String,Object> map = Collections.synchronizedMap(new HashMap<String, Object>());
+    private final Map<String,Object> map = new ConcurrentHashMap<>();
 
     @Override
     @Nullable

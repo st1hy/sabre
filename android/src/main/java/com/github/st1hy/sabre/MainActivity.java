@@ -12,14 +12,14 @@ import android.view.MenuItem;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.github.st1hy.core.utils.ArgumentChangedHandler;
 import com.github.st1hy.core.utils.BacktrackAware;
-import com.github.st1hy.imagecache.CacheHandler;
-import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.imagecache.ImageCacheHandler;
+import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.sabre.core.DependencyDelegate;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks, CacheProvider {
+public class MainActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks, ImageCacheProvider {
     private volatile boolean stopped = false;
     private final List<Runnable> afterRestore = new LinkedList<>();
     private DependencyDelegate dependencyDelegate;
@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements AndroidFragmentAp
 
     @Override
     @NonNull
-    public CacheHandler getCacheHandler() {
-        return getDependencyDelegate().getCacheHandler();
+    public ImageCacheHandler getImageCacheHandler() {
+        return getDependencyDelegate().getImageCacheHandler();
     }
 }

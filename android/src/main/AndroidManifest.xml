@@ -25,7 +25,16 @@
             android:name=".image.ImageActivity"
             android:label="@string/app_name"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/ImageAppTheme"/>
+            android:theme="@style/ImageAppTheme">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>

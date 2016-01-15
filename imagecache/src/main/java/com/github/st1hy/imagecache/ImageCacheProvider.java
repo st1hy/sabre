@@ -2,8 +2,8 @@ package com.github.st1hy.imagecache;
 
 import android.support.annotation.NonNull;
 
-public interface CacheProvider {
+public interface ImageCacheProvider {
 
     @NonNull
-    CacheHandler getCacheHandler();
+    ImageCacheHandler getImageCacheHandler();
 }

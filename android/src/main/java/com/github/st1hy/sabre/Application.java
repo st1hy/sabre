@@ -1,19 +1,20 @@
 package com.github.st1hy.sabre;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import android.database.sqlite.SQLiteDatabase;
 
-import com.github.st1hy.retainer.ObjectRetainer;
-import com.github.st1hy.retainer.Retainer;
-import com.github.st1hy.gesturedetector.Config;
+import com.github.st1hy.collect.MutableRestrictiveClassToInstanceMap;
+import com.github.st1hy.collect.RestrictiveClassToInstanceMap;
 import com.github.st1hy.core.utils.Utils;
+import com.github.st1hy.dao.DaoMaster;
+import com.github.st1hy.gesturedetector.Config;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 import timber.log.Timber;
 
-public class Application extends android.app.Application implements Retainer {
-    private final ObjectRetainer retainer = new ObjectRetainer();
+public class Application extends android.app.Application {
+    private final RestrictiveClassToInstanceMap map = MutableRestrictiveClassToInstanceMap.create(new ConcurrentHashMap<Class<?>, Object>());
 
     public static final Executor CACHED_EXECUTOR_POOL = Utils.CACHED_EXECUTOR_POOL;
 
@@ -24,16 +25,16 @@ public class Application extends android.app.Application implements Retainer {
             Timber.plant(new Timber.DebugTree());
         }
         Config.DEBUG = BuildConfig.DEBUG;
+        configureDao();
     }
 
-    @Override
-    @Nullable
-    public Object get(@NonNull String key) {
-        return retainer.get(key);
+    private void configureDao() {
+        DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper(this, "images.db", null);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        map.putInstance(DaoMaster.class, new DaoMaster(db));
     }
 
-    @Override
-    public void put(@NonNull String key, @Nullable Object value) {
-        retainer.put(key, value);
+    public RestrictiveClassToInstanceMap getCache() {
+        return map;
     }
 }

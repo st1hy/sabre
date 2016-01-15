@@ -1,5 +1,6 @@
 package com.github.st1hy.sabre.history;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
@@ -20,6 +21,10 @@ public class HistoryViewHolder extends ViewBinder {
     @Bind(R.id.empty_view)
     View emptyView;
 
+    @Override
+    public ViewBinder bind(@NonNull View view) {
+        return super.bind(view);
+    }
 
     public View getFloatingButtonContainer() {
         return floatingButtonContainer;

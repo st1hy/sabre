@@ -10,7 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
@@ -31,7 +31,7 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
         View root = inflater.inflate(R.layout.fragment_image_surface, container, false);
         viewHolder.bind(root);
         viewHolder.getViewer().setLoadingCallback(this);
-        ImageCache imageCache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
+        ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
         viewHolder.getViewer().addImageCache(imageCache);
         return root;
     }
@@ -43,7 +43,7 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
     }
 
     private void sanityCheck() {
-        MissingInterfaceException.parentSanityCheck(this, CacheProvider.class);
+        MissingInterfaceException.parentSanityCheck(this, ImageCacheProvider.class);
     }
 
     @Override

@@ -13,7 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.balysv.materialripple.MaterialRippleLayout;
-import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.injector.ViewBinder;
 
@@ -61,7 +61,7 @@ public class SettingsFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_settings, container, false);
         ButterKnife.bind(this, root);
         viewBinders.add(new EnableOpenGLHolder(preferences).bind(settingViews.get(0)));
-        viewBinders.add(new ClearCacheHolder((CacheProvider) getActivity()).bind(settingViews.get(1)));
+        viewBinders.add(new ClearCacheHolder((ImageCacheProvider) getActivity()).bind(settingViews.get(1)));
         ButterKnife.apply(settingViews, RIPPLE, rippleColor);
         return root;
     }

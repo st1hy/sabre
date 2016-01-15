@@ -25,7 +25,7 @@ import com.github.st1hy.core.utils.MissingInterfaceException;
 import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.Config;
-import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.worker.BitmapImageWorker;
 import com.github.st1hy.imagecache.worker.ImageWorker;
@@ -53,7 +53,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         super.onCreate(savedInstanceState);
         sanityCheck();
         this.imageGdxCore = new ImageGdxCore(getBackground());
-        ImageCache imageCache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
+        ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
         imageWorker = new BitmapImageWorker(getActivity(), imageCache);
         imageWorker.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
         imageOnTouchListener = new ImageOnTouchListener(imageGdxCore);
@@ -66,7 +66,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     }
 
     private void sanityCheck() {
-        MissingInterfaceException.parentSanityCheck(this, CacheProvider.class);
+        MissingInterfaceException.parentSanityCheck(this, ImageCacheProvider.class);
     }
 
     private BackgroundColor getBackground() {

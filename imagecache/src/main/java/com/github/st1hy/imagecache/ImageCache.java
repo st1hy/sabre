@@ -24,9 +24,11 @@ import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.util.LruCache;
 
 import com.github.st1hy.core.utils.Utils;
+import com.github.st1hy.imagecache.storage.ImageCacheStorage;
 import com.github.st1hy.retainer.Retainer;
 import com.google.common.hash.Hashing;
 
@@ -46,12 +48,10 @@ import timber.log.Timber;
  * *****************************************************************************
  * This class handles disk and memory caching of bitmaps in conjunction with the
  * {@link com.github.st1hy.imagecache.worker.AbstractImageWorker} class and its subclasses. Use
- * {@link ImageCache#getInstance(Retainer, ImageCacheParams)} to get an instance of this
+ * {@link ImageCache#getInstance(ImageCacheStorage, ImageCacheParams)} to get an instance of this
  * class
  */
 public class ImageCache {
-    private static final String TAG = ImageCache.class.getCanonicalName();
-
     // Default memory cache size in kilobytes
     private static final int DEFAULT_MEM_CACHE_SIZE = 1024 * 5; // 5MB
 
@@ -79,7 +79,7 @@ public class ImageCache {
     /**
      * Create a new ImageCache object using the specified parameters. This should not be
      * called directly by other classes, instead use
-     * {@link ImageCache#getInstance(Retainer, ImageCacheParams)} to fetch an ImageCache
+     * {@link ImageCache#getInstance(ImageCacheStorage, ImageCacheParams)} to fetch an ImageCache
      * instance.
      *
      * @param cacheParams The cache parameters to use to initialize the cache
@@ -147,18 +147,18 @@ public class ImageCache {
      * Return an {@link ImageCache} instance. A {@link Retainer} is used to retain the
      * ImageCache object across configuration changes such as a change in device orientation.
      *
-     * @param retainer The retainer instance to use when dealing with storing cache instance.
+     * @param storage The retainer instance to use when dealing with storing cache instance.
      * @param cacheParams     The cache parameters to use if the ImageCache needs instantiation.
      * @return An existing retained ImageCache object or a new one if one did not exist
      */
-    public static ImageCache getInstance(Retainer retainer, ImageCacheParams cacheParams) {
+    public static ImageCache getInstance(@NonNull ImageCacheStorage storage, @NonNull ImageCacheParams cacheParams) {
         // See if we already have an ImageCache stored in RetainFragment
-        ImageCache imageCache = (ImageCache) retainer.get(TAG);
+        ImageCache imageCache = storage.get();
 
         // No existing ImageCache, create one and store it in RetainFragment
         if (imageCache == null) {
             imageCache = new ImageCache(cacheParams.clone());
-            retainer.put(TAG, imageCache);
+            storage.set(imageCache);
         }
 
         return imageCache;
@@ -462,7 +462,7 @@ public class ImageCache {
 
         /**
          * Create a set of image cache parameters that can be provided to
-         * {@link ImageCache#getInstance(Retainer, ImageCacheParams)}
+         * {@link ImageCache#getInstance(ImageCacheStorage, ImageCacheParams)}
          *
          * @param context                A context to use.
          * @param diskCacheDirectoryName A unique subdirectory name that will be appended to the

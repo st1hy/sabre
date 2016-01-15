@@ -4,16 +4,16 @@ import android.support.annotation.NonNull;
 import android.view.View;
 
 import com.github.st1hy.core.utils.Utils;
-import com.github.st1hy.imagecache.CacheProvider;
+import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.injector.ViewBinder;
 
 public class ClearCacheHolder extends SettingOnOffHolder implements View.OnClickListener {
-    private final CacheProvider cacheProvider;
+    private final ImageCacheProvider imageCacheProvider;
 
-    public ClearCacheHolder(CacheProvider cacheProvider) {
-        this.cacheProvider = cacheProvider;
+    public ClearCacheHolder(ImageCacheProvider imageCacheProvider) {
+        this.imageCacheProvider = imageCacheProvider;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class ClearCacheHolder extends SettingOnOffHolder implements View.OnClick
 
     @Override
     public void onClick(View v) {
-        final ImageCache cache = cacheProvider.getCacheHandler().getCache();
+        final ImageCache cache = imageCacheProvider.getImageCacheHandler().getCache();
         Utils.CACHED_EXECUTOR_POOL.execute(new Runnable() {
             @Override
             public void run() {

@@ -1,5 +1,6 @@
 package com.github.st1hy.sabre;
 
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 
 import com.github.st1hy.sabre.image.gdx.GdxImageViewerFragment;
@@ -23,6 +24,7 @@ public enum NavState {
         this.mClass = mClass;
     }
 
+    @NonNull
     public Fragment newInstance() {
         Exception exception;
         try {

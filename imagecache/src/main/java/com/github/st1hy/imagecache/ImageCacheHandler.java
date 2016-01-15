@@ -5,6 +5,8 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 
+import com.github.st1hy.imagecache.storage.ImageCacheStorage;
+import com.github.st1hy.imagecache.storage.RetainerToImageStorageAdapter;
 import com.github.st1hy.retainer.RetainFragment;
 import com.github.st1hy.retainer.Retainer;
 import com.github.st1hy.retainer.SupportRetainFragment;
@@ -12,15 +14,15 @@ import com.github.st1hy.core.utils.Utils;
 
 import java.util.concurrent.Executor;
 
-public class CacheHandler {
+public class ImageCacheHandler {
     private final ImageCache cache;
     private final Executor executor = Utils.CACHED_EXECUTOR_POOL;
 
-    private CacheHandler(@NonNull Activity activity) {
+    private ImageCacheHandler(@NonNull Activity activity) {
         this.cache = initCacheFromRetainFragment(activity);
     }
 
-    private CacheHandler(@NonNull Context context, @NonNull Retainer retainer) {
+    private ImageCacheHandler(@NonNull Context context, @NonNull ImageCacheStorage retainer) {
         this.cache = createCache(context, retainer);
     }
 
@@ -34,11 +36,12 @@ public class CacheHandler {
         Retainer retainer = activity instanceof FragmentActivity ?
                 SupportRetainFragment.findOrCreateRetainFragment(((FragmentActivity) activity).getSupportFragmentManager()) :
                 RetainFragment.findOrCreateRetainFragment(activity.getFragmentManager());
-        return createCache(activity, retainer);
+        ImageCacheStorage storage = new RetainerToImageStorageAdapter(retainer);
+        return createCache(activity, storage);
     }
 
     @NonNull
-    private ImageCache createCache(@NonNull Context context, @NonNull Retainer retainer) {
+    private ImageCache createCache(@NonNull Context context, @NonNull ImageCacheStorage retainer) {
         ImageCache.ImageCacheParams params = new ImageCache.ImageCacheParams(context, "images");
         params.diskCacheEnabled = true;
         params.setMemCacheSizePercent(0.25f);
@@ -53,13 +56,13 @@ public class CacheHandler {
     }
 
     @NonNull
-    public static CacheHandler getInstance(@NonNull Activity activity) {
-        return new CacheHandler(activity);
+    public static ImageCacheHandler getInstance(@NonNull Activity activity) {
+        return new ImageCacheHandler(activity);
     }
 
     @NonNull
-    public static CacheHandler getInstance(@NonNull Context context, @NonNull Retainer retainer) {
-        return new CacheHandler(context, retainer);
+    public static ImageCacheHandler getInstance(@NonNull Context context, @NonNull ImageCacheStorage retainer) {
+        return new ImageCacheHandler(context, retainer);
     }
 
     public void onStop() {

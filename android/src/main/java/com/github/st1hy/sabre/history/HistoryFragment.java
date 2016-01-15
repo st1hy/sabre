@@ -3,7 +3,6 @@ package com.github.st1hy.sabre.history;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -23,15 +22,13 @@ import android.view.animation.AnimationUtils;
 
 import com.github.st1hy.core.utils.MissingInterfaceException;
 import com.github.st1hy.dao.DaoMaster;
-import com.github.st1hy.dao.DaoSession;
-import com.github.st1hy.dao.OpenImageUtils;
 import com.github.st1hy.dao.OpenedImageContentProvider;
-import com.github.st1hy.imagecache.CacheProvider;
 import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.sabre.Application;
-import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.image.ImageActivity;
+import com.google.common.base.Preconditions;
 
 import java.util.Date;
 
@@ -43,8 +40,6 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
     private HistoryRecyclerAdapter historyAdapter;
     private Animation fade_out;
 
-    private DaoSession daoSession;
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,18 +47,17 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
         setHasOptionsMenu(true);
         fade_out = AnimationUtils.loadAnimation(getActivity(), R.anim.fade_out);
         showHelp = needShowHelp(savedInstanceState);
-        ImageCache imageCache = ((CacheProvider) getActivity()).getCacheHandler().getCache();
+        ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
         historyAdapter = new HistoryRecyclerAdapter(getActivity(), imageCache, this);
 
-        DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper(getActivity(), "images.db", null);
-        SQLiteDatabase db = helper.getWritableDatabase();
-        DaoMaster daoMaster = new DaoMaster(db);
-        daoSession = daoMaster.newSession();
-        OpenedImageContentProvider.daoSession = daoSession;
+        Application app = (Application) getActivity().getApplication();
+        DaoMaster daoMaster = app.getCache().getInstance(DaoMaster.class);
+        Preconditions.checkNotNull(daoMaster);
+        OpenedImageContentProvider.daoSession = daoMaster.newSession();
     }
 
     private void sanityCheck() {
-        MissingInterfaceException.parentSanityCheck(this, CacheProvider.class);
+        MissingInterfaceException.parentSanityCheck(this, ImageCacheProvider.class);
     }
 
     @Override
@@ -192,16 +186,7 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
     @Override
     public void openImage(final Uri uri) {
         final Date date = new Date();
-        Application.CACHED_EXECUTOR_POOL.execute(new Runnable() {
-            @Override
-            public void run() {
-                OpenImageUtils.updateOpenedImage(getActivity(), daoSession, uri, date);
-            }
-        });
-        final Bundle arguments = new Bundle();
-        arguments.putParcelable(NavState.ARG_IMAGE_URI, uri);
-        Intent intent = new Intent(getActivity(), ImageActivity.class);
-        intent.putExtras(arguments);
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri, getActivity(), ImageActivity.class);
         startActivity(intent);
     }
 }
