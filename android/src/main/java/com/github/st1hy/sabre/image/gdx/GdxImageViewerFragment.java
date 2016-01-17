@@ -25,14 +25,15 @@ import com.github.st1hy.core.utils.MissingInterfaceException;
 import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.Config;
-import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.imagecache.worker.BitmapImageWorker;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
+import com.github.st1hy.sabre.image.gdx.touch.ImageTouchController;
 
 import timber.log.Timber;
 
@@ -43,7 +44,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     private GdxViewHolder viewHolder;
     private ImageWorker<Bitmap> imageWorker;
     private AsyncImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
-    private ImageOnTouchListener imageOnTouchListener;
+    private ImageTouchController imageTouchController;
     private final UiThreadHandler handler = new UiThreadHandler();
 
     private Bitmap lastDrawn;
@@ -56,8 +57,8 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
         imageWorker = new BitmapImageWorker(getActivity(), imageCache);
         imageWorker.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
-        imageOnTouchListener = new ImageOnTouchListener(imageGdxCore);
-        if (savedInstanceState!= null) {
+        imageTouchController = new ImageTouchController(imageGdxCore);
+        if (savedInstanceState != null) {
             Object matrixSerialised = savedInstanceState.getSerializable(STORE_MATRIX);
             if (matrixSerialised instanceof float[]) {
                 imageGdxCore.getTransformation().set((float[]) matrixSerialised);
@@ -75,7 +76,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         float g = Color.green(color) / 255f;
         float b = Color.blue(color) / 255f;
         float a = Color.alpha(color) / 255f;
-        return new BackgroundColor(r,g,b,a);
+        return new BackgroundColor(r, g, b, a);
     }
 
     @Override
@@ -92,7 +93,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_image_gl, container, false);
         View glSurface = initializeForView(imageGdxCore, initConfig());
-        glSurface.setOnTouchListener(imageOnTouchListener);
+        glSurface.setOnTouchListener(imageTouchController);
         viewHolder = new GdxViewHolder(glSurface).bind(root);
         return root;
     }
@@ -135,7 +136,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     public void setImageURI(final Uri uri) {
         onLoadingStarted();
         imageWorker.loadImage(uri, imageReceiver);
-        imageOnTouchListener.reset();
+        imageTouchController.reset();
     }
 
     @Override
