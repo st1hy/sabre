@@ -17,16 +17,22 @@
 package com.github.st1hy.imagecache.worker;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.github.st1hy.core.utils.Utils;
+import com.github.st1hy.imagecache.BitmapProvider;
 import com.github.st1hy.imagecache.BuildConfig;
 import com.github.st1hy.imagecache.ImageCache;
-import com.github.st1hy.imagecache.ImageResizer;
+import com.github.st1hy.imagecache.decoder.UriBitmapFactory;
+import com.github.st1hy.imagecache.decoder.UriBitmapSource;
+import com.github.st1hy.imagecache.resize.ResizingStrategy;
+import com.github.st1hy.imagecache.worker.creator.ImageCreator;
+import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
+import com.github.st1hy.imagecache.worker.name.SimpleCacheEntryNameFactory;
 
 import java.util.Collections;
 import java.util.Map;
@@ -38,85 +44,120 @@ import timber.log.Timber;
 /**
  * Taken from DisplayingBitmaps example.
  */
-public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWorkerTask.Callback<T> {
-    protected static final int FADE_IN_TIME = 250;
+public class AbstractImageWorker<T> implements ImageWorker<T> {
+    private final Context context;
+    private final ImageCreator<T> imageCreator;
+    private ImageCache imageCache;
+    private Bitmap loadingBitmap;
+    private int fadeInTime;
+    private LoaderFactory loaderFactory;
+    private CacheEntryNameFactory cacheEntryNameFactory;
+    private BitmapProvider<UriBitmapSource> bitmapProvider;
+    private TaskCallback<T> taskCallback;
 
-    private final ImageCache mImageCache;
-    protected final Context context;
-    protected final Resources mResources;
-
-    protected Bitmap mLoadingBitmap;
-    private boolean mFadeInBitmap = true;
-    private LoaderFactory loaderFactory = SimpleLoaderFactory.RESULT_ON_MAIN_THREAD;
-
-    private volatile boolean mExitTasksEarly = false;
-    private volatile boolean mPauseWork = false;
-    private final Object mPauseWorkLock = new Object();
     protected final Map<ImageReceiver, BitmapWorkerTask> taskMap = Collections.synchronizedMap(new WeakHashMap<ImageReceiver, BitmapWorkerTask>());
-    private int reqWidth = Integer.MAX_VALUE, reqHeight = Integer.MAX_VALUE;
-    private CacheEntryNameFactory cacheEntryNameFactory = new SimpleCacheEntryNameFactory();
 
-    public AbstractImageWorker(Context context, ImageCache imageCache) {
+    private AbstractImageWorker(@NonNull Context context, @NonNull ImageCreator<T> imageCreator) {
         this.context = context;
-        mImageCache = imageCache;
-        mResources = context.getResources();
+        this.imageCreator = imageCreator;
+    }
+
+    private static class TaskCallback<T> implements BitmapWorkerTask.Callback<T> {
+        private final AbstractImageWorker<T> parent;
+        private final Object mPauseWorkLock = new Object();
+        private volatile boolean mExitTasksEarly = false;
+        private volatile boolean mPauseWork = false;
+
+        public TaskCallback(@NonNull AbstractImageWorker<T> parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public Bitmap processBitmap(Uri uri) {
+            UriBitmapSource source = UriBitmapSource.of(parent.context.getContentResolver(), uri);
+            return parent.bitmapProvider.getImage(source);
+        }
+
+        @Override
+        public ImageCache getImageCache() {
+            return parent.imageCache;
+        }
+
+        @Override
+        public T createImage(Bitmap bitmap) {
+            return parent.imageCreator.createImage(bitmap);
+        }
+
+        @Override
+        public Object getSharedWaitingLock() {
+            return mPauseWorkLock;
+        }
+
+        @Override
+        public boolean isWaitingRequired() {
+            return mPauseWork;
+        }
+
+        @Override
+        public boolean isExitingTaskEarly() {
+            return mExitTasksEarly;
+        }
+
+        @Override
+        public void setFinalImageAndReleasePrevious(ImageReceiver<T> imageView, T image, Bitmap newBitmapUsed) {
+            if (parent.fadeInTime > 0) {
+                // Set background to loading bitmap
+                imageView.setBackground(createImage(parent.loadingBitmap));
+                image = parent.imageCreator.createImageFadingIn(image, parent.fadeInTime);
+            }
+            parent.setImageAndRegister(imageView, image);
+        }
+
+        @Override
+        public BitmapWorkerTask getBitmapWorkerTask(ImageReceiver imageReceiver) {
+            return parent.taskMap.get(imageReceiver);
+        }
+
+        @NonNull
+        @Override
+        public String getCacheIndex(@NonNull Uri uri) {
+            return parent.cacheEntryNameFactory.getCacheIndex(uri);
+        }
+
+        public void setPauseWork(boolean pauseWork) {
+            synchronized (mPauseWorkLock) {
+                mPauseWork = pauseWork;
+                if (!mPauseWork) {
+                    mPauseWorkLock.notifyAll();
+                }
+            }
+        }
     }
 
     @Override
-    public void setLoaderFactory(LoaderFactory loaderFactory) {
-        if (loaderFactory == null) throw new NullPointerException();
-        this.loaderFactory = loaderFactory;
-    }
-
-    @Override
-    public void loadImage(@NonNull Uri uri,@NonNull ImageReceiver<T> imageView) {
-        Bitmap value = mImageCache.getBitmapFromMemCache(getCacheIndex(uri));
+    public void loadImage(@NonNull Uri uri, @NonNull ImageReceiver<T> imageView) {
+        Bitmap value = imageCache.getBitmapFromMemCache(getCacheIndex(uri));
         if (value != null) {
             // Bitmap found in memory cache
-            T image = createImage(value);
-            setImageAndRegister(imageView, image, value);
+            T image = imageCreator.createImage(value);
+            setImageAndRegister(imageView, image);
         } else if (cancelPotentialWork(uri, imageView)) {
-            final BitmapWorkerTask task = loaderFactory.newTask(uri, imageView, this);
+            final BitmapWorkerTask task = loaderFactory.newTask(uri, imageView, taskCallback);
             taskMap.put(imageView, task);
-            setImageAndRegister(imageView, createImage(mLoadingBitmap), mLoadingBitmap);
+            setImageAndRegister(imageView, imageCreator.createImage(loadingBitmap));
             task.executeOnExecutor(getExecutor());
         }
     }
 
     @Override
-    public void setLoadingImage(Bitmap bitmap) {
-        mLoadingBitmap = bitmap;
-    }
-
-    @Override
-    public void setLoadingImage(int resId) {
-        mLoadingBitmap = BitmapFactory.decodeResource(mResources, resId);
-    }
-
-    @Override
-    public void setImageFadeIn(boolean fadeIn) {
-        mFadeInBitmap = fadeIn;
-    }
-
-    @Override
     public void setExitTasksEarly(boolean exitTasksEarly) {
-        mExitTasksEarly = exitTasksEarly;
+        taskCallback.mExitTasksEarly = exitTasksEarly;
         setPauseWork(false);
     }
 
     @Override
-    public Bitmap processBitmap(Uri uri) {
-        return ImageResizer.decodeUri(uri, reqWidth, reqHeight, mImageCache, context.getContentResolver());
-    }
-
-    @Override
-    public ImageCache getImageCache() {
-        return mImageCache;
-    }
-
-    @Override
     public void cancelWork(@NonNull ImageReceiver<T> imageReceiver) {
-        BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageReceiver);
+        BitmapWorkerTask bitmapWorkerTask = taskCallback.getBitmapWorkerTask(imageReceiver);
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancelTask(true);
             if (BuildConfig.DEBUG) {
@@ -127,7 +168,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
 
     @Override
     public boolean cancelPotentialWork(@NonNull Uri uri, @NonNull ImageReceiver<T> imageReceiver) {
-        BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageReceiver);
+        BitmapWorkerTask bitmapWorkerTask = taskCallback.getBitmapWorkerTask(imageReceiver);
         if (bitmapWorkerTask != null) {
             final String cacheIndex = bitmapWorkerTask.getCacheIndex();
             if (cacheIndex == null || !cacheIndex.equals(getCacheIndex(uri))) {
@@ -143,15 +184,6 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
         return true;
     }
 
-    /**
-     * @param imageReceiver Any imageReceiver
-     * @return Retrieve the currently active work task (if any) associated with this imageReceiver.
-     * null if there is no such task.
-     */
-    @Override
-    public BitmapWorkerTask getBitmapWorkerTask(ImageReceiver<T> imageReceiver) {
-        return taskMap.get(imageReceiver);
-    }
 
     @Override
     @NonNull
@@ -159,30 +191,13 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
         return cacheEntryNameFactory.getCacheIndex(uri);
     }
 
-    @Override
-    public void setFinalImageAndReleasePrevious(ImageReceiver<T> imageView, T image, Bitmap newBitmapUsed) {
-        if (mFadeInBitmap) {
-            // Set background to loading bitmap
-            imageView.setBackground(createImage(mLoadingBitmap));
-            image = createImageFadingIn(image);
-        }
-        setImageAndRegister(imageView, image, newBitmapUsed);
-    }
-
-    private void setImageAndRegister(ImageReceiver<T> imageView, T image, Bitmap newBitmapUsed) {
+    private void setImageAndRegister(ImageReceiver<T> imageView, T image) {
         imageView.setImage(image);
     }
 
-    public abstract T createImageFadingIn(T image);
-
     @Override
     public void setPauseWork(boolean pauseWork) {
-        synchronized (mPauseWorkLock) {
-            mPauseWork = pauseWork;
-            if (!mPauseWork) {
-                mPauseWorkLock.notifyAll();
-            }
-        }
+        taskCallback.setPauseWork(pauseWork);
     }
 
     @Override
@@ -190,7 +205,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
         getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                mImageCache.clearCache();
+                imageCache.clearCache();
             }
         });
     }
@@ -200,7 +215,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
         getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                mImageCache.flush();
+                imageCache.flush();
             }
         });
     }
@@ -210,7 +225,7 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
         getExecutor().execute(new Runnable() {
             @Override
             public void run() {
-                mImageCache.close();
+                imageCache.close();
             }
         });
     }
@@ -219,29 +234,95 @@ public abstract class AbstractImageWorker<T> implements ImageWorker<T>, BitmapWo
         return Utils.CACHED_EXECUTOR_POOL;
     }
 
-    @Override
-    public Object getSharedWaitingLock() {
-        return mPauseWorkLock;
-    }
+    public static class Builder<T> {
+        private final Context context;
+        private final ImageCreator<T> imageCreator;
+        private ImageCache imageCache;
+        private Bitmap loadingBitmap;
+        private int fadeInTime = 250;
+        private LoaderFactory loaderFactory = SimpleLoaderFactory.RESULT_ON_MAIN_THREAD;
+        private CacheEntryNameFactory cacheEntryNameFactory;
 
-    @Override
-    public boolean isWaitingRequired() {
-        return mPauseWork;
-    }
+        private int reqWidth = Integer.MAX_VALUE, reqHeight = Integer.MAX_VALUE;
+        private ResizingStrategy resizingStrategy;
 
-    @Override
-    public boolean isExitingTaskEarly() {
-        return mExitTasksEarly;
-    }
+        public Builder(@NonNull Context context, @NonNull ImageCreator<T> imageCreator) {
+            this.context = context;
+            this.imageCreator = imageCreator;
+        }
 
-    @Override
-    public void setRequestedSize(int reqWidth, int reqHeight) {
-        this.reqWidth = reqWidth;
-        this.reqHeight = reqHeight;
-    }
+        public Builder setImageCache(@Nullable ImageCache imageCache) {
+            this.imageCache = imageCache;
+            return this;
+        }
 
-    @Override
-    public void setCacheEntryNameFactory(@NonNull CacheEntryNameFactory cacheEntryNameFactory) {
-        this.cacheEntryNameFactory = cacheEntryNameFactory;
+        public Builder setRequestedSize(int reqWidth, int reqHeight) {
+            this.reqWidth = reqWidth;
+            this.reqHeight = reqHeight;
+            return this;
+        }
+
+        public Builder setCacheEntryNameFactory(@NonNull CacheEntryNameFactory cacheEntryNameFactory) {
+            this.cacheEntryNameFactory = cacheEntryNameFactory;
+            return this;
+        }
+
+        public Builder setResizingStrategy(@NonNull ResizingStrategy resizingStrategy) {
+            this.resizingStrategy = resizingStrategy;
+            return this;
+        }
+
+        /**
+         * Set placeholder bitmap that shows when the the background thread is running.
+         *
+         */
+        public Builder setLoadingImage(@Nullable Bitmap bitmap) {
+            loadingBitmap = bitmap;
+            return this;
+        }
+
+        /**
+         * Set placeholder bitmap that shows when the the background thread is running.
+         *
+         * @param resId image resource id
+         */
+        public Builder setLoadingImage(int resId) {
+            loadingBitmap = BitmapFactory.decodeResource(context.getResources(), resId);
+            return this;
+        }
+
+        /**
+         * Set to 0 to disable fade-in, else the image will fade-in once it has been loaded by the background thread.
+         */
+        public Builder setImageFadeIn(int fadeInTime) {
+            this.fadeInTime = fadeInTime;
+            return this;
+        }
+
+        public Builder setLoaderFactory(@NonNull LoaderFactory loaderFactory) {
+            this.loaderFactory = loaderFactory;
+            return this;
+        }
+
+        public AbstractImageWorker<T> build() {
+            AbstractImageWorker<T> worker = new AbstractImageWorker<>(context, imageCreator);
+            worker.imageCache = imageCache;
+            worker.loadingBitmap = loadingBitmap;
+            worker.fadeInTime = fadeInTime;
+            worker.loaderFactory = loaderFactory;
+            if (cacheEntryNameFactory == null) cacheEntryNameFactory = new SimpleCacheEntryNameFactory();
+            worker.cacheEntryNameFactory = cacheEntryNameFactory;
+            worker.bitmapProvider = buildBitmapProvider();
+            worker.taskCallback = new TaskCallback<>(worker);
+            return worker;
+        }
+
+        private BitmapProvider<UriBitmapSource> buildBitmapProvider() {
+            BitmapProvider.Builder<UriBitmapSource> builder = new BitmapProvider.Builder<>(new UriBitmapFactory());
+            builder.setRequiredSize(reqWidth, reqHeight);
+            builder.setImageCache(imageCache);
+            builder.setResizingStrategy(resizingStrategy);
+            return builder.build();
+        }
     }
 }

@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 
 import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
 
 import java.util.concurrent.Executor;
 

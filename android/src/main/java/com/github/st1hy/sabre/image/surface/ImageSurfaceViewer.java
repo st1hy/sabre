@@ -10,22 +10,26 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.AttributeSet;
 
-import com.github.st1hy.imagecache.ImageCache;
-import com.github.st1hy.imagecache.ImageResizer;
-import com.github.st1hy.imagecache.worker.DrawableImageWorker;
-import com.github.st1hy.imagecache.worker.ImageWorker;
-import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
+import com.github.st1hy.core.utils.UiThreadHandler;
+import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 import com.github.st1hy.gesturedetector.MultipleGestureListener;
 import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.SimpleGestureListener;
+import com.github.st1hy.imagecache.BitmapProvider;
+import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.imagecache.decoder.UriBitmapFactory;
+import com.github.st1hy.imagecache.decoder.UriBitmapSource;
+import com.github.st1hy.imagecache.resize.KeepOriginal;
+import com.github.st1hy.imagecache.worker.AbstractImageWorker;
+import com.github.st1hy.imagecache.worker.ImageWorker;
+import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
+import com.github.st1hy.imagecache.worker.creator.DrawableCreator;
 import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
-import com.github.st1hy.core.utils.UiThreadHandler;
-import com.github.st1hy.core.utils.Utils;
 
 public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, AsyncImageReceiver.Callback {
     private ImageWorker<Drawable> imageWorker;
@@ -82,8 +86,12 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
 
     @Override
     public void addImageCache(ImageCache cache) {
-        imageWorker = new DrawableImageWorker(getContext(), cache);
-        imageWorker.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
+        Context context = getContext();
+        DrawableCreator drawableCreator = new DrawableCreator(context.getResources());
+        AbstractImageWorker.Builder<Drawable> builder = new AbstractImageWorker.Builder<>(context, drawableCreator);
+        builder.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
+        builder.setImageCache(cache);
+        imageWorker = builder.build();
     }
 
     @Override
@@ -103,11 +111,23 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
             imageWorker.loadImage(uri, imageReceiver);
         } else {
             Application.CACHED_EXECUTOR_POOL.execute(new Runnable() {
+                private BitmapProvider<UriBitmapSource> bitmapProvider;
+
                 @Override
                 public void run() {
-                    Bitmap bitmap = ImageResizer.decodeUri(uri, Integer.MAX_VALUE, Integer.MAX_VALUE, null, getContext().getContentResolver());
+                    Bitmap bitmap = getBitmapProvider().getImage(UriBitmapSource.of(getContext().getContentResolver() , uri));
                     imageReceiver.setImage(new BitmapDrawable(getResources(), bitmap));
                 }
+
+                private BitmapProvider<UriBitmapSource> getBitmapProvider() {
+                    if (bitmapProvider == null) {
+                        BitmapProvider.Builder<UriBitmapSource> builder = new BitmapProvider.Builder<>(new UriBitmapFactory());
+                        builder.setResizingStrategy(new KeepOriginal());
+                        bitmapProvider = builder.build();
+                    }
+                    return bitmapProvider;
+                }
+
             });
         }
     }

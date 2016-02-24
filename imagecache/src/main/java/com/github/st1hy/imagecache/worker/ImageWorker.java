@@ -1,8 +1,9 @@
 package com.github.st1hy.imagecache.worker;
 
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+
+import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
 
 /**
  * This interface wraps up completing some arbitrary long running work when loading a bitmap to an
@@ -10,31 +11,11 @@ import android.support.annotation.NonNull;
  * thread and setting a placeholder image.
  */
 public interface ImageWorker<T> extends CacheEntryNameFactory {
-    void setLoaderFactory(LoaderFactory loaderFactory);
-
     /**
      * Loads image to imageView. If image exists in in-memory cache it will load image immediately.
      * Otherwise it will start asynchronous task that will load it.
      */
     void loadImage(@NonNull Uri uri, @NonNull ImageReceiver<T> imageView);
-
-    /**
-     * Set placeholder bitmap that shows when the the background thread is running.
-     *
-     */
-    void setLoadingImage(Bitmap bitmap);
-
-    /**
-     * Set placeholder bitmap that shows when the the background thread is running.
-     *
-     * @param resId
-     */
-    void setLoadingImage(int resId);
-
-    /**
-     * If set to true, the image will fade-in once it has been loaded by the background thread.
-     */
-    void setImageFadeIn(boolean fadeIn);
 
     void setExitTasksEarly(boolean exitTasksEarly);
 
@@ -79,8 +60,4 @@ public interface ImageWorker<T> extends CacheEntryNameFactory {
      * Starts async task that closes cache. Returns immediately.
      */
     void closeCache();
-
-    void setRequestedSize(int maxWidth, int maxHeight);
-
-    void setCacheEntryNameFactory(@NonNull CacheEntryNameFactory cacheEntryNameFactory);
 }

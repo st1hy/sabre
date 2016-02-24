@@ -27,9 +27,10 @@ import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.ImageCacheProvider;
-import com.github.st1hy.imagecache.worker.BitmapImageWorker;
+import com.github.st1hy.imagecache.worker.AbstractImageWorker;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
+import com.github.st1hy.imagecache.worker.creator.BitmapCreator;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
@@ -54,9 +55,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         super.onCreate(savedInstanceState);
         sanityCheck();
         this.imageGdxCore = new ImageGdxCore(getBackground());
-        ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
-        imageWorker = new BitmapImageWorker(getActivity(), imageCache);
-        imageWorker.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
+        imageWorker = createWorker();
         imageTouchController = new ImageTouchController(imageGdxCore);
         if (savedInstanceState != null) {
             Object matrixSerialised = savedInstanceState.getSerializable(STORE_MATRIX);
@@ -64,6 +63,14 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                 imageGdxCore.getTransformation().set((float[]) matrixSerialised);
             }
         }
+    }
+
+    private ImageWorker<Bitmap> createWorker() {
+        AbstractImageWorker.Builder<Bitmap> builder = new AbstractImageWorker.Builder<>(getActivity(), new BitmapCreator());
+        builder.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
+        ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
+        builder.setImageCache(imageCache);
+        return builder.build();
     }
 
     private void sanityCheck() {

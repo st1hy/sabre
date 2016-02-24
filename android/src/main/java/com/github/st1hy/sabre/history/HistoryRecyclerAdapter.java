@@ -1,11 +1,13 @@
 package com.github.st1hy.sabre.history;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -18,10 +20,11 @@ import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.dao.OpenedImageContentProvider;
 import com.github.st1hy.dao.OpenedImageDao;
 import com.github.st1hy.imagecache.ImageCache;
-import com.github.st1hy.imagecache.worker.CacheEntryNameFactory;
-import com.github.st1hy.imagecache.worker.DrawableImageWorker;
+import com.github.st1hy.imagecache.worker.AbstractImageWorker;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
+import com.github.st1hy.imagecache.worker.creator.DrawableCreator;
+import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
 import com.github.st1hy.sabre.R;
 
 import java.io.File;
@@ -36,20 +39,28 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     private final OnImageClicked onImageClicked;
     private Cursor cursor;
 
-    public HistoryRecyclerAdapter(Context context, ImageCache imageCache, OnImageClicked onImageClicked) {
+    public HistoryRecyclerAdapter(@NonNull Context context, ImageCache imageCache, OnImageClicked onImageClicked) {
         this.context = context;
         this.onImageClicked = onImageClicked;
-        this.imageWorker = new DrawableImageWorker(context, imageCache);
-        imageWorker.setCacheEntryNameFactory(new CacheEntryNameFactory() {
+        this.imageWorker = createWorker(context, imageCache);
+    }
+
+    private static ImageWorker<Drawable> createWorker(@NonNull Context context, @Nullable ImageCache imageCache) {
+        Resources resources = context.getResources();
+        DrawableCreator drawableCreator = new DrawableCreator(resources);
+        AbstractImageWorker.Builder<Drawable> builder = new AbstractImageWorker.Builder<>(context, drawableCreator);
+        builder.setLoaderFactory(SimpleLoaderFactory.RESULT_ON_MAIN_THREAD);
+        builder.setImageCache(imageCache);
+        final int thumbSize = resources.getDimensionPixelSize(R.dimen.history_thumb_size);
+        builder.setRequestedSize(thumbSize, thumbSize);
+        builder.setCacheEntryNameFactory(new CacheEntryNameFactory() {
             @Override
             @NonNull
             public String getCacheIndex(@NonNull Uri uri) {
                 return uri.getPath().concat(".thumb");
             }
         });
-        imageWorker.setLoaderFactory(SimpleLoaderFactory.RESULT_ON_MAIN_THREAD);
-        final int thumbSize = (int) context.getResources().getDimension(R.dimen.history_thumb_size);
-        imageWorker.setRequestedSize(thumbSize, thumbSize);
+        return builder.build();
     }
 
     public void onDestroy() {
@@ -86,7 +97,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         File file = Utils.getRealPathFromURI(context, uri);
         imageWorker.loadImage(uri, holder.getImage());
         holder.getLastAccess().setText(DateFormat.getDateTimeInstance().format(new Date(timestamp)));
-        holder.getImageName().setText(file.getName());
+        holder.getImageName().setText(file.getName());//TODO Remove non existing items from database. Fix potential nullptr exception.
         holder.getMaterialRippleLayout().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -28,6 +28,8 @@ import android.support.annotation.NonNull;
 import android.util.LruCache;
 
 import com.github.st1hy.core.utils.Utils;
+import com.github.st1hy.imagecache.decoder.FileDescriptorBitmapFactory;
+import com.github.st1hy.imagecache.resize.KeepOriginal;
 import com.github.st1hy.imagecache.storage.ImageCacheStorage;
 import com.github.st1hy.retainer.Retainer;
 import com.google.common.hash.Hashing;
@@ -73,6 +75,8 @@ public class ImageCache {
     private final ImageCacheParams mCacheParams;
     private final Object mDiskCacheLock = new Object();
     private boolean mDiskCacheStarting = true;
+
+    private BitmapProvider<FileDescriptor> cachedBitmapProvider;
 
 //    private final Set<SoftReference<Bitmap>> mReusableBitmaps;
 
@@ -304,8 +308,7 @@ public class ImageCache {
 
                             // Decode bitmap, but we don't want to sample so give
                             // MAX_VALUE as the target dimensions
-                            bitmap = ImageResizer.decodeSampledBitmapFromDescriptor(
-                                    fd, Integer.MAX_VALUE, Integer.MAX_VALUE, this);
+                            bitmap = getCachedBitmapProvider().getImage(fd);
                         }
                     }
                 } catch (final IOException e) {
@@ -322,6 +325,16 @@ public class ImageCache {
             }
             return bitmap;
         }
+    }
+
+    private BitmapProvider<FileDescriptor> getCachedBitmapProvider() {
+        if (cachedBitmapProvider == null) {
+            BitmapProvider.Builder<FileDescriptor> builder = new BitmapProvider.Builder<>(new FileDescriptorBitmapFactory());
+            builder.setImageCache(this);
+            builder.setResizingStrategy(new KeepOriginal());
+            cachedBitmapProvider = builder.build();
+        }
+        return cachedBitmapProvider;
     }
 
     //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.

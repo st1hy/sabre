@@ -1,4 +1,4 @@
-package com.github.st1hy.imagecache.worker;
+package com.github.st1hy.imagecache.worker.name;
 
 import android.net.Uri;
 import android.support.annotation.NonNull;
