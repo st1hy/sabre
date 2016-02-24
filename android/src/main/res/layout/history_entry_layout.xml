@@ -21,14 +21,23 @@
             android:paddingRight="@dimen/content_left_right_padding"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp">
-            <com.github.st1hy.sabre.history.ImageReceiverView
-                android:id="@+id/entry_image"
-                android:layout_width="@dimen/history_thumb_size"
-                android:layout_height="@dimen/history_thumb_size"
-                android:scaleType="centerCrop"
-                android:layout_marginRight="16dp"
-                android:layout_marginEnd="16dp"
-                />
+            <android.support.v7.widget.CardView
+                android:id="@+id/cardView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="12dp"
+                android:layout_marginEnd="12dp"
+                app:cardUseCompatPadding="true"
+                app:cardCornerRadius="0dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/card_background">
+                <com.github.st1hy.sabre.history.ImageReceiverView
+                    android:id="@+id/entry_image"
+                    android:layout_width="@dimen/history_thumb_size"
+                    android:layout_height="@dimen/history_thumb_size"
+                    android:scaleType="centerCrop"
+                    />
+            </android.support.v7.widget.CardView>
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
