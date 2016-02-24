@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.dao.OpenedImageContentProvider;
 import com.github.st1hy.dao.OpenedImageDao;
 import com.github.st1hy.imagecache.ImageCache;
@@ -23,6 +24,7 @@ import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.sabre.R;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -91,9 +93,10 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         String uriAsString = cursor.getString(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Uri.columnName));
         long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Date.columnName));
         final Uri uri = Uri.parse(uriAsString);
+        File file = Utils.getRealPathFromURI(context, uri);
         imageWorker.loadImage(uri, holder.getImage());
         holder.getLastAccess().setText(DateFormat.getDateTimeInstance().format(new Date(timestamp)));
-        holder.getImageName().setText(uriAsString);
+        holder.getImageName().setText(file.getName());
         holder.getMaterialRippleLayout().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
