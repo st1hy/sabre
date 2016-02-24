@@ -29,10 +29,6 @@ public class HistoryEntryHolder extends RecyclerView.ViewHolder {
         return holder;
     }
 
-    public static HistoryEntryHolder newEmptyItem(View itemView) {
-        return new HistoryEntryHolder(itemView);
-    }
-
     public TextView getLastAccess() {
         return lastAccess;
     }

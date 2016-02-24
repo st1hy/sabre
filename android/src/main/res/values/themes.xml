@@ -4,7 +4,6 @@
     <style name="AppTheme" parent="Base.Theme.AppCompat.Light.DarkActionBar">
         <item name="android:textColorPrimary">@color/default_dark</item>
         <item name="android:textColorSecondary">@color/default_dark</item>
-        <item name="windowActionBarOverlay">true</item>
         <item name="actionBarStyle">@style/AppTheme.TranslucentDarkActionBar</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>

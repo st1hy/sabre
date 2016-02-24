@@ -30,12 +30,10 @@ import java.util.Date;
 
 public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHolder> implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final int HISTORY_ENTRY = R.layout.history_entry_layout;
-    private static final int SEPARATOR_ENTRY = R.layout.history_entry_top_separator;
 
     private final Context context;
     private final ImageWorker<Drawable> imageWorker;
     private final OnImageClicked onImageClicked;
-    private int numColumns = 1;
     private Cursor cursor;
 
     public HistoryRecyclerAdapter(Context context, ImageCache imageCache, OnImageClicked onImageClicked) {
@@ -60,24 +58,18 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
 
     @Override
     public int getItemViewType(int position) {
-        if (position < numColumns) {
-            return SEPARATOR_ENTRY;
-        } else {
-            return HISTORY_ENTRY;
-        }
+        return HISTORY_ENTRY;
     }
 
     @Override
     public int getItemCount() {
-        return cursor != null ? cursor.getCount() + numColumns : 0;
+        return cursor != null ? cursor.getCount() : 0;
     }
 
     @Override
     public HistoryEntryHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(viewType, parent, false);
         switch (viewType) {
-            case SEPARATOR_ENTRY:
-                return HistoryEntryHolder.newEmptyItem(view);
             case HISTORY_ENTRY:
                 return HistoryEntryHolder.newHistoryItem(view);
             default:
@@ -87,8 +79,6 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
 
     @Override
     public void onBindViewHolder(HistoryEntryHolder holder, int position) {
-        if (position < numColumns) return;
-        position -= numColumns;
         cursor.moveToPosition(position);
         String uriAsString = cursor.getString(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Uri.columnName));
         long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Date.columnName));
