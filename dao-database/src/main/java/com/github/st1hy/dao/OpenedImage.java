@@ -9,6 +9,7 @@ public class OpenedImage {
     private Long id;
     /** Not-null value. */
     private String uri;
+    private String filename;
     /** Not-null value. */
     private java.util.Date date;
 
@@ -19,9 +20,10 @@ public class OpenedImage {
         this.id = id;
     }
 
-    public OpenedImage(Long id, String uri, java.util.Date date) {
+    public OpenedImage(Long id, String uri, String filename, java.util.Date date) {
         this.id = id;
         this.uri = uri;
+        this.filename = filename;
         this.date = date;
     }
 
@@ -41,6 +43,14 @@ public class OpenedImage {
     /** Not-null value; ensure this value is available before it is saved to the database. */
     public void setUri(String uri) {
         this.uri = uri;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
     }
 
     /** Not-null value. */

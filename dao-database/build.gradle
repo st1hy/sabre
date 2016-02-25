@@ -20,5 +20,7 @@ android {
 
 dependencies {
     testCompile 'junit:junit:4.12'
+    compile project(':utils')
     compile 'de.greenrobot:greendao:2.0.0'
+    compile 'com.jakewharton.timber:timber:4.1.0'
 }

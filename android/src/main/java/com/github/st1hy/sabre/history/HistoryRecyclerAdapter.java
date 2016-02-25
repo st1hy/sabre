@@ -16,7 +16,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.dao.OpenedImageContentProvider;
 import com.github.st1hy.dao.OpenedImageDao;
 import com.github.st1hy.imagecache.ImageCache;
@@ -27,7 +26,6 @@ import com.github.st1hy.imagecache.worker.creator.DrawableCreator;
 import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
 import com.github.st1hy.sabre.R;
 
-import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -93,11 +91,11 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         cursor.moveToPosition(position);
         String uriAsString = cursor.getString(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Uri.columnName));
         long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Date.columnName));
+        String filename = cursor.getString(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Filename.columnName));
         final Uri uri = Uri.parse(uriAsString);
-        File file = Utils.getRealPathFromURI(context, uri);
         imageWorker.loadImage(uri, holder.getImage());
         holder.getLastAccess().setText(DateFormat.getDateTimeInstance().format(new Date(timestamp)));
-        holder.getImageName().setText(file.getName());//TODO Remove non existing items from database. Fix potential nullptr exception.
+        holder.getImageName().setText(filename != null ? filename : uriAsString);
         holder.getMaterialRippleLayout().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -108,7 +106,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String[] projection = {OpenedImageDao.Properties.Id.columnName, OpenedImageDao.Properties.Uri.columnName, OpenedImageDao.Properties.Date.columnName};
+        String[] projection = {OpenedImageDao.Properties.Id.columnName, OpenedImageDao.Properties.Uri.columnName, OpenedImageDao.Properties.Date.columnName, OpenedImageDao.Properties.Filename.columnName};
         String sortingOrder = OpenedImageDao.Properties.Date.columnName + " DESC";
         return new CursorLoader(context, OpenedImageContentProvider.CONTENT_URI, projection, null, null, sortingOrder);
     }

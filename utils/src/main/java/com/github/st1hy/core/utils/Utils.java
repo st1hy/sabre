@@ -25,6 +25,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.io.File;
@@ -53,7 +54,7 @@ public enum Utils {
         return Build.VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP;
     }
 
-    public static int getColor(Context context, int colorResId) {
+    public static int getColor(@NonNull Context context, int colorResId) {
         Resources resources = context.getResources();
         if (hasMarshmallow()) {
             return getColorM(resources, context.getTheme(), colorResId);
@@ -63,15 +64,15 @@ public enum Utils {
     }
 
     @TargetApi(23)
-    private static int getColorM(Resources resources, Resources.Theme theme, int colorResId) {
+    private static int getColorM(@NonNull Resources resources, @NonNull Resources.Theme theme, int colorResId) {
         return resources.getColor(colorResId, theme);
     }
 
-    private static int getColorDeprecated(Resources resources, int colorResId) {
+    private static int getColorDeprecated(@NonNull Resources resources, int colorResId) {
         return resources.getColor(colorResId);
     }
 
-    public static Drawable getDrawable(Context context, int drawableResId) {
+    public static Drawable getDrawable(@NonNull Context context, int drawableResId) {
         Resources resources = context.getResources();
         int density = resources.getDisplayMetrics().densityDpi;
         if (hasLolipop()) {
@@ -82,16 +83,27 @@ public enum Utils {
     }
 
     @TargetApi(21)
-    private static Drawable getDrawableL(Resources resources, Resources.Theme theme, int colorResId, int density) {
+    private static Drawable getDrawableL(@NonNull Resources resources, @NonNull Resources.Theme theme, int colorResId, int density) {
         return resources.getDrawableForDensity(colorResId, density, theme);
     }
 
-    private static Drawable getDrawableDeprecated(Resources resources, int colorResId, int density) {
+    private static Drawable getDrawableDeprecated(@NonNull Resources resources, int colorResId, int density) {
         return resources.getDrawableForDensity(colorResId, density);
     }
 
     @Nullable
-    public static File getRealPathFromURI(Context context, Uri contentUri) {
+    public static File getRealPathFromURI(@NonNull Context context, @NonNull Uri contentUri) {
+        switch (contentUri.getScheme()) {
+            case "file":
+                return new File(contentUri.getPath());
+            case "content":
+                return getPathFromContentURI(context, contentUri);
+            default:
+                return null;
+        }
+    }
+
+    private static File getPathFromContentURI(@NonNull Context context, @NonNull Uri contentUri) {
         Cursor cursor = null;
         try {
             String[] proj = {MediaStore.Images.Media.DATA};

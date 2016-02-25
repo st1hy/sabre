@@ -6,6 +6,7 @@ import com.github.st1hy.collect.MutableRestrictiveClassToInstanceMap;
 import com.github.st1hy.collect.RestrictiveClassToInstanceMap;
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.dao.DaoMaster;
+import com.github.st1hy.dao.DaoOpenHelper;
 import com.github.st1hy.gesturedetector.Config;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +30,7 @@ public class Application extends android.app.Application {
     }
 
     private void configureDao() {
-        DaoMaster.OpenHelper helper = new DaoMaster.DevOpenHelper(this, "images.db", null);
+        DaoOpenHelper helper = new DaoOpenHelper(this, "images.db", null);
         SQLiteDatabase db = helper.getWritableDatabase();
         map.putInstance(DaoMaster.class, new DaoMaster(db));
     }

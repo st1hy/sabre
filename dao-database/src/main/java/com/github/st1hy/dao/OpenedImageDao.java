@@ -23,7 +23,8 @@ public class OpenedImageDao extends AbstractDao<OpenedImage, Long> {
     public static class Properties {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property Uri = new Property(1, String.class, "uri", false, "URI");
-        public final static Property Date = new Property(2, java.util.Date.class, "date", false, "DATE");
+        public final static Property Filename = new Property(2, String.class, "filename", false, "FILENAME");
+        public final static Property Date = new Property(3, java.util.Date.class, "date", false, "DATE");
     };
 
 
@@ -39,9 +40,13 @@ public class OpenedImageDao extends AbstractDao<OpenedImage, Long> {
     public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
         String constraint = ifNotExists? "IF NOT EXISTS ": "";
         db.execSQL("CREATE TABLE " + constraint + "\"OPENED_IMAGE\" (" + //
-                "\"_id\" INTEGER PRIMARY KEY ," + // 0: id
-                "\"URI\" TEXT NOT NULL ," + // 1: uri
-                "\"DATE\" INTEGER NOT NULL );"); // 2: date
+                "\"_id\" INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE ," + // 0: id
+                "\"URI\" TEXT NOT NULL UNIQUE ," + // 1: uri
+                "\"FILENAME\" TEXT," + // 2: filename
+                "\"DATE\" INTEGER NOT NULL );"); // 3: date
+        // Add Indexes
+        db.execSQL("CREATE INDEX " + constraint + "IDX_OPENED_IMAGE__id ON OPENED_IMAGE" +
+                " (\"_id\");");
     }
 
     /** Drops the underlying database table. */
@@ -60,7 +65,12 @@ public class OpenedImageDao extends AbstractDao<OpenedImage, Long> {
             stmt.bindLong(1, id);
         }
         stmt.bindString(2, entity.getUri());
-        stmt.bindLong(3, entity.getDate().getTime());
+ 
+        String filename = entity.getFilename();
+        if (filename != null) {
+            stmt.bindString(3, filename);
+        }
+        stmt.bindLong(4, entity.getDate().getTime());
     }
 
     /** @inheritdoc */
@@ -75,7 +85,8 @@ public class OpenedImageDao extends AbstractDao<OpenedImage, Long> {
         OpenedImage entity = new OpenedImage( //
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.getString(offset + 1), // uri
-            new java.util.Date(cursor.getLong(offset + 2)) // date
+            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // filename
+            new java.util.Date(cursor.getLong(offset + 3)) // date
         );
         return entity;
     }
@@ -85,7 +96,8 @@ public class OpenedImageDao extends AbstractDao<OpenedImage, Long> {
     public void readEntity(Cursor cursor, OpenedImage entity, int offset) {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setUri(cursor.getString(offset + 1));
-        entity.setDate(new java.util.Date(cursor.getLong(offset + 2)));
+        entity.setFilename(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
+        entity.setDate(new java.util.Date(cursor.getLong(offset + 3)));
      }
     
     /** @inheritdoc */

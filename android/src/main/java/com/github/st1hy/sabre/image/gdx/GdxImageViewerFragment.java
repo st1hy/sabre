@@ -55,7 +55,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         super.onCreate(savedInstanceState);
         sanityCheck();
         this.imageGdxCore = new ImageGdxCore(getBackground());
-        imageWorker = createWorker();
         imageTouchController = new ImageTouchController(imageGdxCore);
         if (savedInstanceState != null) {
             Object matrixSerialised = savedInstanceState.getSerializable(STORE_MATRIX);
@@ -63,14 +62,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                 imageGdxCore.getTransformation().set((float[]) matrixSerialised);
             }
         }
-    }
-
-    private ImageWorker<Bitmap> createWorker() {
-        AbstractImageWorker.Builder<Bitmap> builder = new AbstractImageWorker.Builder<>(getActivity(), new BitmapCreator());
-        builder.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
-        ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
-        builder.setImageCache(imageCache);
-        return builder.build();
     }
 
     private void sanityCheck() {
@@ -93,6 +84,23 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         if (actionBar != null) {
             actionBar.hide();
         }
+        imageWorker = createWorker();
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            Parcelable parcelable = arguments.getParcelable(NavState.ARG_IMAGE_URI);
+            if (parcelable instanceof Uri) {
+                setImageURI((Uri) parcelable);
+            }
+        }
+    }
+
+
+    private ImageWorker<Bitmap> createWorker() {
+        AbstractImageWorker.Builder<Bitmap> builder = new AbstractImageWorker.Builder<>(getActivity(), new BitmapCreator());
+        builder.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
+        ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
+        builder.setImageCache(imageCache);
+        return builder.build();
     }
 
     @Nullable
@@ -109,18 +117,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     public void onDestroyView() {
         super.onDestroyView();
         viewHolder.unbind();
-    }
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        Bundle arguments = getArguments();
-        if (arguments != null) {
-            Parcelable parcelable = arguments.getParcelable(NavState.ARG_IMAGE_URI);
-            if (parcelable instanceof Uri) {
-                setImageURI((Uri) parcelable);
-            }
-        }
     }
 
     @Override

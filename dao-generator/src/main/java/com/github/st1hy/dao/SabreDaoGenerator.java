@@ -8,17 +8,18 @@ import de.greenrobot.daogenerator.Schema;
 public class SabreDaoGenerator {
 
     public static void main(String[] args) throws Exception {
-        Schema schema = new Schema(1000, "com.github.st1hy.dao");
+        Schema schema = new Schema(1001, "com.github.st1hy.dao");
         addOpenedImage(schema);
 
-        new DaoGenerator().generateAll(schema, "../dao-database/src/main/java");
+        new DaoGenerator().generateAll(schema, "dao-database/src/main/java");
     }
 
 
     private static void addOpenedImage(Schema schema) {
         Entity openedImage = schema.addEntity("OpenedImage");
-        openedImage.addIdProperty();
-        openedImage.addStringProperty("uri").notNull();
+        openedImage.addIdProperty().index().unique().autoincrement();
+        openedImage.addStringProperty("uri").notNull().unique();
+        openedImage.addStringProperty("filename");
         openedImage.addDateProperty("date").notNull();
 
         ContentProvider contentProvider = openedImage.addContentProvider();
