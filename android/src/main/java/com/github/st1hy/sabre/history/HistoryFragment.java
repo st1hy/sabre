@@ -30,8 +30,6 @@ import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.image.ImageActivity;
 import com.google.common.base.Preconditions;
 
-import java.util.Date;
-
 public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.OnImageClicked {
     private static final int REQUEST_IMAGE = 0x16ed;
     private final HistoryViewHolder viewHolder =  new HistoryViewHolder();
@@ -185,8 +183,10 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
 
     @Override
     public void openImage(final Uri uri) {
-        final Date date = new Date();
-        Intent intent = new Intent(Intent.ACTION_VIEW, uri, getActivity(), ImageActivity.class);
+        Intent intent = new Intent();
+        intent.setDataAndTypeAndNormalize(uri, "image/*");
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setClass(getActivity(), ImageActivity.class);
         startActivity(intent);
     }
 }

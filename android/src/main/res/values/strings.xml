@@ -12,5 +12,6 @@
     <string name="pref_clear_cache_desc">Remove cache of image miniatures.</string>
 
     <string name="start_instructions">Press here to open image.</string>
+    <string name="incoming_image_cannot_be_read">Sorry, but this file is not supported by this application.</string>
 
 </resources>

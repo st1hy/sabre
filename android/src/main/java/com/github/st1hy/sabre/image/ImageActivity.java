@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
 
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.github.st1hy.core.utils.SystemUIMode;
@@ -42,6 +43,10 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
                 final Uri imageUriFromIntent = getImageUriFromIntent(intent);
                 if (imageUriFromIntent != null) {
                     configureFragment(imageUriFromIntent, fragment);
+                } else {
+                    Toast.makeText(this, R.string.incoming_image_cannot_be_read, Toast.LENGTH_LONG).show();
+                    exit();
+                    return;
                 }
             }
             getSupportFragmentManager().beginTransaction().replace(R.id.main_activity_fragment_container, fragment).commit();
@@ -73,7 +78,17 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
         String action = intent.getAction();
         Timber.d("View image: %s", intent.toString());
         if (action.equals(Intent.ACTION_VIEW)) {
-            return intent.getData();
+            String type = intent.getType();
+            if (type != null && type.startsWith("image/")) {
+                return intent.getData();
+            }
+        } else if (action.equals(Intent.ACTION_SEND)) {
+            String type = intent.getType();
+            if (type != null && type.startsWith("image/")) {
+                Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                Timber.d("View image extra stream: %s", uri);
+                return uri;
+            }
         }
         return null;
     }
