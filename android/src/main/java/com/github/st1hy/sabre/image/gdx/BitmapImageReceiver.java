@@ -1,6 +1,7 @@
 package com.github.st1hy.sabre.image.gdx;
 
 import android.graphics.Bitmap;
+import android.support.annotation.Nullable;
 
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
 
@@ -13,14 +14,18 @@ public class BitmapImageReceiver implements AsyncImageReceiver<Bitmap> {
     }
 
     @Override
-    public void setImage(Bitmap image) {
+    public void setImage(@Nullable Bitmap image) {
         this.image = image;
-        callback.onImageLoaded();
-        callback.redrawNeeded();
+        if (image == null) {
+            callback.onImageLoadingFailed();
+        } else {
+            callback.onImageLoaded();
+            callback.redrawNeeded();
+        }
     }
 
     @Override
-    public void setBackground(Bitmap background) {
+    public void setBackground(@Nullable Bitmap background) {
         this.background = background;
     }
 

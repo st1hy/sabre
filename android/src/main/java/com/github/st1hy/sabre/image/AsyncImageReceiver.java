@@ -13,5 +13,7 @@ public interface AsyncImageReceiver<T> extends ImageReceiver<T> {
         void onImageLoaded();
 
         void redrawNeeded();
+
+        void onImageLoadingFailed();
     }
 }

@@ -2,6 +2,8 @@ package com.github.st1hy.imagecache.worker;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
@@ -35,14 +37,15 @@ interface BitmapWorkerTask {
          * @param image         image that should be received
          * @param newBitmapUsed Reference to new bitmap linked to this receiver. Used for fine tuning caching.
          */
-        void setFinalImageAndReleasePrevious(ImageReceiver<T> imageView, T image, Bitmap newBitmapUsed);
+        void setFinalImageAndReleasePrevious(@NonNull ImageReceiver<T> imageView, @Nullable T image, @Nullable Bitmap newBitmapUsed);
 
         /**
          * @return The {@link ImageCache} object currently being used..
          */
         ImageCache getImageCache();
 
-        T createImage(Bitmap bitmap);
+        @Nullable
+        T createImage(@Nullable Bitmap bitmap);
 
         Object getSharedWaitingLock();
 

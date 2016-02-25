@@ -25,6 +25,19 @@ public enum OpenImageUtils {
             openedImage.setDate(date);
         }
         dao.insertOrReplace(openedImage);
+        notifyContentChanged(context);
+    }
+
+    public static void removeOpenedImage(@NonNull Context context, @NonNull DaoSession session, @NonNull Uri uri) {
+        OpenedImageDao dao = session.getOpenedImageDao();
+        OpenedImage image = getImage(dao, uri);
+        if (image != null) {
+            dao.delete(image);
+            notifyContentChanged(context);
+        }
+    }
+
+    private static void notifyContentChanged(@NonNull Context context) {
         context.getContentResolver().notifyChange(OpenedImageContentProvider.CONTENT_URI, null);
     }
 

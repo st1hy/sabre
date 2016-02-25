@@ -116,7 +116,11 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
                 @Override
                 public void run() {
                     Bitmap bitmap = getBitmapProvider().getImage(UriBitmapSource.of(getContext().getContentResolver() , uri));
-                    imageReceiver.setImage(new BitmapDrawable(getResources(), bitmap));
+                    if (bitmap == null) {
+                        loadingCallback.onImageLoadingFailed();
+                    } else {
+                        imageReceiver.setImage(new BitmapDrawable(getResources(), bitmap));
+                    }
                 }
 
                 private BitmapProvider<UriBitmapSource> getBitmapProvider() {
@@ -193,5 +197,15 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
     @Override
     public void redrawNeeded() {
         surfaceRedrawNeeded(holder);
+    }
+
+    @Override
+    public void onImageLoadingFailed() {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                loadingCallback.onImageLoadingFailed();
+            }
+        });
     }
 }

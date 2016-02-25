@@ -4,6 +4,7 @@ package com.github.st1hy.imagecache.worker;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.github.st1hy.imagecache.BuildConfig;
 import com.github.st1hy.imagecache.ImageCache;
@@ -101,11 +102,7 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
         if (mImageCache != null) {
             mImageCache.addBitmapToCache(cacheIndex, bitmap, cacheOnDisk);
         }
-        if (bitmap != null) {
-            // Running on Honeycomb or newer, so wrap in a standard BitmapDrawable
-            image = callback.createImage(bitmap);
-            //drawable = new AsyncDrawable(mResources, bitmap, this);
-        }
+        image = callback.createImage(bitmap);
 
         if (BuildConfig.DEBUG) {
             Timber.d("finished work " + image + " " + bitmap);
@@ -114,13 +111,13 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
         return image;
     }
 
-    public void setImage(T image) {
+    public void setImage(@Nullable T image) {
         if (isCancelled() || callback.isExitingTaskEarly()) {
             image = null;
         }
 
         final ImageReceiver<T> imageView = getAttachedImageView();
-        if (image != null && imageView != null) {
+        if (imageView != null) {
             if (BuildConfig.DEBUG) {
                 Timber.d("setting bitmap");
             }

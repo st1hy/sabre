@@ -1,7 +1,9 @@
 package com.github.st1hy.imagecache.worker;
 
-public interface ImageReceiver<T> {
-    void setImage(T image);
+import android.support.annotation.Nullable;
 
-    void setBackground(T background);
+public interface ImageReceiver<T> {
+    void setImage(@Nullable T image);
+
+    void setBackground(@Nullable T background);
 }

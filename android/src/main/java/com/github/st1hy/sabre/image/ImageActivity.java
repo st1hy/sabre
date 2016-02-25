@@ -1,5 +1,6 @@
 package com.github.st1hy.sabre.image;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.widget.Toast;
 
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.github.st1hy.core.utils.SystemUIMode;
+import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.dao.DaoMaster;
 import com.github.st1hy.dao.DaoSession;
 import com.github.st1hy.dao.OpenImageUtils;
@@ -28,6 +30,7 @@ import timber.log.Timber;
 
 public class ImageActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks, ImageCacheProvider {
     private ImageCacheHandler imageCacheHandler;
+    private Uri imageUriFromIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,11 +43,12 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
             Fragment fragment = state.newInstance();
             Intent intent = getIntent();
             if (intent != null) {
-                final Uri imageUriFromIntent = getImageUriFromIntent(intent);
+                imageUriFromIntent = getImageUriFromIntent(intent);
                 if (imageUriFromIntent != null) {
-                    configureFragment(imageUriFromIntent, fragment);
+                    updateDatabaseImageDate();
+                    configureFragment(fragment);
                 } else {
-                    Toast.makeText(this, R.string.incoming_image_cannot_be_read, Toast.LENGTH_LONG).show();
+                    notifyWrongImage(this);
                     exit();
                     return;
                 }
@@ -54,20 +58,7 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
         SystemUIMode.IMMERSIVE_STICKY.apply(getWindow());
     }
 
-    private void configureFragment(@NonNull final Uri imageUriFromIntent, @NonNull Fragment fragment) {
-        Application app = (Application) getApplication();
-        final DaoMaster daoMaster = app.getCache().getInstance(DaoMaster.class);
-        if (daoMaster == null) {
-            Timber.e("No editable database available, cannot update image access time.");
-        } else {
-            Application.CACHED_EXECUTOR_POOL.execute(new Runnable() {
-                @Override
-                public void run() {
-                    DaoSession daoSession = daoMaster.newSession();
-                    OpenImageUtils.updateOpenedImage(ImageActivity.this, daoSession, imageUriFromIntent, new Date());
-                }
-            });
-        }
+    private void configureFragment(@NonNull Fragment fragment) {
         Bundle bundle = new Bundle();
         bundle.putParcelable(NavState.ARG_IMAGE_URI, imageUriFromIntent);
         fragment.setArguments(bundle);
@@ -96,6 +87,50 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     @Override
     public void exit() {
         finish();
+    }
+
+    public void onImageFailedToLoad() {
+        ImageActivity.notifyWrongImage(this);
+        deleteImageFromDatabase();
+        exit();
+    }
+
+    public static void notifyWrongImage(@NonNull Context context) {
+        Toast.makeText(context, R.string.incoming_image_cannot_be_read, Toast.LENGTH_LONG).show();
+    }
+
+    private void updateDatabaseImageDate() {
+        final DaoMaster daoMaster = getDaoMaster();
+        if (daoMaster == null) return;
+        Utils.CACHED_EXECUTOR_POOL.execute(new Runnable() {
+            @Override
+            public void run() {
+                DaoSession daoSession = daoMaster.newSession();
+                OpenImageUtils.updateOpenedImage(ImageActivity.this, daoSession, imageUriFromIntent, new Date());
+            }
+        });
+    }
+
+    private void deleteImageFromDatabase() {
+        final DaoMaster daoMaster = getDaoMaster();
+        if (daoMaster == null) return;
+        Utils.CACHED_EXECUTOR_POOL.execute(new Runnable() {
+            @Override
+            public void run() {
+                DaoSession daoSession = daoMaster.newSession();
+                OpenImageUtils.removeOpenedImage(ImageActivity.this, daoSession, imageUriFromIntent);
+            }
+        });
+    }
+
+    @Nullable
+    private DaoMaster getDaoMaster() {
+        Application app = (Application) getApplication();
+        final DaoMaster daoMaster = app.getCache().getInstance(DaoMaster.class);
+        if (daoMaster == null) {
+            Timber.wtf("No editable database available!");
+        }
+        return daoMaster;
     }
 
     @Override

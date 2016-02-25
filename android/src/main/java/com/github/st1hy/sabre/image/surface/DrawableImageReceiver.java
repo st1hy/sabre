@@ -2,6 +2,7 @@ package com.github.st1hy.sabre.image.surface;
 
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
+import android.support.annotation.Nullable;
 
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
 
@@ -23,20 +24,23 @@ public class DrawableImageReceiver implements AsyncImageReceiver<Drawable>, Draw
     }
 
     @Override
-    public void setImage(Drawable drawable) {
+    public void setImage(@Nullable Drawable drawable) {
         if (image != null) {
             image.setCallback(null);
             cancelAllFuture(image);
         }
         image = drawable;
-        callback.onImageLoaded();
-        callback.redrawNeeded();
-        if (image == null) return;
-        image.setCallback(this);
+        if (image == null) {
+            callback.onImageLoadingFailed();
+        } else {
+            callback.onImageLoaded();
+            callback.redrawNeeded();
+            image.setCallback(this);
+        }
     }
 
     @Override
-    public void setBackground(Drawable drawable) {
+    public void setBackground(@Nullable Drawable drawable) {
         if (background != null) {
             background.setCallback(null);
             cancelAllFuture(background);
@@ -46,7 +50,7 @@ public class DrawableImageReceiver implements AsyncImageReceiver<Drawable>, Draw
         background.setCallback(this);
     }
 
-    private void cancelAllFuture(Drawable drawable) {
+    private void cancelAllFuture(@Nullable Drawable drawable) {
         Map<Runnable, Future<?>> runnableFutureMap = futureDrawingTasks.get(drawable);
         if (runnableFutureMap == null) return;
         for (Map.Entry<Runnable, Future<?>> entry : runnableFutureMap.entrySet()) {

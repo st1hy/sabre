@@ -15,6 +15,7 @@ import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.core.utils.MissingInterfaceException;
+import com.github.st1hy.sabre.image.ImageActivity;
 
 public class SurfaceImageViewFragment extends Fragment implements ImageViewer.ImageLoadingCallback {
     private final SurfaceViewHolder viewHolder = new SurfaceViewHolder();
@@ -84,6 +85,11 @@ public class SurfaceImageViewFragment extends Fragment implements ImageViewer.Im
         viewHolder.getLoadingProgressBar().setVisibility(View.GONE);
     }
 
+    @Override
+    public void onImageLoadingFailed() {
+        ImageActivity activity = (ImageActivity) getActivity();
+        activity.onImageFailedToLoad();
+    }
 
     @Override
     public void onResume() {

@@ -27,13 +27,14 @@ import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.ImageCacheProvider;
-import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.ImageWorker;
+import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.imagecache.worker.creator.BitmapCreator;
 import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
+import com.github.st1hy.sabre.image.ImageActivity;
 import com.github.st1hy.sabre.image.gdx.touch.ImageTouchController;
 
 import timber.log.Timber;
@@ -200,6 +201,17 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                 }
             });
         }
+    }
+
+    @Override
+    public void onImageLoadingFailed() {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                ImageActivity activity = (ImageActivity) getActivity();
+                activity.onImageFailedToLoad();
+            }
+        });
     }
 
     private void onLoadingStarted() {

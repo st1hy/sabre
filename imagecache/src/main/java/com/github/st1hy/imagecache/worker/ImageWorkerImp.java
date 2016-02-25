@@ -41,13 +41,11 @@ import java.util.concurrent.Executor;
 
 import timber.log.Timber;
 
-/**
- * Taken from DisplayingBitmaps example.
- */
 public class ImageWorkerImp<T> implements ImageWorker<T> {
     private final Context context;
     private final ImageCreator<T> imageCreator;
     private ImageCache imageCache;
+    @Nullable
     private Bitmap loadingBitmap;
     private int fadeInTime;
     private LoaderFactory loaderFactory;
@@ -84,7 +82,8 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         }
 
         @Override
-        public T createImage(Bitmap bitmap) {
+        @Nullable
+        public T createImage(@Nullable Bitmap bitmap) {
             return parent.imageCreator.createImage(bitmap);
         }
 
@@ -104,11 +103,11 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         }
 
         @Override
-        public void setFinalImageAndReleasePrevious(ImageReceiver<T> imageView, T image, Bitmap newBitmapUsed) {
+        public void setFinalImageAndReleasePrevious(@NonNull ImageReceiver<T> imageView, @Nullable T image, @Nullable Bitmap newBitmapUsed) {
             if (parent.fadeInTime > 0) {
-                // Set background to loading bitmap
-                imageView.setBackground(createImage(parent.loadingBitmap));
-                image = parent.imageCreator.createImageFadingIn(image, parent.fadeInTime);
+                if (image != null) {
+                    image = parent.imageCreator.createImageFadingIn(image, parent.fadeInTime);
+                }
             }
             parent.setImageAndRegister(imageView, image);
         }
@@ -136,6 +135,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
 
     @Override
     public void loadImage(@NonNull Uri uri, @NonNull ImageReceiver<T> imageView) {
+        imageView.setBackground(imageCreator.createImage(loadingBitmap));
         Bitmap value = imageCache.getBitmapFromMemCache(getCacheIndex(uri));
         if (value != null) {
             // Bitmap found in memory cache
@@ -144,7 +144,6 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         } else if (cancelPotentialWork(uri, imageView)) {
             final BitmapWorkerTask task = loaderFactory.newTask(uri, imageView, taskCallback);
             taskMap.put(imageView, task);
-            setImageAndRegister(imageView, imageCreator.createImage(loadingBitmap));
             task.executeOnExecutor(getExecutor());
         }
     }
@@ -191,7 +190,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         return cacheEntryNameFactory.getCacheIndex(uri);
     }
 
-    private void setImageAndRegister(ImageReceiver<T> imageView, T image) {
+    private void setImageAndRegister(@NonNull ImageReceiver<T> imageView, @Nullable T image) {
         imageView.setImage(image);
     }
 

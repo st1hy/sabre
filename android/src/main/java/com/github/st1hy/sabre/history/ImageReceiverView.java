@@ -3,6 +3,7 @@ package com.github.st1hy.sabre.history;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
@@ -28,7 +29,7 @@ public class ImageReceiverView extends ImageView implements ImageReceiver<Drawab
     }
 
     @Override
-    public void setImage(Drawable image) {
+    public void setImage(@Nullable Drawable image) {
         setImageDrawable(image);
     }
 

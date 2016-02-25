@@ -23,5 +23,7 @@ public interface ImageViewer {
         void onImageLoadingStarted();
 
         void onImageLoadingFinished();
+
+        void onImageLoadingFailed();
     }
 }
