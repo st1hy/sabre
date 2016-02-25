@@ -117,7 +117,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
                 public void run() {
                     Bitmap bitmap = getBitmapProvider().getImage(UriBitmapSource.of(getContext().getContentResolver() , uri));
                     if (bitmap == null) {
-                        loadingCallback.onImageLoadingFailed();
+                        imageReceiver.onImageLoadingFailed();
                     } else {
                         imageReceiver.setImage(new BitmapDrawable(getResources(), bitmap));
                     }

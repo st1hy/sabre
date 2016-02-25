@@ -16,12 +16,13 @@ public class BitmapImageReceiver implements AsyncImageReceiver<Bitmap> {
     @Override
     public void setImage(@Nullable Bitmap image) {
         this.image = image;
-        if (image == null) {
-            callback.onImageLoadingFailed();
-        } else {
-            callback.onImageLoaded();
-            callback.redrawNeeded();
-        }
+        callback.onImageLoaded();
+        callback.redrawNeeded();
+    }
+
+    @Override
+    public void onImageLoadingFailed() {
+        callback.onImageLoadingFailed();
     }
 
     @Override

@@ -33,4 +33,8 @@ public class ImageReceiverView extends ImageView implements ImageReceiver<Drawab
         setImageDrawable(image);
     }
 
+    @Override
+    public void onImageLoadingFailed() {
+
+    }
 }

@@ -104,12 +104,14 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
 
         @Override
         public void setFinalImageAndReleasePrevious(@NonNull ImageReceiver<T> imageView, @Nullable T image, @Nullable Bitmap newBitmapUsed) {
-            if (parent.fadeInTime > 0) {
-                if (image != null) {
+            if (image != null) {
+                if (parent.fadeInTime > 0) {
                     image = parent.imageCreator.createImageFadingIn(image, parent.fadeInTime);
                 }
+                parent.setImageAndRegister(imageView, image);
+            } else {
+                imageView.onImageLoadingFailed();
             }
-            parent.setImageAndRegister(imageView, image);
         }
 
         @Override
@@ -144,6 +146,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         } else if (cancelPotentialWork(uri, imageView)) {
             final BitmapWorkerTask task = loaderFactory.newTask(uri, imageView, taskCallback);
             taskMap.put(imageView, task);
+            setImageAndRegister(imageView, imageCreator.createImage(loadingBitmap));
             task.executeOnExecutor(getExecutor());
         }
     }

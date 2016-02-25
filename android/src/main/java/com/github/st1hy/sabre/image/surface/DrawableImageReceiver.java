@@ -30,13 +30,16 @@ public class DrawableImageReceiver implements AsyncImageReceiver<Drawable>, Draw
             cancelAllFuture(image);
         }
         image = drawable;
-        if (image == null) {
-            callback.onImageLoadingFailed();
-        } else {
-            callback.onImageLoaded();
-            callback.redrawNeeded();
+        callback.onImageLoaded();
+        callback.redrawNeeded();
+        if (image != null) {
             image.setCallback(this);
         }
+    }
+
+    @Override
+    public void onImageLoadingFailed() {
+        callback.onImageLoadingFailed();
     }
 
     @Override
