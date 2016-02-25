@@ -31,6 +31,7 @@ import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.imagecache.decoder.FileDescriptorBitmapFactory;
 import com.github.st1hy.imagecache.resize.KeepOriginal;
 import com.github.st1hy.imagecache.storage.ImageCacheStorage;
+import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.retainer.Retainer;
 import com.google.common.hash.Hashing;
 
@@ -49,7 +50,7 @@ import timber.log.Timber;
  * <p/>
  * *****************************************************************************
  * This class handles disk and memory caching of bitmaps in conjunction with the
- * {@link com.github.st1hy.imagecache.worker.AbstractImageWorker} class and its subclasses. Use
+ * {@link ImageWorkerImp} class and its subclasses. Use
  * {@link ImageCache#getInstance(ImageCacheStorage, ImageCacheParams)} to get an instance of this
  * class
  */

@@ -44,7 +44,7 @@ import timber.log.Timber;
 /**
  * Taken from DisplayingBitmaps example.
  */
-public class AbstractImageWorker<T> implements ImageWorker<T> {
+public class ImageWorkerImp<T> implements ImageWorker<T> {
     private final Context context;
     private final ImageCreator<T> imageCreator;
     private ImageCache imageCache;
@@ -57,18 +57,18 @@ public class AbstractImageWorker<T> implements ImageWorker<T> {
 
     protected final Map<ImageReceiver, BitmapWorkerTask> taskMap = Collections.synchronizedMap(new WeakHashMap<ImageReceiver, BitmapWorkerTask>());
 
-    private AbstractImageWorker(@NonNull Context context, @NonNull ImageCreator<T> imageCreator) {
+    private ImageWorkerImp(@NonNull Context context, @NonNull ImageCreator<T> imageCreator) {
         this.context = context;
         this.imageCreator = imageCreator;
     }
 
     private static class TaskCallback<T> implements BitmapWorkerTask.Callback<T> {
-        private final AbstractImageWorker<T> parent;
+        private final ImageWorkerImp<T> parent;
         private final Object mPauseWorkLock = new Object();
         private volatile boolean mExitTasksEarly = false;
         private volatile boolean mPauseWork = false;
 
-        public TaskCallback(@NonNull AbstractImageWorker<T> parent) {
+        public TaskCallback(@NonNull ImageWorkerImp<T> parent) {
             this.parent = parent;
         }
 
@@ -304,8 +304,8 @@ public class AbstractImageWorker<T> implements ImageWorker<T> {
             return this;
         }
 
-        public AbstractImageWorker<T> build() {
-            AbstractImageWorker<T> worker = new AbstractImageWorker<>(context, imageCreator);
+        public ImageWorkerImp<T> build() {
+            ImageWorkerImp<T> worker = new ImageWorkerImp<>(context, imageCreator);
             worker.imageCache = imageCache;
             worker.loadingBitmap = loadingBitmap;
             worker.fadeInTime = fadeInTime;

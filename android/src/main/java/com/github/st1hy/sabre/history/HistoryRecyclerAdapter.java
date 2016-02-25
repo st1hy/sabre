@@ -19,7 +19,7 @@ import android.view.ViewGroup;
 import com.github.st1hy.dao.OpenedImageContentProvider;
 import com.github.st1hy.dao.OpenedImageDao;
 import com.github.st1hy.imagecache.ImageCache;
-import com.github.st1hy.imagecache.worker.AbstractImageWorker;
+import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.imagecache.worker.creator.DrawableCreator;
@@ -46,7 +46,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     private static ImageWorker<Drawable> createWorker(@NonNull Context context, @Nullable ImageCache imageCache) {
         Resources resources = context.getResources();
         DrawableCreator drawableCreator = new DrawableCreator(resources);
-        AbstractImageWorker.Builder<Drawable> builder = new AbstractImageWorker.Builder<>(context, drawableCreator);
+        ImageWorkerImp.Builder<Drawable> builder = new ImageWorkerImp.Builder<>(context, drawableCreator);
         builder.setLoaderFactory(SimpleLoaderFactory.RESULT_ON_MAIN_THREAD);
         builder.setImageCache(imageCache);
         final int thumbSize = resources.getDimensionPixelSize(R.dimen.history_thumb_size);

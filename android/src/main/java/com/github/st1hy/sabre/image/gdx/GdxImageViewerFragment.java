@@ -27,7 +27,7 @@ import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.ImageCacheProvider;
-import com.github.st1hy.imagecache.worker.AbstractImageWorker;
+import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.imagecache.worker.creator.BitmapCreator;
@@ -96,7 +96,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
 
 
     private ImageWorker<Bitmap> createWorker() {
-        AbstractImageWorker.Builder<Bitmap> builder = new AbstractImageWorker.Builder<>(getActivity(), new BitmapCreator());
+        ImageWorkerImp.Builder<Bitmap> builder = new ImageWorkerImp.Builder<>(getActivity(), new BitmapCreator());
         builder.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
         ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
         builder.setImageCache(imageCache);

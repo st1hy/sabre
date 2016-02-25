@@ -23,7 +23,7 @@ import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.decoder.UriBitmapFactory;
 import com.github.st1hy.imagecache.decoder.UriBitmapSource;
 import com.github.st1hy.imagecache.resize.KeepOriginal;
-import com.github.st1hy.imagecache.worker.AbstractImageWorker;
+import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.imagecache.worker.creator.DrawableCreator;
@@ -88,7 +88,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
     public void addImageCache(ImageCache cache) {
         Context context = getContext();
         DrawableCreator drawableCreator = new DrawableCreator(context.getResources());
-        AbstractImageWorker.Builder<Drawable> builder = new AbstractImageWorker.Builder<>(context, drawableCreator);
+        ImageWorkerImp.Builder<Drawable> builder = new ImageWorkerImp.Builder<>(context, drawableCreator);
         builder.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
         builder.setImageCache(cache);
         imageWorker = builder.build();
