@@ -1,15 +1,16 @@
 package com.github.st1hy.sabre.history;
 
+import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.injector.ViewBinder;
 
 import butterknife.Bind;
+import butterknife.ButterKnife;
 
-public class HistoryViewHolder extends ViewBinder {
+public class HistoryViewHolder {
     @Bind(R.id.main_activity_empty_view)
     View floatingButtonContainer;
     @Bind(R.id.text_open_image_help)
@@ -21,9 +22,8 @@ public class HistoryViewHolder extends ViewBinder {
     @Bind(R.id.empty_view)
     View emptyView;
 
-    @Override
-    public ViewBinder bind(@NonNull View view) {
-        return super.bind(view);
+    public void bind(@NonNull Activity activity) {
+        ButterKnife.bind(this, activity);
     }
 
     public View getFloatingButtonContainer() {
@@ -38,7 +38,6 @@ public class HistoryViewHolder extends ViewBinder {
     public View getFloatingButton() {
         return floatingButton;
     }
-
 
     public RecyclerView getRecyclerView() {
         return recyclerView;

@@ -1,18 +1,15 @@
-package com.github.st1hy.sabre;
+package com.github.st1hy.sabre.image;
 
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 
 import com.github.st1hy.sabre.image.gdx.GdxImageViewerFragment;
-import com.github.st1hy.sabre.history.HistoryFragment;
 import com.github.st1hy.sabre.image.surface.SurfaceImageViewFragment;
-import com.github.st1hy.sabre.settings.SettingsFragment;
 
+@Deprecated
 public enum NavState {
-    HISTORY(HistoryFragment.class),
     IMAGE_VIEWER_GL(GdxImageViewerFragment.class),
     IMAGE_VIEWER_SURFACE(SurfaceImageViewFragment.class),
-    SETTINGS(SettingsFragment.class),
     ;
     public static final String ARG_IMAGE_URI = "com.github.st1hy.sabre.image_uri";
 

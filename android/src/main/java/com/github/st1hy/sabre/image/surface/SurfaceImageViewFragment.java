@@ -10,9 +10,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.github.st1hy.imagecache.ImageCacheProvider;
+import com.github.st1hy.sabre.core.ImageCacheProvider;
 import com.github.st1hy.imagecache.ImageCache;
-import com.github.st1hy.sabre.NavState;
+import com.github.st1hy.sabre.image.NavState;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.core.utils.MissingInterfaceException;
 import com.github.st1hy.sabre.image.ImageActivity;

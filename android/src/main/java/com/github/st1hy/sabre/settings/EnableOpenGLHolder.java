@@ -18,7 +18,7 @@ public class EnableOpenGLHolder extends SettingOnOffHolder implements View.OnCli
 
     private final SharedPreferences preferences;
 
-    public EnableOpenGLHolder(@NonNull SharedPreferences preferences) {
+    EnableOpenGLHolder(@NonNull SharedPreferences preferences) {
         this.preferences = preferences;
     }
 

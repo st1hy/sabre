@@ -37,7 +37,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     private final OnImageClicked onImageClicked;
     private Cursor cursor;
 
-    public HistoryRecyclerAdapter(@NonNull Context context, ImageCache imageCache, OnImageClicked onImageClicked) {
+    public HistoryRecyclerAdapter(@NonNull Context context, @NonNull OnImageClicked onImageClicked, @Nullable ImageCache imageCache) {
         this.context = context;
         this.onImageClicked = onImageClicked;
         this.imageWorker = createWorker(context, imageCache);

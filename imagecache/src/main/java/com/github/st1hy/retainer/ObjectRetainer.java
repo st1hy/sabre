@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ObjectRetainer implements Retainer {
-    private final Map<String,Object> map = new ConcurrentHashMap<>();
+    private final Map<String, Object> map = new ConcurrentHashMap<>();
 
     @Override
     @Nullable

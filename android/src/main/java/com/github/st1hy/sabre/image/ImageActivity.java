@@ -17,11 +17,10 @@ import com.github.st1hy.dao.DaoMaster;
 import com.github.st1hy.dao.DaoSession;
 import com.github.st1hy.dao.OpenImageUtils;
 import com.github.st1hy.imagecache.ImageCacheHandler;
-import com.github.st1hy.imagecache.ImageCacheProvider;
 import com.github.st1hy.sabre.Application;
-import com.github.st1hy.sabre.NavState;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.DependencyDelegate;
+import com.github.st1hy.sabre.core.CacheUtils;
+import com.github.st1hy.sabre.core.ImageCacheProvider;
 import com.github.st1hy.sabre.settings.EnableOpenGLHolder;
 
 import java.util.Date;
@@ -37,7 +36,7 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Application app = (Application) getApplication();
-        imageCacheHandler = DependencyDelegate.configureImageCacheHandler(app);
+        imageCacheHandler = CacheUtils.newImageCacheHandler(app);
         if (savedInstanceState == null) {
             NavState state = EnableOpenGLHolder.isOpenGLEnabled(this) ? NavState.IMAGE_VIEWER_GL : NavState.IMAGE_VIEWER_SURFACE;
             Fragment fragment = state.newInstance();

@@ -9,7 +9,7 @@ import com.rey.material.widget.CheckBox;
 
 import butterknife.Bind;
 
-public class SettingOnOffHolder extends ViewBinder {
+class SettingOnOffHolder extends ViewBinder {
 
     @Bind(R.id.text_setting_title)
     TextView title;

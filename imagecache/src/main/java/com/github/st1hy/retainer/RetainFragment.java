@@ -10,7 +10,7 @@ import android.support.annotation.Nullable;
  * A simple non-UI Fragment that stores a single Object and is retained over configuration
  * changes. It will be used to retain the ImageCache object.
  */
-public class RetainFragment extends Fragment implements Retainer{
+public class RetainFragment extends Fragment implements Retainer {
     private static final String TAG = "RetainFragment";
     private final Retainer retainer = new ObjectRetainer();
 
