@@ -52,7 +52,6 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
 
         setContentView(R.layout.activity_history);
         bind();
-        setTitle(R.string.app_name);
     }
 
     private boolean needShowHelp(Bundle savedInstanceState) {

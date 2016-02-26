@@ -10,7 +10,6 @@
     <style name="AppTheme.Light" parent="Base.Theme.AppCompat.Light.DarkActionBar">
         <item name="android:textColorPrimary">@color/default_dark</item>
         <item name="android:textColorSecondary">@color/default_dark</item>
-        <item name="actionBarStyle">@style/AppTheme.TranslucentDarkActionBar</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
     <style name="AppTheme.Image" parent="AppTheme.NoActionBar">
@@ -41,8 +40,5 @@
         <item name="rd_delayClick">none</item>
     </style>
 
-    <style name="AppTheme.TranslucentDarkActionBar" parent="Widget.AppCompat.ActionBar.Solid">
-        <item name="background">@color/actionBarBackground</item>
-    </style>
 
 </resources>
