@@ -1,11 +1,14 @@
 package com.github.st1hy.sabre.history;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -32,7 +35,7 @@ import com.google.common.base.Preconditions;
 
 public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.OnImageClicked {
     private static final int REQUEST_IMAGE = 0x16ed;
-    private final HistoryViewHolder viewHolder =  new HistoryViewHolder();
+    private final HistoryViewHolder viewHolder = new HistoryViewHolder();
     private static final String SAVE_ANIMATION_SHOW_FLAG = "animation shown";
     private boolean showHelp = true;
     private HistoryRecyclerAdapter historyAdapter;
@@ -182,11 +185,24 @@ public class HistoryFragment extends Fragment implements HistoryRecyclerAdapter.
     }
 
     @Override
-    public void openImage(final Uri uri) {
+    public void openImage(@NonNull Uri uri) {
         Intent intent = new Intent();
         intent.setDataAndTypeAndNormalize(uri, "image/*");
         intent.setAction(Intent.ACTION_VIEW);
         intent.setClass(getActivity(), ImageActivity.class);
+//        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+//            startActivityWithExitTransition(intent);
+//        } else {
+//            startActivity(intent);
+//        }
         startActivity(intent);
+    }
+
+    @TargetApi(21)
+    private void startActivityWithExitTransition(Intent intent) {
+        Bundle bundle = ActivityOptions
+                .makeSceneTransitionAnimation(getActivity())
+                .toBundle();
+        startActivity(intent, bundle);
     }
 }

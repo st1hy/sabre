@@ -5,13 +5,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    >
 
     <com.github.st1hy.sabre.image.surface.ImageSurfaceViewer
         android:id="@+id/image_viewer_surface"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"/>
+        android:visibility="invisible"
+        />
 
     <com.rey.material.widget.ProgressView
         android:id="@+id/fragment_image_viewer_progress_bar"
@@ -21,5 +23,6 @@
         app:pv_circular="true"
         app:pv_progressStyle="@style/AppTheme.CircularProgress"
         app:pv_progressMode="indeterminate"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"
+        />
 </FrameLayout>

@@ -87,7 +87,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     }
 
     @Override
-    public void onBindViewHolder(HistoryEntryHolder holder, int position) {
+    public void onBindViewHolder(final HistoryEntryHolder holder, int position) {
         cursor.moveToPosition(position);
         String uriAsString = cursor.getString(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Uri.columnName));
         long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Date.columnName));
@@ -124,6 +124,6 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     }
 
     public interface OnImageClicked {
-        void openImage(Uri uri);
+        void openImage(@NonNull Uri uri);
     }
 }

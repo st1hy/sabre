@@ -8,11 +8,13 @@
     app:mrl_rippleColor="@color/history_entry_ripple_foreground"
     app:mrl_rippleInAdapter="false"
     app:mrl_rippleOverlay="true"
-    app:mrl_rippleAlpha="0.1">
+    app:mrl_rippleAlpha="0.1"
+    >
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        >
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -20,7 +22,8 @@
             android:paddingLeft="14dp"
             android:paddingRight="@dimen/content_left_right_padding"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp">
+            android:layout_marginBottom="8dp"
+            >
             <android.support.v7.widget.CardView
                 android:id="@+id/cardView"
                 android:layout_width="wrap_content"
@@ -30,7 +33,8 @@
                 app:cardUseCompatPadding="true"
                 app:cardCornerRadius="0dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="@color/card_background">
+                app:cardBackgroundColor="@color/card_background"
+                >
                 <com.github.st1hy.sabre.history.ImageReceiverView
                     android:id="@+id/entry_image"
                     android:layout_width="@dimen/history_thumb_size"
@@ -41,24 +45,28 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                >
                 <com.rey.material.widget.TextView
                     android:id="@+id/entry_resource"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     style="?android:attr/textAppearanceMedium"
                     android:ellipsize="middle"
-                    android:singleLine="true"/>
+                    android:singleLine="true"
+                    />
                 <com.rey.material.widget.TextView
                     android:id="@+id/entry_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    style="?android:attr/textAppearanceSmall"/>
+                    style="?android:attr/textAppearanceSmall"
+                    />
             </LinearLayout>
         </LinearLayout>
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="@color/setting_separator"/>
+            android:background="@color/setting_separator"
+            />
     </LinearLayout>
 </com.balysv.materialripple.MaterialRippleLayout>

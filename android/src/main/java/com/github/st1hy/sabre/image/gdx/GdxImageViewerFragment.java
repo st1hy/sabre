@@ -209,6 +209,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
             @Override
             public void run() {
                 ImageActivity activity = (ImageActivity) getActivity();
+                if (activity == null) return;
                 activity.onImageFailedToLoad();
             }
         });
