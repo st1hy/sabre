@@ -52,6 +52,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
     private CacheEntryNameFactory cacheEntryNameFactory;
     private BitmapProvider<UriBitmapSource> bitmapProvider;
     private TaskCallback<T> taskCallback;
+    private Executor executor;
 
     protected final Map<ImageReceiver, BitmapWorkerTask> taskMap = Collections.synchronizedMap(new WeakHashMap<ImageReceiver, BitmapWorkerTask>());
 
@@ -71,7 +72,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         }
 
         @Override
-        public Bitmap processBitmap(Uri uri) {
+        public Bitmap readBitmap(@NonNull Uri uri) {
             UriBitmapSource source = UriBitmapSource.of(parent.context.getContentResolver(), uri);
             return parent.bitmapProvider.getImage(source);
         }
@@ -79,12 +80,6 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         @Override
         public ImageCache getImageCache() {
             return parent.imageCache;
-        }
-
-        @Override
-        @Nullable
-        public T createImage(@Nullable Bitmap bitmap) {
-            return parent.imageCreator.createImage(bitmap);
         }
 
         @Override
@@ -103,10 +98,13 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         }
 
         @Override
-        public void setFinalImageAndReleasePrevious(@NonNull ImageReceiver<T> imageView, @Nullable T image, @Nullable Bitmap newBitmapUsed) {
-            if (image != null) {
+        public void onBitmapRead(@NonNull ImageReceiver<T> imageView, @Nullable Bitmap bitmap) {
+            if (bitmap != null) {
+                T image;
                 if (parent.fadeInTime > 0) {
-                    image = parent.imageCreator.createImageFadingIn(image, parent.fadeInTime);
+                    image = parent.imageCreator.createImageFadingIn(bitmap, parent.fadeInTime);
+                } else {
+                    image = parent.imageCreator.createImage(bitmap);
                 }
                 parent.setImageAndRegister(imageView, image);
             } else {
@@ -115,7 +113,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         }
 
         @Override
-        public BitmapWorkerTask getBitmapWorkerTask(ImageReceiver imageReceiver) {
+        public BitmapWorkerTask getBitmapWorkerTask(@NonNull ImageReceiver imageReceiver) {
             return parent.taskMap.get(imageReceiver);
         }
 
@@ -147,7 +145,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
             final BitmapWorkerTask task = loaderFactory.newTask(uri, imageView, taskCallback);
             taskMap.put(imageView, task);
             setImageAndRegister(imageView, imageCreator.createImage(loadingBitmap));
-            task.executeOnExecutor(getExecutor());
+            task.executeOnExecutor(executor);
         }
     }
 
@@ -204,7 +202,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
 
     @Override
     public void clearCache() {
-        getExecutor().execute(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 imageCache.clearCache();
@@ -214,7 +212,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
 
     @Override
     public void flushCache() {
-        getExecutor().execute(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 imageCache.flush();
@@ -224,16 +222,12 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
 
     @Override
     public void closeCache() {
-        getExecutor().execute(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 imageCache.close();
             }
         });
-    }
-
-    private Executor getExecutor() {
-        return Utils.CACHED_EXECUTOR_POOL;
     }
 
     public static class Builder<T> {
@@ -244,6 +238,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         private int fadeInTime = 250;
         private LoaderFactory loaderFactory = SimpleLoaderFactory.RESULT_ON_MAIN_THREAD;
         private CacheEntryNameFactory cacheEntryNameFactory;
+        private Executor executor;
 
         private int reqWidth = Integer.MAX_VALUE, reqHeight = Integer.MAX_VALUE;
         private ResizingStrategy resizingStrategy;
@@ -306,6 +301,11 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
             return this;
         }
 
+        public Builder setExecutor(@NonNull Executor executor) {
+            this.executor = executor;
+            return this;
+        }
+
         public ImageWorkerImp<T> build() {
             ImageWorkerImp<T> worker = new ImageWorkerImp<>(context, imageCreator);
             worker.imageCache = imageCache;
@@ -316,13 +316,15 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
             worker.cacheEntryNameFactory = cacheEntryNameFactory;
             worker.bitmapProvider = buildBitmapProvider();
             worker.taskCallback = new TaskCallback<>(worker);
+            if (executor == null) executor = Utils.CACHED_EXECUTOR_POOL;
+            worker.executor = executor;
             return worker;
         }
 
         private BitmapProvider<UriBitmapSource> buildBitmapProvider() {
             BitmapProvider.Builder<UriBitmapSource> builder = new BitmapProvider.Builder<>(new UriBitmapFactory());
             builder.setRequiredSize(reqWidth, reqHeight);
-            builder.setImageCache(imageCache);
+//            builder.setImageCache(imageCache);
             builder.setResizingStrategy(resizingStrategy);
             return builder.build();
         }

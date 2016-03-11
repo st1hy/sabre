@@ -25,11 +25,12 @@ import android.support.annotation.Nullable;
 import com.github.st1hy.imagecache.decoder.BitmapDecoder;
 import com.github.st1hy.imagecache.resize.InputDownSampling;
 import com.github.st1hy.imagecache.resize.ResizingStrategy;
+import com.github.st1hy.imagecache.reuse.ReusableBitmapPool;
 
 public class BitmapProvider<Source> {
     private int requiredWidth;
     private int requiredHeight;
-    private ImageCache imageCache;
+    private ReusableBitmapPool reusableBitmapPool;
     private BitmapDecoder<Source> bitmapDecoder;
     private ResizingStrategy resizingStrategy;
 
@@ -47,7 +48,7 @@ public class BitmapProvider<Source> {
             bitmapDecoder.decode(source, null, options);
             options.inSampleSize = resizingStrategy.calculateInSampleSize(options, requiredWidth, requiredHeight);
         }
-        //findBitmapToReuse(options);
+        findBitmapToReuse(options);
         options.inJustDecodeBounds = false;
         Bitmap bitmap = bitmapDecoder.decode(source, null, options);
         if (resizingStrategy.isResizingRequired() && bitmap != null) {
@@ -66,27 +67,19 @@ public class BitmapProvider<Source> {
         return getImage(source, null, null);
     }
 
-    //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
-    @Deprecated
     private void findBitmapToReuse(@NonNull BitmapFactory.Options options) {
-        // inBitmap only works with mutable bitmaps so force the decoder to
-        // return mutable bitmaps.
-//        options.inMutable = true;
-
-//        if (cache != null) {
-//            // Try and find a bitmap to use for inBitmap
-//            Bitmap inBitmap = cache.getBitmapFromReusableSet(options);
-//
-//            if (inBitmap != null) {
-//                options.inBitmap = inBitmap;
-//            }
-//        }
+        if (reusableBitmapPool == null) return;
+        options.inMutable = true;
+        Bitmap inBitmap = reusableBitmapPool.getBitmapFromReusableSet(options);
+        if (inBitmap != null) {
+            options.inBitmap = inBitmap;
+        }
     }
 
     public static class Builder<Source> {
         private int requiredWidth = Integer.MAX_VALUE;
         private int requiredHeight = Integer.MAX_VALUE;
-        private ImageCache imageCache;
+        private ReusableBitmapPool reusableBitmapPool;
         private BitmapDecoder<Source> bitmapDecoder;
         private ResizingStrategy resizingStrategy;
 
@@ -100,8 +93,8 @@ public class BitmapProvider<Source> {
             return this;
         }
 
-        public Builder setImageCache(@Nullable ImageCache imageCache) {
-            this.imageCache = imageCache;
+        public Builder setReusableBitmapPool(@Nullable ReusableBitmapPool reusableBitmapPool) {
+            this.reusableBitmapPool = reusableBitmapPool;
             return this;
         }
 
@@ -113,7 +106,7 @@ public class BitmapProvider<Source> {
         public BitmapProvider<Source> build() {
             BitmapProvider<Source> bitmapProvider = new BitmapProvider<>();
             bitmapProvider.bitmapDecoder = bitmapDecoder;
-            bitmapProvider.imageCache = imageCache;
+            bitmapProvider.reusableBitmapPool = reusableBitmapPool;
             bitmapProvider.requiredHeight = requiredHeight;
             bitmapProvider.requiredWidth = requiredWidth;
             if (resizingStrategy == null) resizingStrategy = new InputDownSampling();

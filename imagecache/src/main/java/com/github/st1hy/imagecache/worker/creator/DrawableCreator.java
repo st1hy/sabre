@@ -28,9 +28,9 @@ public class DrawableCreator implements ImageCreator<Drawable> {
 
     @NonNull
     @Override
-    public Drawable createImageFadingIn(@NonNull Drawable image, int fadeInTime) {
+    public Drawable createImageFadingIn(@NonNull Bitmap image, int fadeInTime) {
         // Transition drawable with a transparent drawable and the final drawable
-        TransitionDrawable td = new TransitionDrawable(new Drawable[]{new ColorDrawable(Color.TRANSPARENT), image});
+        TransitionDrawable td = new TransitionDrawable(new Drawable[]{new ColorDrawable(Color.TRANSPARENT), createImage(image)});
         td.startTransition(fadeInTime);
         return td;
     }

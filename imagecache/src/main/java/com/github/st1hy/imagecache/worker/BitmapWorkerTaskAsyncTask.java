@@ -1,5 +1,6 @@
 package com.github.st1hy.imagecache.worker;
 
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
@@ -9,15 +10,15 @@ import java.util.concurrent.Executor;
 /**
  * The actual AsyncTask that will asynchronously process the image.
  */
-class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, T> implements BitmapWorkerTask {
-    private final BitmapWorkerDelegate<T> workerDelegate;
+class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, Bitmap> implements BitmapWorkerTask {
+    private final BitmapWorkerDelegate workerDelegate;
 
     public BitmapWorkerTaskAsyncTask(@NonNull Uri uri, @NonNull ImageReceiver<T> imageView, @NonNull BitmapWorkerTask.Callback<T> callback) {
         workerDelegate = new BitmapWorkerDelegate<>(this, uri, imageView, callback);
     }
 
     @Override
-    protected T doInBackground(Void... params) {
+    protected Bitmap doInBackground(Void... params) {
         return workerDelegate.call();
     }
 
@@ -25,12 +26,12 @@ class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, T> implements B
      * Once the image is processed, associates it to the imageView
      */
     @Override
-    protected void onPostExecute(T drawable) {
-        workerDelegate.setImage(drawable);
+    protected void onPostExecute(Bitmap bitmap) {
+        workerDelegate.onBitmapRead(bitmap);
     }
 
     @Override
-    protected void onCancelled(T value) {
+    protected void onCancelled(Bitmap bitmap) {
         super.onCancelled();
         workerDelegate.onCancelled();
     }

@@ -20,8 +20,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
-import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -79,8 +77,6 @@ public class ImageCache {
 
     private BitmapProvider<FileDescriptor> cachedBitmapProvider;
 
-//    private final Set<SoftReference<Bitmap>> mReusableBitmaps;
-
     /**
      * Create a new ImageCache object using the specified parameters. This should not be
      * called directly by other classes, instead use
@@ -92,23 +88,10 @@ public class ImageCache {
     private ImageCache(ImageCacheParams cacheParams) {
         mCacheParams = cacheParams;
 
-        // Set up memory cache
         if (mCacheParams.memoryCacheEnabled) {
             if (BuildConfig.DEBUG) {
                 Timber.d("Memory cache created (size = %d )", mCacheParams.memCacheSize);
             }
-
-            // If we're running on Honeycomb or newer, create a set of reusable bitmaps that can be
-            // populated into the inBitmap field of BitmapFactory.Options. Note that the set is
-            // of SoftReferences which will actually not be very effective due to the garbage
-            // collector being aggressive clearing Soft/WeakReferences. A better approach
-            // would be to use a strongly references bitmaps, however this would require some
-            // balancing of memory usage between this set and the bitmap LruCache. It would also
-            // require knowledge of the expected size of the bitmaps. From Honeycomb to JellyBean
-            // the size would need to be precise, from KitKat onward the size would just need to
-            // be the upper bound (due to changes in how inBitmap can re-use bitmaps).
-            //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
-//            mReusableBitmaps = Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
 
             mMemoryCache = new LruCache<String, Bitmap>(mCacheParams.memCacheSize) {
 
@@ -136,8 +119,6 @@ public class ImageCache {
             };
         } else {
             mMemoryCache = null;
-            //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
-//            mReusableBitmaps = null;
         }
 
         // By default the disk cache is not initialized here as it should be initialized
@@ -331,50 +312,11 @@ public class ImageCache {
     private BitmapProvider<FileDescriptor> getCachedBitmapProvider() {
         if (cachedBitmapProvider == null) {
             BitmapProvider.Builder<FileDescriptor> builder = new BitmapProvider.Builder<>(new FileDescriptorBitmapFactory());
-            builder.setImageCache(this);
             builder.setResizingStrategy(new KeepOriginal());
             cachedBitmapProvider = builder.build();
         }
         return cachedBitmapProvider;
     }
-
-    //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
-//    /**
-//     * @param options - BitmapFactory.Options with out* options populated
-//     * @return Bitmap that case be used for inBitmap
-//     */
-//    protected Bitmap getBitmapFromReusableSet(BitmapFactory.Options options) {
-//        Bitmap bitmap = null;
-//
-//        if (mReusableBitmaps != null && !mReusableBitmaps.isEmpty()) {
-//            synchronized (mReusableBitmaps) {
-//                Timber.d("Searching for reusable bitmap.");
-//                final Iterator<SoftReference<Bitmap>> iterator = mReusableBitmaps.iterator();
-//                Bitmap item;
-//
-//                while (iterator.hasNext()) {
-//                    item = iterator.next().get();
-//
-//                    if (null != item && item.isMutable()) {
-//                        // Check to see it the item can be used for inBitmap
-//                        if (canUseForInBitmap(item, options)) {
-//                            bitmap = item;
-//
-//                            // Remove from reusable set so it can't be used again
-//                            iterator.remove();
-//                            break;
-//                        }
-//                    } else {
-//                        // Remove from the set if the reference has been cleared.
-//                        iterator.remove();
-//                    }
-//                }
-//                Timber.d("Search complete. Found: " + (bitmap != null ? bitmap.hashCode() : "null"));
-//            }
-//        }
-//
-//        return bitmap;
-//    }
 
     public void clearMemory() {
         if (mMemoryCache != null) {
@@ -513,50 +455,6 @@ public class ImageCache {
         }
     }
 
-    /**
-     * @param candidate     - Bitmap to check
-     * @param targetOptions - Options that have the out* value populated
-     * @return true if <code>candidate</code> can be used for inBitmap re-use with
-     * <code>targetOptions</code>
-     */
-    @TargetApi(VERSION_CODES.KITKAT)
-    private static boolean canUseForInBitmap(
-            Bitmap candidate, BitmapFactory.Options targetOptions) {
-        //BEGIN_INCLUDE(can_use_for_inbitmap)
-        if (!Utils.hasKitKat()) {
-            // On earlier versions, the dimensions must match exactly and the inSampleSize must be 1
-            return candidate.getWidth() == targetOptions.outWidth
-                    && candidate.getHeight() == targetOptions.outHeight
-                    && targetOptions.inSampleSize == 1;
-        }
-
-        // From Android 4.4 (KitKat) onward we can re-use if the byte size of the new bitmap
-        // is smaller than the reusable bitmap candidate allocation byte count.
-        int width = targetOptions.outWidth / targetOptions.inSampleSize;
-        int height = targetOptions.outHeight / targetOptions.inSampleSize;
-        int byteCount = width * height * getBytesPerPixel(candidate.getConfig());
-        return byteCount <= candidate.getAllocationByteCount();
-        //END_INCLUDE(can_use_for_inbitmap)
-    }
-
-    /**
-     * Return the byte usage per pixel of a bitmap based on its configuration.
-     *
-     * @param config The bitmap configuration.
-     * @return The byte usage per pixel.
-     */
-    private static int getBytesPerPixel(Config config) {
-        if (config == Config.ARGB_8888) {
-            return 4;
-        } else if (config == Config.RGB_565) {
-            return 2;
-        } else if (config == Config.ARGB_4444) {
-            return 2;
-        } else if (config == Config.ALPHA_8) {
-            return 1;
-        }
-        return 1;
-    }
 
     /**
      * Get a usable cache directory (external if available, internal otherwise).

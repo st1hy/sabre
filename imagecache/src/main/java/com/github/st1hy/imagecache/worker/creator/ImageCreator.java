@@ -10,5 +10,5 @@ public interface ImageCreator<T> {
     T createImage(@Nullable Bitmap bitmap);
 
     @NonNull
-    T createImageFadingIn(@NonNull T image, int fadeInTime);
+    T createImageFadingIn(@NonNull Bitmap image, int fadeInTime);
 }
