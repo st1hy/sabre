@@ -25,6 +25,8 @@ ext {
     box2DLightsVersion = '1.4'
     ashleyVersion = '1.7.0'
     aiVersion = '1.7.0'
+
+    supportLibraryVersion = '23.2.1'
 }
 
 allprojects {
