@@ -30,12 +30,15 @@ import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.decoder.UriBitmapFactory;
 import com.github.st1hy.imagecache.decoder.UriBitmapSource;
 import com.github.st1hy.imagecache.resize.ResizingStrategy;
+import com.github.st1hy.imagecache.reuse.RefHandle;
 import com.github.st1hy.imagecache.worker.creator.ImageCreator;
 import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
 import com.github.st1hy.imagecache.worker.name.SimpleCacheEntryNameFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 
@@ -55,6 +58,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
     private Executor executor;
 
     protected final Map<ImageReceiver, BitmapWorkerTask> taskMap = Collections.synchronizedMap(new WeakHashMap<ImageReceiver, BitmapWorkerTask>());
+    private final Map<ImageReceiver, RefHandle> handleMap = Collections.synchronizedMap(new HashMap<ImageReceiver, RefHandle>());
 
     private ImageWorkerImp(@NonNull Context context, @NonNull ImageCreator<T> imageCreator) {
         this.context = context;
@@ -72,7 +76,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         }
 
         @Override
-        public Bitmap readBitmap(@NonNull Uri uri) {
+        public RefHandle<Bitmap> readBitmap(@NonNull Uri uri) {
             UriBitmapSource source = UriBitmapSource.of(parent.context.getContentResolver(), uri);
             return parent.bitmapProvider.getImage(source);
         }
@@ -98,15 +102,17 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         }
 
         @Override
-        public void onBitmapRead(@NonNull ImageReceiver<T> imageView, @Nullable Bitmap bitmap) {
-            if (bitmap != null) {
+        public void onBitmapRead(@NonNull ImageReceiver<T> imageView, @Nullable RefHandle<Bitmap> bitmapHandle) {
+            if (bitmapHandle != null) {
                 T image;
+                Bitmap bitmap = bitmapHandle.get();
                 if (parent.fadeInTime > 0) {
                     image = parent.imageCreator.createImageFadingIn(bitmap, parent.fadeInTime);
                 } else {
                     image = parent.imageCreator.createImage(bitmap);
                 }
-                parent.setImageAndRegister(imageView, image);
+                parent.releaseOldHandleAndBindNew(imageView, bitmapHandle);
+                parent.setImage(imageView, image);
             } else {
                 imageView.onImageLoadingFailed();
             }
@@ -133,20 +139,49 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         }
     }
 
+    private void releaseOldHandleAndBindNew(@NonNull ImageReceiver<T> imageView, @Nullable RefHandle<Bitmap> bitmapHandle) {
+        RefHandle refHandle = handleMap.get(imageView);
+        if (refHandle != null) refHandle.close();
+        handleMap.put(imageView, bitmapHandle);
+    }
+
     @Override
     public void loadImage(@NonNull Uri uri, @NonNull ImageReceiver<T> imageView) {
-        imageView.setBackground(imageCreator.createImage(loadingBitmap));
-        Bitmap value = imageCache.getBitmapFromMemCache(getCacheIndex(uri));
+        if (loadingBitmap != null) imageView.setBackground(imageCreator.createImage(loadingBitmap));
+        RefHandle<Bitmap> value = imageCache.getBitmapFromMemCache(getCacheIndex(uri));
         if (value != null) {
             // Bitmap found in memory cache
-            T image = imageCreator.createImage(value);
-            setImageAndRegister(imageView, image);
+            taskCallback.onBitmapRead(imageView, value);
         } else if (cancelPotentialWork(uri, imageView)) {
             final BitmapWorkerTask task = loaderFactory.newTask(uri, imageView, taskCallback);
             taskMap.put(imageView, task);
-            setImageAndRegister(imageView, imageCreator.createImage(loadingBitmap));
+            T image = loadingBitmap != null ? imageCreator.createImage(loadingBitmap) : null;
+            setImage(imageView, image);
             task.executeOnExecutor(executor);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        setExitTasksEarly(true);
+        cancelAll();
+        releaseAll();
+    }
+
+    private void cancelAll() {
+        Set<Map.Entry<ImageReceiver, BitmapWorkerTask>> entries = taskMap.entrySet();
+        for (Map.Entry<ImageReceiver, BitmapWorkerTask> entry : entries) {
+            entry.getValue().cancelTask(true);
+        }
+        taskMap.clear();
+    }
+
+    private void releaseAll() {
+        Set<Map.Entry<ImageReceiver, RefHandle>> entries = handleMap.entrySet();
+        for (Map.Entry<ImageReceiver, RefHandle>  entry : entries) {
+            entry.getValue().close();
+        }
+        handleMap.clear();
     }
 
     @Override
@@ -191,7 +226,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         return cacheEntryNameFactory.getCacheIndex(uri);
     }
 
-    private void setImageAndRegister(@NonNull ImageReceiver<T> imageView, @Nullable T image) {
+    private void setImage(@NonNull ImageReceiver<T> imageView, @Nullable T image) {
         imageView.setImage(image);
     }
 
@@ -324,7 +359,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         private BitmapProvider<UriBitmapSource> buildBitmapProvider() {
             BitmapProvider.Builder<UriBitmapSource> builder = new BitmapProvider.Builder<>(new UriBitmapFactory());
             builder.setRequiredSize(reqWidth, reqHeight);
-//            builder.setImageCache(imageCache);
+            builder.setReusableBitmapPool(imageCache.getReusableBitmapPool());
             builder.setResizingStrategy(resizingStrategy);
             return builder.build();
         }

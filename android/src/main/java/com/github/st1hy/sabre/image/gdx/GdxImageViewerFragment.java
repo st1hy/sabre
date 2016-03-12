@@ -158,8 +158,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     @Override
     public void onDestroy() {
         super.onDestroy();
-        imageWorker.setExitTasksEarly(true);
-        imageWorker.cancelWork(imageReceiver);
+        imageWorker.onDestroy();
         handler.removeAll();
     }
 

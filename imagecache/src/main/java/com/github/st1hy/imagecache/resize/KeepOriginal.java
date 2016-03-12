@@ -15,6 +15,11 @@ public class KeepOriginal implements ResizingStrategy {
     }
 
     @Override
+    public boolean isReusingBitmaps() {
+        return true;
+    }
+
+    @Override
     public boolean isInSampleSizeUsed() {
         return false;
     }

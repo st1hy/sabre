@@ -23,11 +23,14 @@ import android.graphics.Bitmap.CompressFormat;
 import android.os.Build.VERSION_CODES;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.LruCache;
 
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.imagecache.decoder.FileDescriptorBitmapFactory;
 import com.github.st1hy.imagecache.resize.KeepOriginal;
+import com.github.st1hy.imagecache.reuse.RefHandle;
+import com.github.st1hy.imagecache.reuse.ReusableBitmapPool;
 import com.github.st1hy.imagecache.storage.ImageCacheStorage;
 import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.retainer.Retainer;
@@ -70,12 +73,13 @@ public class ImageCache {
     private static final boolean DEFAULT_INIT_DISK_CACHE_ON_CREATE = false;
 
     private DiskLruCache mDiskLruCache;
-    private final LruCache<String, Bitmap> mMemoryCache;
+    private final LruCache<String, RefHandle<Bitmap>> mMemoryCache;
     private final ImageCacheParams mCacheParams;
     private final Object mDiskCacheLock = new Object();
     private boolean mDiskCacheStarting = true;
 
     private BitmapProvider<FileDescriptor> cachedBitmapProvider;
+    private final ReusableBitmapPool reusableBitmapPool = new ReusableBitmapPool();
 
     /**
      * Create a new ImageCache object using the specified parameters. This should not be
@@ -93,18 +97,14 @@ public class ImageCache {
                 Timber.d("Memory cache created (size = %d )", mCacheParams.memCacheSize);
             }
 
-            mMemoryCache = new LruCache<String, Bitmap>(mCacheParams.memCacheSize) {
+            mMemoryCache = new LruCache<String, RefHandle<Bitmap>>(mCacheParams.memCacheSize) {
 
                 /**
                  * Notify the removed entry that is no longer being cached
                  */
                 @Override
-                protected void entryRemoved(boolean evicted, String key, Bitmap oldValue, Bitmap newValue) {
-                    //FIXME: Case 1: Unsafe! This allows reusing bitmap we don't exclusively own, possibly writing to already displayed bitmap.
-//                    synchronized (mReusableBitmaps) {
-//                        Timber.d("Cache eviction: adding bitmap as reusable: " + key + " " + oldValue.hashCode());
-//                        mReusableBitmaps.add(new SoftReference<>(oldValue));
-//                    }
+                protected void entryRemoved(boolean evicted, String key, RefHandle<Bitmap> oldValue, RefHandle<Bitmap> newValue) {
+                    oldValue.close();
                 }
 
                 /**
@@ -112,8 +112,8 @@ public class ImageCache {
                  * for a bitmap cache
                  */
                 @Override
-                protected int sizeOf(String key, Bitmap value) {
-                    final int bitmapSize = getBitmapSize(value) / 1024;
+                protected int sizeOf(String key, RefHandle<Bitmap> value) {
+                    final int bitmapSize = getBitmapSize(value.get()) / 1024;
                     return bitmapSize == 0 ? 1 : bitmapSize;
                 }
             };
@@ -190,49 +190,60 @@ public class ImageCache {
      * Adds a bitmap to both memory and disk cache.
      *
      * @param data  Unique identifier for the bitmap to store
-     * @param value The bitmap drawable to store
+     * @param bitmapHandle The bitmap reference to store, image cache will take ownership of provided handle
      */
-    public void addBitmapToCache(String data, Bitmap value) {
-        addBitmapToCache(data, value, true);
+    public void addBitmapToCache(@NonNull String data, @NonNull RefHandle<Bitmap> bitmapHandle) {
+        addBitmapToCache(data, bitmapHandle, true);
     }
 
-    public void addBitmapToCache(String data, Bitmap value, boolean cacheOnDisk) {
-        if (data == null || value == null) {
-            return;
-        }
-
+    /**
+     * Adds a bitmap to both memory and disk cache.
+     *
+     * @param data  Unique identifier for the bitmap to store
+     * @param bitmapHandle The bitmap reference to store, image cache will take ownership of provided handle
+     * @param cacheOnDisk true if disk cache will be used, false - only memory cache will be used
+     */
+    public void addBitmapToCache(@NonNull String data, @NonNull RefHandle<Bitmap> bitmapHandle, boolean cacheOnDisk) {
         // Add to memory cache
         if (mMemoryCache != null) {
-            mMemoryCache.put(data, value);
+            mMemoryCache.put(data, bitmapHandle);
         }
-
         if (cacheOnDisk) {
-            synchronized (mDiskCacheLock) {
-                // Add to disk cache
-                if (mDiskLruCache != null) {
-                    final String key = hashKeyForDisk(data);
-                    OutputStream out = null;
-                    try {
-                        DiskLruCache.Snapshot snapshot = mDiskLruCache.get(key);
-                        if (snapshot == null) {
-                            final DiskLruCache.Editor editor = mDiskLruCache.edit(key);
-                            if (editor != null) {
-                                try {
-                                    out = editor.newOutputStream(DISK_CACHE_INDEX);
-                                    value.compress(mCacheParams.compressFormat, mCacheParams.compressQuality, out);
-                                    editor.commit();
-                                } finally {
-                                    if (out != null) {
-                                        out.close();
-                                    }
+            addToDiskCache(data, bitmapHandle);
+        }
+    }
+
+    private void addToDiskCache(@NonNull String data, @NonNull RefHandle<Bitmap> bitmapHandle) {
+        Bitmap bitmap = bitmapHandle.getOrNull();
+        if (bitmap == null) {
+            Timber.w("Cannot add to disk cache, bitmap reference has been closed!");
+            return;
+        }
+        synchronized (mDiskCacheLock) {
+            // Add to disk cache
+            if (mDiskLruCache != null) {
+                final String key = hashKeyForDisk(data);
+                OutputStream out = null;
+                try {
+                    DiskLruCache.Snapshot snapshot = mDiskLruCache.get(key);
+                    if (snapshot == null) {
+                        final DiskLruCache.Editor editor = mDiskLruCache.edit(key);
+                        if (editor != null) {
+                            try {
+                                out = editor.newOutputStream(DISK_CACHE_INDEX);
+                                bitmap.compress(mCacheParams.compressFormat, mCacheParams.compressQuality, out);
+                                editor.commit();
+                            } finally {
+                                if (out != null) {
+                                    out.close();
                                 }
                             }
-                        } else {
-                            snapshot.getInputStream(DISK_CACHE_INDEX).close();
                         }
-                    } catch (Exception e) {
-                        Timber.e(e, "addBitmapToCache failed");
+                    } else {
+                        snapshot.getInputStream(DISK_CACHE_INDEX).close();
                     }
+                } catch (Exception e) {
+                    Timber.e(e, "Adding bitmap to disk cache failed");
                 }
             }
         }
@@ -242,17 +253,19 @@ public class ImageCache {
      * Get from memory cache.
      *
      * @param data Unique identifier for which item to get
-     * @return The bitmap drawable if found in cache, null otherwise
+     * @return The bitmap drawable if found in cache, null otherwise, returned bitmap reference is owned by the receiver.
      */
-    public Bitmap getBitmapFromMemCache(String data) {
-        Bitmap memValue = null;
+    @Nullable
+    public RefHandle<Bitmap> getBitmapFromMemCache(String data) {
+        RefHandle<Bitmap> memValue = null;
 
         if (mMemoryCache != null) {
             memValue = mMemoryCache.get(data);
+            if (memValue != null) memValue = memValue.clone();
         }
 
         if (BuildConfig.DEBUG && memValue != null) {
-            Timber.d("Memory cache hit %s bitmap %s", data, memValue.toString());
+            Timber.d("Memory cache hit %s bitmap %s", data, memValue.get().toString());
         }
 
         return memValue;
@@ -262,12 +275,13 @@ public class ImageCache {
      * Get from disk cache.
      *
      * @param data Unique identifier for which item to get
-     * @return The bitmap if found in cache, null otherwise
+     * @return The bitmap if found in cache, null otherwise, returned handle is owned by the receiver
      */
-    public Bitmap getBitmapFromDiskCache(String data) {
+    @Nullable
+    public RefHandle<Bitmap> getBitmapFromDiskCache(String data) {
         if (!mCacheParams.diskCacheEnabled) return null;
         final String key = hashKeyForDisk(data);
-        Bitmap bitmap = null;
+        RefHandle<Bitmap> bitmapHandle = null;
 
         synchronized (mDiskCacheLock) {
             while (mDiskCacheStarting) {
@@ -288,9 +302,9 @@ public class ImageCache {
                         if (inputStream != null) {
                             FileDescriptor fd = ((FileInputStream) inputStream).getFD();
 
-                            // Decode bitmap, but we don't want to sample so give
+                            // Decode bitmapHandle, but we don't want to sample so give
                             // MAX_VALUE as the target dimensions
-                            bitmap = getCachedBitmapProvider().getImage(fd);
+                            bitmapHandle = getCachedBitmapProvider().getImage(fd);
                         }
                     }
                 } catch (final IOException e) {
@@ -305,14 +319,16 @@ public class ImageCache {
                     }
                 }
             }
-            return bitmap;
+            return bitmapHandle;
         }
     }
 
+    @NonNull
     private BitmapProvider<FileDescriptor> getCachedBitmapProvider() {
         if (cachedBitmapProvider == null) {
             BitmapProvider.Builder<FileDescriptor> builder = new BitmapProvider.Builder<>(new FileDescriptorBitmapFactory());
             builder.setResizingStrategy(new KeepOriginal());
+            builder.setReusableBitmapPool(reusableBitmapPool);
             cachedBitmapProvider = builder.build();
         }
         return cachedBitmapProvider;
@@ -510,5 +526,8 @@ public class ImageCache {
         return path.getUsableSpace();
     }
 
-
+    @NonNull
+    public ReusableBitmapPool getReusableBitmapPool() {
+        return reusableBitmapPool;
+    }
 }

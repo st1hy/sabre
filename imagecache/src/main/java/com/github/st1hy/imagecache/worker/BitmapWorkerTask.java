@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.imagecache.reuse.RefHandle;
 import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
 
 import java.util.concurrent.Executor;
@@ -25,16 +26,16 @@ interface BitmapWorkerTask {
          *
          * @param uri The data to identify which image to process, as provided by
          *            {@link ImageWorker#loadImage(Uri, ImageReceiver)}
-         * @return The processed bitmap
+         * @return The processed bitmap, owned by the receiver
          */
-        Bitmap readBitmap(@NonNull Uri uri);
+        RefHandle<Bitmap> readBitmap(@NonNull Uri uri);
 
         /**
          * Called when the processing is complete and the final image has been read.
          *
          * @param bitmap bitmap as read from the source
          */
-        void onBitmapRead(@NonNull ImageReceiver<T> imageView, @Nullable Bitmap bitmap);
+        void onBitmapRead(@NonNull ImageReceiver<T> imageView, @Nullable RefHandle<Bitmap> bitmap);
 
         /**
          * @return The {@link ImageCache} object currently being used..

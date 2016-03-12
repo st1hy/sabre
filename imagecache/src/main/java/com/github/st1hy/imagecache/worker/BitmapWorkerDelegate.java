@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 
 import com.github.st1hy.imagecache.BuildConfig;
 import com.github.st1hy.imagecache.ImageCache;
+import com.github.st1hy.imagecache.reuse.RefHandle;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
@@ -17,7 +18,7 @@ import timber.log.Timber;
 /**
  * Common bitmap worker behavior for every worker
  */
-public class BitmapWorkerDelegate<T> implements Callable<Bitmap> {
+public class BitmapWorkerDelegate<T> implements Callable<RefHandle<Bitmap>> {
     private final Object mPauseWorkLock;
     private final Uri uri;
     private final String cacheIndex;
@@ -38,6 +39,7 @@ public class BitmapWorkerDelegate<T> implements Callable<Bitmap> {
         mPauseWorkLock = callback.getSharedWaitingLock();
     }
 
+    @NonNull
     public String getCacheIndex() {
         return cacheIndex;
     }
@@ -57,11 +59,11 @@ public class BitmapWorkerDelegate<T> implements Callable<Bitmap> {
     }
 
     @Override
-    public Bitmap call() {
+    public RefHandle<Bitmap> call() {
         if (BuildConfig.DEBUG) {
             Timber.d("runnable - starting work");
         }
-        Bitmap bitmap = null;
+        RefHandle<Bitmap> bitmapHandle = null;
 
         // Wait here if work is paused and the task is not cancelled
         synchronized (mPauseWorkLock) {
@@ -76,34 +78,35 @@ public class BitmapWorkerDelegate<T> implements Callable<Bitmap> {
 
         // If the image cache is available and this task has not been cancelled by another
         // thread and the ImageView that was originally bound to this task is still bound back
-        // to this task and our "exit early" flag is not set then try and fetch the bitmap from
+        // to this task and our "exit early" flag is not set then try and fetch the bitmapHandle from
         // the cache
         if (mImageCache != null && isTaskFresh()) {
-            bitmap = mImageCache.getBitmapFromDiskCache(cacheIndex);
+            bitmapHandle = mImageCache.getBitmapFromDiskCache(cacheIndex);
         }
 
-        // If the bitmap was not found in the cache and this task has not been cancelled by
+        // If the bitmapHandle was not found in the cache and this task has not been cancelled by
         // another thread and the ImageView that was originally bound to this task is still
         // bound back to this task and our "exit early" flag is not set, then call the main
         // process method (as implemented by a subclass)
-        if (bitmap == null && isTaskFresh()) {
-            bitmap = callback.readBitmap(uri);
+        if (bitmapHandle == null && isTaskFresh()) {
+            bitmapHandle = callback.readBitmap(uri);
         }
 
-        // If the bitmap was processed and the image cache is available, then add the processed
-        // bitmap to the cache for future use. Note we don't check if the task was cancelled
+        // If the bitmapHandle was processed and the image cache is available, then add the processed
+        // bitmapHandle to the cache for future use. Note we don't check if the task was cancelled
         // here, if it was, and the thread is still running, we may as well add the processed
-        // bitmap to our cache as it might be used again in the future
-        if (mImageCache != null) {
-            mImageCache.addBitmapToCache(cacheIndex, bitmap, cacheOnDisk);
+        // bitmapHandle to our cache as it might be used again in the future
+        if (mImageCache != null && bitmapHandle != null) {
+            //We clone reference so that cache can take ownership over it.
+            mImageCache.addBitmapToCache(cacheIndex, bitmapHandle.clone(), cacheOnDisk);
         }
         if (BuildConfig.DEBUG) {
-            Timber.d("finished work " + bitmap);
+            Timber.d("finished work " + bitmapHandle);
         }
-        return bitmap;
+        return bitmapHandle;
     }
 
-    public void onBitmapRead(@Nullable Bitmap image) {
+    public void onBitmapRead(@Nullable RefHandle<Bitmap> image) {
         if (isCancelled() || callback.isExitingTaskEarly()) {
             image = null;
         }

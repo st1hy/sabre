@@ -16,6 +16,12 @@ public interface ResizingStrategy {
     boolean isResizingRequired();
 
     /**
+     *
+     * @return true if inBitmap can be used
+     */
+    boolean isReusingBitmaps();
+
+    /**
      * When resizing you may want to use inSampleSize to reduce amount of allocated memory for image.
      *
      * The loaded resolution of image equals initial resolution / inSampleSize.

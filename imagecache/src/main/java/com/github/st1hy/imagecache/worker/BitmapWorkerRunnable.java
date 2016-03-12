@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import com.github.st1hy.imagecache.reuse.RefHandle;
+
 import java.util.concurrent.Executor;
 
 class BitmapWorkerRunnable<T> implements BitmapWorkerTask, Runnable {
@@ -36,7 +38,7 @@ class BitmapWorkerRunnable<T> implements BitmapWorkerTask, Runnable {
 
     @Override
     public void run() {
-        Bitmap bitmap = workerDelegate.call();
+        RefHandle<Bitmap> bitmap = workerDelegate.call();
         workerDelegate.onBitmapRead(bitmap);
     }
 }

@@ -8,7 +8,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 public class DrawableCreator implements ImageCreator<Drawable> {
     private final Resources resources;
@@ -17,13 +16,10 @@ public class DrawableCreator implements ImageCreator<Drawable> {
         this.resources = resources;
     }
 
-    @Nullable
+    @NonNull
     @Override
-    public Drawable createImage(@Nullable Bitmap bitmap) {
-        if (bitmap == null)
-            return null;
-        else
-            return new BitmapDrawable(resources, bitmap);
+    public Drawable createImage(@NonNull Bitmap bitmap) {
+        return new BitmapDrawable(resources, bitmap);
     }
 
     @NonNull

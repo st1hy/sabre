@@ -25,7 +25,10 @@ import android.support.annotation.Nullable;
 import com.github.st1hy.imagecache.decoder.BitmapDecoder;
 import com.github.st1hy.imagecache.resize.InputDownSampling;
 import com.github.st1hy.imagecache.resize.ResizingStrategy;
+import com.github.st1hy.imagecache.reuse.RefHandle;
 import com.github.st1hy.imagecache.reuse.ReusableBitmapPool;
+
+import timber.log.Timber;
 
 public class BitmapProvider<Source> {
     private int requiredWidth;
@@ -38,41 +41,57 @@ public class BitmapProvider<Source> {
     }
 
     @Nullable
-    public Bitmap getImage(@NonNull Source source, @Nullable Rect outPadding, @Nullable BitmapFactory.Options options) {
-        if (!resizingStrategy.isResizingRequired()) {
-            return bitmapDecoder.decode(source, outPadding, options);
-        }
+    public RefHandle<Bitmap> getImage(@NonNull Source source, @Nullable Rect outPadding, @Nullable BitmapFactory.Options options) {
         if (options == null) options = new BitmapFactory.Options();
-        if (resizingStrategy.isInSampleSizeUsed()) {
+        final boolean isDecodingBounds = resizingStrategy.isInSampleSizeUsed() || resizingStrategy.isReusingBitmaps();
+        if (isDecodingBounds) {
             options.inJustDecodeBounds = true;
-            bitmapDecoder.decode(source, null, options);
-            options.inSampleSize = resizingStrategy.calculateInSampleSize(options, requiredWidth, requiredHeight);
+            bitmapDecoder.decode(source, outPadding, options);
+            if (resizingStrategy.isInSampleSizeUsed()) {
+                options.inSampleSize = resizingStrategy.calculateInSampleSize(options, requiredWidth, requiredHeight);
+            } else {
+                options.inSampleSize = 1;
+            }
         }
-        findBitmapToReuse(options);
-        options.inJustDecodeBounds = false;
-        Bitmap bitmap = bitmapDecoder.decode(source, null, options);
-        if (resizingStrategy.isResizingRequired() && bitmap != null) {
-            bitmap = resizingStrategy.resizeBitmap(bitmap, requiredWidth, requiredHeight);
+        if (resizingStrategy.isReusingBitmaps()) {
+            findBitmapToReuse(options);
         }
-        return bitmap;
+        Bitmap bitmap = null;
+        boolean isErrorTryingToDecode = isDecodingBounds && options.outHeight == -1;
+        if (!isErrorTryingToDecode) {
+            options.inJustDecodeBounds = false;
+            bitmap = bitmapDecoder.decode(source, outPadding, options);
+            if (resizingStrategy.isResizingRequired() && bitmap != null) {
+                bitmap = resizingStrategy.resizeBitmap(bitmap, requiredWidth, requiredHeight);
+            }
+        }
+        if (bitmap == null) {
+            Timber.e("Error trying to decode image");
+            return null;
+        }
+        if (reusableBitmapPool != null) {
+            return reusableBitmapPool.newBitmapHandleForReuse(bitmap);
+        } else {
+            return RefHandle.newHandle(bitmap);
+        }
     }
 
     @Nullable
-    public Bitmap getImage(@NonNull Source source, @Nullable Rect outPadding) {
+    public RefHandle<Bitmap> getImage(@NonNull Source source, @Nullable Rect outPadding) {
         return getImage(source, outPadding, null);
     }
 
     @Nullable
-    public Bitmap getImage(@NonNull Source source) {
+    public RefHandle<Bitmap> getImage(@NonNull Source source) {
         return getImage(source, null, null);
     }
 
     private void findBitmapToReuse(@NonNull BitmapFactory.Options options) {
         if (reusableBitmapPool == null) return;
         options.inMutable = true;
-        Bitmap inBitmap = reusableBitmapPool.getBitmapFromReusableSet(options);
-        if (inBitmap != null) {
-            options.inBitmap = inBitmap;
+        Bitmap bitmap = reusableBitmapPool.getBitmapFromReusableSet(options);
+        if (bitmap != null) {
+            options.inBitmap = bitmap;
         }
     }
 

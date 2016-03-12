@@ -5,12 +5,14 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 
+import com.github.st1hy.imagecache.reuse.RefHandle;
+
 import java.util.concurrent.Executor;
 
 /**
  * The actual AsyncTask that will asynchronously process the image.
  */
-class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, Bitmap> implements BitmapWorkerTask {
+class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, RefHandle<Bitmap>> implements BitmapWorkerTask {
     private final BitmapWorkerDelegate workerDelegate;
 
     public BitmapWorkerTaskAsyncTask(@NonNull Uri uri, @NonNull ImageReceiver<T> imageView, @NonNull BitmapWorkerTask.Callback<T> callback) {
@@ -18,7 +20,7 @@ class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, Bitmap> impleme
     }
 
     @Override
-    protected Bitmap doInBackground(Void... params) {
+    protected RefHandle<Bitmap> doInBackground(Void... params) {
         return workerDelegate.call();
     }
 
@@ -26,12 +28,12 @@ class BitmapWorkerTaskAsyncTask<T> extends AsyncTask<Void, Void, Bitmap> impleme
      * Once the image is processed, associates it to the imageView
      */
     @Override
-    protected void onPostExecute(Bitmap bitmap) {
+    protected void onPostExecute(RefHandle<Bitmap> bitmap) {
         workerDelegate.onBitmapRead(bitmap);
     }
 
     @Override
-    protected void onCancelled(Bitmap bitmap) {
+    protected void onCancelled(RefHandle<Bitmap> bitmap) {
         super.onCancelled();
         workerDelegate.onCancelled();
     }

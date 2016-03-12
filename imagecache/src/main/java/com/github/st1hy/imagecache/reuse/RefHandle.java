@@ -1,13 +1,14 @@
 package com.github.st1hy.imagecache.reuse;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 public class RefHandle<T> {
-    T ref;
-    final RefCounter<T> counter;
-    boolean closed = false;
+    protected T ref;
+    private final RefCounter<T> counter;
+    protected boolean closed = false;
 
-    RefHandle(@NonNull T ref, @NonNull RefCounter<T> counter) {
+    protected RefHandle(@NonNull T ref, RefCounter<T> counter) {
         this.ref = ref;
         this.counter = counter;
     }
@@ -25,12 +26,27 @@ public class RefHandle<T> {
         }
     }
 
+    @Nullable
+    public T getOrNull() {
+        synchronized (counter) {
+            return ref;
+        }
+    }
+
     public void close() {
         synchronized (counter) {
             closed = true;
             counter.decrement();
             ref = null;
         }
+    }
+
+    public static <T> RefHandle<T> newHandle(@NonNull T ref) {
+        return new DeadRefHandle<>(ref);
+    }
+
+    public static <T> RefHandle<T> newHandle(@NonNull T ref, @Nullable RefCounter.Callback<T> callback) {
+        return new RefCounter<>(ref, callback).newHandle();
     }
 
     /**
@@ -44,8 +60,11 @@ public class RefHandle<T> {
         }
     }
 
+    public boolean isClosed() {
+        return closed;
+    }
 
-    private void checkState() {
+    protected void checkState() {
         if (closed) throw new IllegalStateException("Cannot access reference after close");
     }
 }

@@ -23,11 +23,11 @@ import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.decoder.UriBitmapFactory;
 import com.github.st1hy.imagecache.decoder.UriBitmapSource;
 import com.github.st1hy.imagecache.resize.KeepOriginal;
-import com.github.st1hy.imagecache.worker.ImageWorkerImp;
+import com.github.st1hy.imagecache.reuse.RefHandle;
 import com.github.st1hy.imagecache.worker.ImageWorker;
+import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.imagecache.worker.creator.DrawableCreator;
-import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
 
@@ -110,16 +110,17 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
         if (imageWorker != null) {
             imageWorker.loadImage(uri, imageReceiver);
         } else {
-            Application.CACHED_EXECUTOR_POOL.execute(new Runnable() {
+            Utils.CACHED_EXECUTOR_POOL.execute(new Runnable() {
                 private BitmapProvider<UriBitmapSource> bitmapProvider;
 
                 @Override
                 public void run() {
-                    Bitmap bitmap = getBitmapProvider().getImage(UriBitmapSource.of(getContext().getContentResolver() , uri));
-                    if (bitmap == null) {
+                    UriBitmapSource source = UriBitmapSource.of(getContext().getContentResolver(), uri);
+                    RefHandle<Bitmap> bitmapRefHandle = getBitmapProvider().getImage(source);
+                    if (bitmapRefHandle == null) {
                         imageReceiver.onImageLoadingFailed();
                     } else {
-                        imageReceiver.setImage(new BitmapDrawable(getResources(), bitmap));
+                        imageReceiver.setImage(new BitmapDrawable(getResources(), bitmapRefHandle.get()));
                     }
                 }
 
@@ -127,6 +128,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
                     if (bitmapProvider == null) {
                         BitmapProvider.Builder<UriBitmapSource> builder = new BitmapProvider.Builder<>(new UriBitmapFactory());
                         builder.setResizingStrategy(new KeepOriginal());
+                        //No reuse for bitmaps
                         bitmapProvider = builder.build();
                     }
                     return bitmapProvider;
@@ -178,8 +180,7 @@ public class ImageSurfaceViewer extends SurfaceViewer implements ImageViewer, As
     @Override
     public void onDestroy() {
         if (imageWorker != null) {
-            imageWorker.setExitTasksEarly(true);
-            imageWorker.cancelWork(imageReceiver);
+            imageWorker.onDestroy();
         }
         handler.removeAll();
     }

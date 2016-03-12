@@ -17,6 +17,8 @@ public interface ImageWorker<T> extends CacheEntryNameFactory {
      */
     void loadImage(@NonNull Uri uri, @NonNull ImageReceiver<T> imageView);
 
+    void onDestroy();
+
     void setExitTasksEarly(boolean exitTasksEarly);
 
     /**

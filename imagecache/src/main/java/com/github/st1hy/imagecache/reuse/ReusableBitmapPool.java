@@ -27,10 +27,11 @@ public class ReusableBitmapPool {
     // require knowledge of the expected size of the bitmaps. From Honeycomb to JellyBean
     // the size would need to be precise, from KitKat onward the size would just need to
     // be the upper bound (due to changes in how inBitmap can re-use bitmaps).
-    private final Set<SoftReference<Bitmap>> mReusableBitmaps;
+    private final Set<SoftReference<Bitmap>> reusableBitmaps;
+    private final CounterCallback callback = new CounterCallback();
 
     public ReusableBitmapPool() {
-        mReusableBitmaps = Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
+        reusableBitmaps = Collections.synchronizedSet(new HashSet<SoftReference<Bitmap>>());
     }
 
     /**
@@ -39,11 +40,11 @@ public class ReusableBitmapPool {
      */
     @Nullable
     public Bitmap getBitmapFromReusableSet(@NonNull BitmapFactory.Options options) {
-        if (mReusableBitmaps.isEmpty()) return null;
+        if (reusableBitmaps.isEmpty()) return null;
         Bitmap bitmap = null;
-        synchronized (mReusableBitmaps) {
+        synchronized (reusableBitmaps) {
             Timber.d("Searching for reusable bitmap.");
-            final Iterator<SoftReference<Bitmap>> iterator = mReusableBitmaps.iterator();
+            final Iterator<SoftReference<Bitmap>> iterator = reusableBitmaps.iterator();
             Bitmap item;
 
             while (iterator.hasNext()) {
@@ -65,10 +66,18 @@ public class ReusableBitmapPool {
             }
             Timber.d("Search complete. Found: " + (bitmap != null ? bitmap.hashCode() : "null"));
         }
-
         return bitmap;
     }
 
+    /**
+     * Creates bitmap handle that will notify this {@link ReusableBitmapPool} when its no longer reachable
+     * by its handles and can be reused again.
+     *
+     * @param bitmap bitmap to create handle to.
+     */
+    public RefHandle<Bitmap> newBitmapHandleForReuse(@NonNull Bitmap bitmap) {
+        return RefHandle.newHandle(bitmap, callback);
+    }
 
     /**
      * @param candidate     - Bitmap to check
@@ -112,5 +121,14 @@ public class ReusableBitmapPool {
             return 1;
         }
         return 1;
+    }
+
+    private class CounterCallback implements RefCounter.Callback<Bitmap> {
+        @Override
+        public void onUnreachable(@NonNull Bitmap ref) {
+            synchronized (reusableBitmaps) {
+                reusableBitmaps.add(new SoftReference<>(ref));
+            }
+        }
     }
 }
