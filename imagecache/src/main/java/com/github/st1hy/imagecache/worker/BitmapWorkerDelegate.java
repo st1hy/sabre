@@ -17,7 +17,7 @@ import timber.log.Timber;
 /**
  * Common bitmap worker behavior for every worker
  */
-public class BitmapWorkerDelegate<T> implements Callable<T> {
+public class BitmapWorkerDelegate<T> implements Callable<Bitmap> {
     private final Object mPauseWorkLock;
     private final Uri uri;
     private final String cacheIndex;
@@ -27,7 +27,6 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
     private final ImageCache mImageCache;
     private boolean cacheOnDisk = true;
     private final BitmapWorkerTask parent;
-    private Bitmap bitmap;
 
     public BitmapWorkerDelegate(@NonNull BitmapWorkerTask parent, @NonNull Uri uri, @NonNull ImageReceiver<T> imageView, @NonNull BitmapWorkerTask.Callback<T> callback) {
         this.parent = parent;
@@ -55,16 +54,14 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
 
     public void cancelTask() {
         isCancelled = true;
-        this.bitmap = null;
     }
 
     @Override
-    public T call() {
+    public Bitmap call() {
         if (BuildConfig.DEBUG) {
             Timber.d("runnable - starting work");
         }
         Bitmap bitmap = null;
-        T image = null;
 
         // Wait here if work is paused and the task is not cancelled
         synchronized (mPauseWorkLock) {
@@ -81,8 +78,7 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
         // thread and the ImageView that was originally bound to this task is still bound back
         // to this task and our "exit early" flag is not set then try and fetch the bitmap from
         // the cache
-        if (mImageCache != null && !isCancelled() && getAttachedImageView() != null
-                && !callback.isExitingTaskEarly()) {
+        if (mImageCache != null && isTaskFresh()) {
             bitmap = mImageCache.getBitmapFromDiskCache(cacheIndex);
         }
 
@@ -90,9 +86,8 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
         // another thread and the ImageView that was originally bound to this task is still
         // bound back to this task and our "exit early" flag is not set, then call the main
         // process method (as implemented by a subclass)
-        if (bitmap == null && !isCancelled() && getAttachedImageView() != null
-                && !callback.isExitingTaskEarly()) {
-            bitmap = callback.processBitmap(uri);
+        if (bitmap == null && isTaskFresh()) {
+            bitmap = callback.readBitmap(uri);
         }
 
         // If the bitmap was processed and the image cache is available, then add the processed
@@ -102,31 +97,34 @@ public class BitmapWorkerDelegate<T> implements Callable<T> {
         if (mImageCache != null) {
             mImageCache.addBitmapToCache(cacheIndex, bitmap, cacheOnDisk);
         }
-        image = callback.createImage(bitmap);
-
         if (BuildConfig.DEBUG) {
-            Timber.d("finished work " + image + " " + bitmap);
+            Timber.d("finished work " + bitmap);
         }
-        this.bitmap = bitmap;
-        return image;
+        return bitmap;
     }
 
-    public void setImage(@Nullable T image) {
+    public void onBitmapRead(@Nullable Bitmap image) {
         if (isCancelled() || callback.isExitingTaskEarly()) {
             image = null;
         }
-
-        final ImageReceiver<T> imageView = getAttachedImageView();
-        if (imageView != null) {
+        ImageReceiver<T> imageView = getAttachedImageView();
+        if (imageView != null && isTaskFresh()) {
             if (BuildConfig.DEBUG) {
                 Timber.d("setting bitmap");
             }
-            callback.setFinalImageAndReleasePrevious(imageView, image, bitmap);
+            callback.onBitmapRead(imageView, image);
         }
     }
 
     public boolean isCancelled() {
         return isCancelled;
+    }
+
+    /**
+     * @return true if task still should be performed, false if it has been canceled or otherwise invalidated.
+     */
+    private boolean isTaskFresh() {
+        return !isCancelled() && getAttachedImageView() != null && !callback.isExitingTaskEarly();
     }
 
     /**

@@ -27,25 +27,19 @@ interface BitmapWorkerTask {
          *            {@link ImageWorker#loadImage(Uri, ImageReceiver)}
          * @return The processed bitmap
          */
-        Bitmap processBitmap(Uri uri);
+        Bitmap readBitmap(@NonNull Uri uri);
 
         /**
-         * Called when the processing is complete and the final image should be
-         * set on the ImageView.
+         * Called when the processing is complete and the final image has been read.
          *
-         * @param imageView     target that should receive image
-         * @param image         image that should be received
-         * @param newBitmapUsed Reference to new bitmap linked to this receiver. Used for fine tuning caching.
+         * @param bitmap bitmap as read from the source
          */
-        void setFinalImageAndReleasePrevious(@NonNull ImageReceiver<T> imageView, @Nullable T image, @Nullable Bitmap newBitmapUsed);
+        void onBitmapRead(@NonNull ImageReceiver<T> imageView, @Nullable Bitmap bitmap);
 
         /**
          * @return The {@link ImageCache} object currently being used..
          */
         ImageCache getImageCache();
-
-        @Nullable
-        T createImage(@Nullable Bitmap bitmap);
 
         Object getSharedWaitingLock();
 
