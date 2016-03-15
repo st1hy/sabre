@@ -31,10 +31,6 @@
             android:orientation="vertical"
             >
             <include
-                android:id="@+id/settings_use_open_gl"
-                layout="@layout/setting_on_off"
-                />
-            <include
                 android:id="@+id/setting_clear_cache"
                 layout="@layout/setting_on_off"
                 />

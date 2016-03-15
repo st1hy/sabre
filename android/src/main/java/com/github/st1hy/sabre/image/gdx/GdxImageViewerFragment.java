@@ -7,7 +7,7 @@ import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.os.Bundle;
-import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,13 +26,12 @@ import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.imagecache.ImageCache;
-import com.github.st1hy.sabre.core.ImageCacheProvider;
 import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.imagecache.worker.creator.BitmapCreator;
-import com.github.st1hy.sabre.image.NavState;
 import com.github.st1hy.sabre.R;
+import com.github.st1hy.sabre.core.ImageCacheProvider;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
 import com.github.st1hy.sabre.image.ImageActivity;
 import com.github.st1hy.sabre.image.gdx.touch.ImageTouchController;
@@ -67,6 +66,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
 
     private void sanityCheck() {
         MissingInterfaceException.parentSanityCheck(this, ImageCacheProvider.class);
+        MissingInterfaceException.parentSanityCheck(this, ImageActivity.class);
     }
 
     private BackgroundColor getBackground() {
@@ -81,20 +81,15 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        ActionBar actionBar = getActivity().getActionBar();
+        ImageActivity activity = (ImageActivity) getActivity();
+        ActionBar actionBar = activity.getActionBar();
         if (actionBar != null) {
             actionBar.hide();
         }
         imageWorker = createWorker();
-        Bundle arguments = getArguments();
-        if (arguments != null) {
-            Parcelable parcelable = arguments.getParcelable(NavState.ARG_IMAGE_URI);
-            if (parcelable instanceof Uri) {
-                setImageURI((Uri) parcelable);
-            }
-        }
+        Uri uri = activity.getImageUriFromIntent();
+        if (uri != null) setImageURI(uri);
     }
-
 
     private ImageWorker<Bitmap> createWorker() {
         ImageWorkerImp.Builder<Bitmap> builder = new ImageWorkerImp.Builder<>(getActivity(), new BitmapCreator());
@@ -137,7 +132,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         return config;
     }
 
-    public void setImageURI(final Uri uri) {
+    public void setImageURI(@NonNull final Uri uri) {
         onLoadingStarted();
         imageWorker.loadImage(uri, imageReceiver);
         imageTouchController.reset();

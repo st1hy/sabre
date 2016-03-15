@@ -33,19 +33,17 @@ public class SettingsActivity extends AppCompatActivity {
 
     @BindColor(R.color.settings_ripple)
     int rippleColor;
-    @Bind({R.id.settings_use_open_gl, R.id.setting_clear_cache})
+    @Bind({R.id.setting_clear_cache})
     List<View> settingViews;
     @Bind(R.id.settings_toolbar)
     Toolbar toolbar;
 
     private ImageCacheHandler imageCacheHandler;
-    private SharedPreferences preferences;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         imageCacheHandler = CacheUtils.newImageCacheHandler((Application) getApplication());
         setContentView(R.layout.activity_settings);
         bind();
@@ -58,17 +56,13 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void bind() {
         ButterKnife.bind(this);
-        new EnableOpenGLHolder(preferences).bind(settingViews.get(0));
-        new ClearCacheHolder(imageCacheHandler).bind(settingViews.get(1));
+        new ClearCacheHolder(imageCacheHandler).bind(settingViews.get(0));
         ButterKnife.apply(settingViews, RIPPLE, rippleColor);
     }
 
     public static void loadDefaultSettings(Context context, boolean overrideCurrentValues) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = preferences.edit();
-        if (overrideCurrentValues || !preferences.contains(EnableOpenGLHolder.PREF_ENABLE_OPEN_GL)) {
-            editor.putBoolean(EnableOpenGLHolder.PREF_ENABLE_OPEN_GL, EnableOpenGLHolder.PREF_ENABLE_OPEN_GL_DEFAULT);
-        }
         editor.apply();
     }
 }

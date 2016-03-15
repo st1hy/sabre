@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
@@ -21,7 +20,6 @@ import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.CacheUtils;
 import com.github.st1hy.sabre.core.ImageCacheProvider;
-import com.github.st1hy.sabre.settings.EnableOpenGLHolder;
 
 import java.util.Date;
 
@@ -34,33 +32,21 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         Application app = (Application) getApplication();
         imageCacheHandler = CacheUtils.newImageCacheHandler(app);
-        if (savedInstanceState == null) {
-            NavState state = EnableOpenGLHolder.isOpenGLEnabled(this) ? NavState.IMAGE_VIEWER_GL : NavState.IMAGE_VIEWER_SURFACE;
-            Fragment fragment = state.newInstance();
-            Intent intent = getIntent();
-            if (intent != null) {
-                imageUriFromIntent = getImageUriFromIntent(intent);
-                if (imageUriFromIntent != null) {
-                    updateDatabaseImageDate();
-                    configureFragment(fragment);
-                } else {
-                    notifyWrongImage(this);
-                    exit();
-                    return;
-                }
+        Intent intent = getIntent();
+        if (intent != null) {
+            imageUriFromIntent = getImageUriFromIntent(intent);
+            if (imageUriFromIntent != null) {
+                updateDatabaseImageDate();
+            } else {
+                notifyWrongImage(this);
+                exit();
+                return;
             }
-            getSupportFragmentManager().beginTransaction().replace(R.id.main_activity_fragment_container, fragment).commit();
         }
+        setContentView(R.layout.activity_image);
         SystemUIMode.IMMERSIVE_STICKY.apply(getWindow());
-    }
-
-    private void configureFragment(@NonNull Fragment fragment) {
-        Bundle bundle = new Bundle();
-        bundle.putParcelable(NavState.ARG_IMAGE_URI, imageUriFromIntent);
-        fragment.setArguments(bundle);
     }
 
     @Nullable
@@ -81,6 +67,12 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
             }
         }
         return null;
+    }
+
+
+    @Nullable
+    public Uri getImageUriFromIntent() {
+        return imageUriFromIntent;
     }
 
     @Override
