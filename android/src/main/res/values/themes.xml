@@ -1,44 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Base application theme. -->
-    <style name="AppTheme.History" parent="AppTheme.Light">
+    <style name="AppTheme.History" parent="AppTheme.NoActionBar">
     </style>
-    <style name="AppTheme.Settings" parent="AppTheme.Light">
-        <item name="windowNoTitle">true</item>
+    <style name="AppTheme.Settings" parent="AppTheme.NoActionBar">
+    </style>
+    <style name="AppTheme.Image" parent="Theme.AppCompat.NoActionBar">
+    </style>
+    <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
-    <style name="AppTheme.Light" parent="Base.Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="android:textColorPrimary">@color/default_dark</item>
         <item name="android:textColorSecondary">@color/default_dark</item>
         <item name="colorAccent">@color/colorAccent</item>
-    </style>
-    <style name="AppTheme.Image" parent="AppTheme.NoActionBar">
-    </style>
-    <style name="AppTheme.NoActionBar" parent="Base.Theme.AppCompat">
-        <item name="windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
-        <item name="android:textColorPrimary">@color/default_light</item>
-        <item name="android:textColorSecondary">@color/default_light</item>
-    </style>
-    <style name="DarkFloatingActionButtonIcon" >
-        <item name="lmd_state">@xml/fab_icon_states</item>
-        <item name="lmd_curState">0</item>
-        <item name="lmd_padding">2dp</item>
-        <item name="lmd_animDuration">300</item>
-        <item name="lmd_interpolator">@android:anim/accelerate_decelerate_interpolator</item>
-        <item name="lmd_strokeSize">4dp</item>
-        <item name="lmd_strokeColor">#FF000000</item>
-        <item name="lmd_strokeCap">round</item>
-        <item name="lmd_strokeJoin">round</item>
-        <item name="lmd_clockwise">true</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
     </style>
 
-    <style name="LightFABWave" parent="Material.Drawable.Ripple.Wave.Light">
-        <item name="fab_backgroundColor">#FFDFDFDF</item>
-        <item name="fab_elevation">1dp</item>
-        <item name="fab_iconLineMorphing">@style/DarkFloatingActionButtonIcon</item>
-        <item name="rd_delayClick">none</item>
+    <style name="Toolbar">
+        <item name="theme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
     </style>
-
-
 </resources>

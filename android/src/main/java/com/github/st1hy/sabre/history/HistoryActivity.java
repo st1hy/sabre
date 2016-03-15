@@ -52,6 +52,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
 
         setContentView(R.layout.activity_history);
         bind();
+        setSupportActionBar(viewHolder.getToolbar());
     }
 
     private boolean needShowHelp(Bundle savedInstanceState) {
@@ -118,14 +119,6 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu_history, menu);
-        //TOREMOVE
-//        menu.findItem(R.id.action_open).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-//            @Override
-//            public boolean onMenuItemClick(MenuItem item) {
-//                onActionOpen();
-//                return true;
-//            }
-//        });
         return true;
     }
 

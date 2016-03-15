@@ -9,7 +9,24 @@
         <item name="rd_style">@style/LightFABWave</item>
         <item name="fab_elevation">6dp</item>
     </style>
-    <style name="AppTheme.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
-        <item name="theme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
+
+    <style name="DarkFloatingActionButtonIcon" >
+        <item name="lmd_state">@xml/fab_icon_states</item>
+        <item name="lmd_curState">0</item>
+        <item name="lmd_padding">2dp</item>
+        <item name="lmd_animDuration">300</item>
+        <item name="lmd_interpolator">@android:anim/accelerate_decelerate_interpolator</item>
+        <item name="lmd_strokeSize">4dp</item>
+        <item name="lmd_strokeColor">#FF000000</item>
+        <item name="lmd_strokeCap">round</item>
+        <item name="lmd_strokeJoin">round</item>
+        <item name="lmd_clockwise">true</item>
+    </style>
+
+    <style name="LightFABWave" parent="Material.Drawable.Ripple.Wave.Light">
+        <item name="fab_backgroundColor">#FFDFDFDF</item>
+        <item name="fab_elevation">1dp</item>
+        <item name="fab_iconLineMorphing">@style/DarkFloatingActionButtonIcon</item>
+        <item name="rd_delayClick">none</item>
     </style>
 </resources>

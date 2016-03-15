@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="actionBarBackground">#D8111111</color>
     <color name="colorAccent">@color/default_dark</color>
+    <color name="colorPrimary">@color/default_dark</color>
     <color name="default_dark">@color/material_grey_800</color>
     <color name="default_light">@color/material_grey_100</color>
     <color name="progress_bar_stroke">@color/default_light</color>
