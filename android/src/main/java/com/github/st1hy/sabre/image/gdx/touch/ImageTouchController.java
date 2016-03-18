@@ -1,13 +1,19 @@
 package com.github.st1hy.sabre.image.gdx.touch;
 
+import android.content.Context;
+import android.graphics.Matrix;
+import android.graphics.PointF;
 import android.support.annotation.NonNull;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.badlogic.gdx.Gdx;
 import com.github.st1hy.core.ImageGdxCore;
 import com.github.st1hy.gesturedetector.GestureDetector;
-import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
+import com.github.st1hy.gesturedetector.GestureEventState;
+import com.github.st1hy.gesturedetector.MultipleGestureDetector;
 import com.github.st1hy.gesturedetector.Options;
+import com.github.st1hy.gesturedetector.SimpleGestureListener;
 import com.github.st1hy.sabre.image.gdx.touch.transform.AndroidToOpenGLMatrixAdapter;
 import com.github.st1hy.view.SelectorOnTouchListener;
 import com.github.st1hy.view.SimpleTouchPredicate;
@@ -19,12 +25,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ImageTouchController implements GestureDetector {
+public class ImageTouchController extends SimpleGestureListener implements GestureDetector {
+    private final Context context;
+    private final ImageGdxCore core;
     private final AndroidToOpenGLMatrixAdapter adapter;
     private final ImageGdxCoreTransformWrapper gdxCoreTransformWrapper;
     private final SelectorOnTouchListener<GestureDetector> delegate;
 
-    public ImageTouchController(@NonNull ImageGdxCore core) {
+    public ImageTouchController(@NonNull Context context, @NonNull ImageGdxCore core) {
+        this.context = context;
+        this.core = core;
         gdxCoreTransformWrapper = new ImageGdxCoreTransformWrapper(core);
         adapter = new AndroidToOpenGLMatrixAdapter(gdxCoreTransformWrapper);
         delegate = buildSelector();
@@ -38,19 +48,23 @@ public class ImageTouchController implements GestureDetector {
         conditionMap.put(deadZone, null);
 
         TouchPredicate allElse = new SimpleTouchPredicate(true);
-        conditionMap.put(allElse, buildMatrixDetector());
+        conditionMap.put(allElse, buildMainDetector());
 
         List<TouchPredicate> order = Lists.newArrayList(deadZone, allElse);
         return new SelectorOnTouchListener<>(conditionMap, order);
     }
 
     @NonNull
-    private MatrixTransformationDetector buildMatrixDetector() {
-        Options options = new Options();
+    private GestureDetector buildMainDetector() {
+        Options options = new Options(context.getResources());
+        for (Options.Event event: Options.Event.values()) {
+            options.setEnabled(event, false);
+        }
         options.set(Options.Constant.MATRIX_MAX_POINTERS_COUNT, 3);
         options.setFlag(Options.Flag.MATRIX_OPEN_GL_COMPATIBILITY, true);
         options.setEnabled(Options.Event.MATRIX_TRANSFORMATION, true);
-        return new MatrixTransformationDetector(adapter, options);
+        options.setEnabled(Options.Event.DOUBLE_CLICK, true);
+        return new MultipleGestureDetector(this, options);
     }
 
     public void reset() {
@@ -69,5 +83,16 @@ public class ImageTouchController implements GestureDetector {
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         return delegate.onTouch(v, event);
+    }
+
+    @Override
+    public void onMatrix(GestureEventState state, Matrix currentTransformation) {
+        adapter.onMatrix(state, currentTransformation);
+    }
+
+    @Override
+    public void onDoubleClick(PointF startPoint) {
+        reset();
+        Gdx.graphics.requestRendering();
     }
 }

@@ -13,14 +13,14 @@ public class ImageGdxCore extends ApplicationAdapter {
     private final Matrix4 transformation = new Matrix4();
     private int startX,startY, imgWidthOut, imgHeightOut;
     private ImageTexture texture;
-    private final BackgroundColor background;
+    private final Color background;
 
-    public ImageGdxCore(BackgroundColor backgroundColor) {
+    public ImageGdxCore(Color backgroundColor) {
         this.background = backgroundColor;
     }
 
     public ImageGdxCore() {
-        background = new BackgroundColor();
+        background = new Color();
     }
 
     @Override

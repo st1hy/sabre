@@ -2,7 +2,6 @@ package com.github.st1hy.sabre.image.gdx;
 
 import android.app.ActionBar;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
@@ -18,7 +17,7 @@ import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.github.st1hy.core.BackgroundColor;
+import com.github.st1hy.core.Color;
 import com.github.st1hy.core.ImageGdxCore;
 import com.github.st1hy.core.ImageTexture;
 import com.github.st1hy.core.utils.MissingInterfaceException;
@@ -55,7 +54,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         super.onCreate(savedInstanceState);
         sanityCheck();
         this.imageGdxCore = new ImageGdxCore(getBackground());
-        imageTouchController = new ImageTouchController(imageGdxCore);
+        imageTouchController = new ImageTouchController(getActivity(), imageGdxCore);
         if (savedInstanceState != null) {
             Object matrixSerialised = savedInstanceState.getSerializable(STORE_MATRIX);
             if (matrixSerialised instanceof float[]) {
@@ -69,13 +68,13 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         MissingInterfaceException.parentSanityCheck(this, ImageActivity.class);
     }
 
-    private BackgroundColor getBackground() {
+    private Color getBackground() {
         int color = Utils.getColor(getActivity(), R.color.image_surface_background);
-        float r = Color.red(color) / 255f;
-        float g = Color.green(color) / 255f;
-        float b = Color.blue(color) / 255f;
-        float a = Color.alpha(color) / 255f;
-        return new BackgroundColor(r, g, b, a);
+        float r = android.graphics.Color.red(color) / 255f;
+        float g = android.graphics.Color.green(color) / 255f;
+        float b = android.graphics.Color.blue(color) / 255f;
+        float a = android.graphics.Color.alpha(color) / 255f;
+        return new Color(r, g, b, a);
     }
 
     @Override
