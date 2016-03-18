@@ -1,9 +1,9 @@
 <resources>
 
-    <style name="AppTheme.CircularProgress" parent="Material.Drawable.CircularProgress">
+    <style name="CircularProgress" parent="Material.Drawable.CircularProgress">
         <item name="cpd_strokeColor">@color/progress_bar_stroke</item>
     </style>
-    <style name="AppTheme.History.FloatingButton">
+    <style name="FloatingButton">
         <item name="fab_backgroundColor">?colorAccent</item>
         <item name="rd_enable">true</item>
         <item name="rd_style">@style/LightFABWave</item>

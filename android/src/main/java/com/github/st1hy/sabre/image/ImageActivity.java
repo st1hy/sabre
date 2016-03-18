@@ -2,6 +2,7 @@ package com.github.st1hy.sabre.image;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -20,14 +21,22 @@ import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.CacheUtils;
 import com.github.st1hy.sabre.core.ImageCacheProvider;
+import com.rey.material.widget.FloatingActionButton;
 
 import java.util.Date;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import timber.log.Timber;
 
 public class ImageActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks, ImageCacheProvider {
     private ImageCacheHandler imageCacheHandler;
     private Uri imageUriFromIntent;
+    @Bind(R.id.image_fab)
+    FloatingActionButton floatingButton;
+    private static final String SAVE_EDIT_MODE_STATE = "ImageActivity.isInEditMode";
+    private boolean isInEditMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +55,14 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
             }
         }
         setContentView(R.layout.activity_image);
+        ButterKnife.bind(this);
         SystemUIMode.IMMERSIVE_STICKY.apply(getWindow());
+        if (savedInstanceState != null) restoreState(savedInstanceState);
+    }
+
+    private void restoreState(@NonNull Bundle savedInstanceState) {
+        isInEditMode = savedInstanceState.getBoolean(SAVE_EDIT_MODE_STATE, false);
+        if (isInEditMode) setEditMode(floatingButton, true, false);
     }
 
     @Nullable
@@ -69,6 +85,11 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
         return null;
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(SAVE_EDIT_MODE_STATE, isInEditMode);
+    }
 
     @Nullable
     public Uri getImageUriFromIntent() {
@@ -128,5 +149,18 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     @NonNull
     public ImageCacheHandler getImageCacheHandler() {
         return imageCacheHandler;
+    }
+
+    @OnClick(R.id.image_fab)
+    void onFloatingButtonPressed(@NonNull FloatingActionButton fab) {
+        isInEditMode = !isInEditMode;
+        setEditMode(fab, isInEditMode, true);
+    }
+
+    private void setEditMode(@NonNull FloatingActionButton fab, boolean isInEdit, boolean animate) {
+        int drawableResId = isInEdit ? R.drawable.ic_clear_white_24dp :
+                R.drawable.ic_content_cut_white_24dp;
+        Drawable icon = Utils.getDrawable(this, drawableResId);
+        fab.setIcon(icon, animate);
     }
 }

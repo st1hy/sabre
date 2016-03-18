@@ -16,15 +16,14 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="@string/start_instructions"
         android:layout_gravity="center"
+        android:layout_marginRight="8dp"
         />
 
     <com.rey.material.widget.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/open_image_button"
-        style="@style/AppTheme.History.FloatingButton"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
+        style="@style/FloatingButton"
         android:layout_gravity="center"
         app:fab_iconSrc="@drawable/ic_open"
         />
