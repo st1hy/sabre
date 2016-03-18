@@ -1,86 +1,59 @@
 package com.github.st1hy.core;
 
-import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Matrix4;
 
-public class ImageGdxCore extends ApplicationAdapter {
-    private SpriteBatch batch;
-    private int windowWidth, windowHeight;
-    private final Matrix4 transformation = new Matrix4();
-    private int startX,startY, imgWidthOut, imgHeightOut;
-    private ImageTexture texture;
+public class ImageGdxCore implements ApplicationListener {
     private final Color background;
+    private final SceneManager sceneManager;
 
     public ImageGdxCore(Color backgroundColor) {
         this.background = backgroundColor;
+        sceneManager = new SceneManager();
     }
 
     public ImageGdxCore() {
-        background = new Color();
+        this(new Color());
+    }
+
+    public ImageScene setImage(Texture image) {
+        ImageScene scene = new ImageScene(image);
+        sceneManager.setCurrentScene(scene);
+        return scene;
     }
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
         Gdx.graphics.setContinuousRendering(false);
-    }
-
-    public void loadTexture(ImageTexture texture) {
-        this.texture = texture;
-        configureBounds();
-    }
-
-    public ImageTexture getTexture() {
-        return texture;
-    }
-
-    public Matrix4 getTransformation() {
-        return transformation;
+        sceneManager.create();
     }
 
     @Override
     public void resize(int width, int height) {
-        super.resize(width, height);
-        this.windowWidth = width;
-        this.windowHeight = height;
-        configureBounds();
-    }
-
-    private void configureBounds() {
-        if (texture == null) return;
-        Texture img = texture.getTexture();
-        int imgWidth = img.getWidth();
-        int imgHeight = img.getHeight();
-        float scale = Math.min((float) windowWidth / (float) imgWidth,
-                (float) windowHeight / (float) imgHeight);
-        startX = (int) ((windowWidth - imgWidth * scale) * 0.5f + 0.5f);
-        startY = (int) ((windowHeight - imgHeight * scale) * 0.5f + 0.5f);
-        imgWidthOut = (int) Math.ceil(imgWidth * scale);
-        imgHeightOut = (int) Math.ceil(imgHeight * scale);
+        sceneManager.resize(width, height);
     }
 
     @Override
     public void render() {
         Gdx.gl.glClearColor(background.r, background.g, background.b, background.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        if (texture == null) return;
-        batch.begin();
-        batch.setTransformMatrix(transformation);
-        batch.draw(texture.getTexture(), startX, startY, imgWidthOut, imgHeightOut);
-        batch.end();
+        sceneManager.render();
     }
 
     @Override
     public void resume() {
-        super.resume();
+        sceneManager.resume();
     }
 
     @Override
     public void pause() {
-        super.pause();
+        sceneManager.pause();
+    }
+
+    @Override
+    public void dispose() {
+        sceneManager.dispose();
     }
 }

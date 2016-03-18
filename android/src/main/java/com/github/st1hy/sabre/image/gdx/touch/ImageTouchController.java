@@ -4,11 +4,13 @@ import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.badlogic.gdx.Gdx;
 import com.github.st1hy.core.ImageGdxCore;
+import com.github.st1hy.core.ImageScene;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MultipleGestureDetector;
@@ -29,15 +31,19 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
     private final Context context;
     private final ImageGdxCore core;
     private final AndroidToOpenGLMatrixAdapter adapter;
-    private final ImageGdxCoreTransformWrapper gdxCoreTransformWrapper;
+    private final ImageSceneTransformWrapper imageTransformWrapper;
     private final SelectorOnTouchListener<GestureDetector> delegate;
 
     public ImageTouchController(@NonNull Context context, @NonNull ImageGdxCore core) {
         this.context = context;
         this.core = core;
-        gdxCoreTransformWrapper = new ImageGdxCoreTransformWrapper(core);
-        adapter = new AndroidToOpenGLMatrixAdapter(gdxCoreTransformWrapper);
+        imageTransformWrapper = new ImageSceneTransformWrapper();
+        adapter = new AndroidToOpenGLMatrixAdapter(imageTransformWrapper);
         delegate = buildSelector();
+    }
+
+    public void setImageScene(@Nullable ImageScene imageScene) {
+        imageTransformWrapper.setScene(imageScene);
     }
 
     @NonNull
@@ -69,7 +75,7 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
 
     public void reset() {
         adapter.reset();
-        gdxCoreTransformWrapper.reset();
+        imageTransformWrapper.reset();
     }
 
     @Override

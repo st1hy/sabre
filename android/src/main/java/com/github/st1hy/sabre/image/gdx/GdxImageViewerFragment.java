@@ -19,7 +19,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.github.st1hy.core.Color;
 import com.github.st1hy.core.ImageGdxCore;
-import com.github.st1hy.core.ImageTexture;
+import com.github.st1hy.core.ImageScene;
 import com.github.st1hy.core.utils.MissingInterfaceException;
 import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
@@ -38,8 +38,6 @@ import com.github.st1hy.sabre.image.gdx.touch.ImageTouchController;
 import timber.log.Timber;
 
 public class GdxImageViewerFragment extends AndroidFragmentApplication implements AsyncImageReceiver.Callback {
-    private static final String STORE_MATRIX = "com.github.st1hy.sabre.transformation.matrix";
-
     private ImageGdxCore imageGdxCore;
     private GdxViewHolder viewHolder;
     private ImageWorker<Bitmap> imageWorker;
@@ -55,16 +53,9 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         sanityCheck();
         this.imageGdxCore = new ImageGdxCore(getBackground());
         imageTouchController = new ImageTouchController(getActivity(), imageGdxCore);
-        if (savedInstanceState != null) {
-            Object matrixSerialised = savedInstanceState.getSerializable(STORE_MATRIX);
-            if (matrixSerialised instanceof float[]) {
-                imageGdxCore.getTransformation().set((float[]) matrixSerialised);
-            }
-        }
     }
 
     private void sanityCheck() {
-        MissingInterfaceException.parentSanityCheck(this, ImageCacheProvider.class);
         MissingInterfaceException.parentSanityCheck(this, ImageActivity.class);
     }
 
@@ -112,12 +103,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     public void onDestroyView() {
         super.onDestroyView();
         viewHolder.unbind();
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putSerializable(STORE_MATRIX, imageGdxCore.getTransformation().getValues());
     }
 
     private AndroidApplicationConfiguration initConfig() {
@@ -185,10 +170,11 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex.getTextureObjectHandle());
                     GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
                     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-                    imageGdxCore.loadTexture(new ImageTexture(tex));
+                    final ImageScene imageScene = imageGdxCore.setImage(tex);
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
+                            imageTouchController.setImageScene(imageScene);
                             onLoadingFinished();
                         }
                     });

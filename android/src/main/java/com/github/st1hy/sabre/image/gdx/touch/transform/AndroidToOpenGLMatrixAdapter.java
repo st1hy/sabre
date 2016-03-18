@@ -4,6 +4,7 @@ import android.graphics.Matrix;
 import android.support.annotation.NonNull;
 
 import com.badlogic.gdx.math.Matrix3;
+import com.github.st1hy.core.Matrix3ChangedListener;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 
