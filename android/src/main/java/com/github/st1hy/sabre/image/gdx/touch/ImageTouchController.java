@@ -10,7 +10,7 @@ import android.view.View;
 
 import com.badlogic.gdx.Gdx;
 import com.github.st1hy.core.ImageGdxCore;
-import com.github.st1hy.core.ImageScene;
+import com.github.st1hy.core.screen.ImageScreen;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MultipleGestureDetector;
@@ -42,8 +42,8 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
         delegate = buildSelector();
     }
 
-    public void setImageScene(@Nullable ImageScene imageScene) {
-        imageTransformWrapper.setScene(imageScene);
+    public void setImageScene(@Nullable ImageScreen imageScreen) {
+        imageTransformWrapper.setScene(imageScreen);
     }
 
     @NonNull

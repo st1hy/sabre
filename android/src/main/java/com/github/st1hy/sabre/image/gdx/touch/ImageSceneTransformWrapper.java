@@ -4,13 +4,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.badlogic.gdx.math.Matrix3;
-import com.github.st1hy.core.ImageScene;
+import com.github.st1hy.core.screen.ImageScreen;
 import com.github.st1hy.core.Matrix3ChangedListener;
 
 public class ImageSceneTransformWrapper implements Matrix3ChangedListener {
-    private ImageScene scene;
+    private ImageScreen scene;
 
-    public void setScene(@Nullable ImageScene scene) {
+    public void setScene(@Nullable ImageScreen scene) {
         this.scene = scene;
     }
 

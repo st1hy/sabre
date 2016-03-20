@@ -1,4 +1,4 @@
-package com.github.st1hy.core;
+package com.github.st1hy.core.screen;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
@@ -6,14 +6,18 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
+import com.github.st1hy.core.Matrix3ChangedListener;
 
-public class ImageScene implements ApplicationListener, Matrix3ChangedListener {
+public class ImageScreen implements ApplicationListener, Matrix3ChangedListener {
     private SpriteBatch batch;
     private final Matrix4 transformation = new Matrix4();
     private int startX,startY, imgWidthOut, imgHeightOut;
     private Texture texture;
 
-    public ImageScene(Texture texture) {
+    /**
+     * @param texture texture to be displayed. This reference is not managed by this scene.
+     */
+    public ImageScreen(Texture texture) {
         this.texture = texture;
     }
 

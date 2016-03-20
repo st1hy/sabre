@@ -1,8 +1,8 @@
-package com.github.st1hy.core;
+package com.github.st1hy.core.screen;
 
 import com.badlogic.gdx.ApplicationListener;
 
-public class SceneManager implements ApplicationListener {
+public class ScreenManager implements ApplicationListener {
     private static final int UNKNOWN_SIZE = -1;
     private int width = UNKNOWN_SIZE, height = UNKNOWN_SIZE;
     private ApplicationListener currentScene;

@@ -2,58 +2,68 @@ package com.github.st1hy.core;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.github.st1hy.core.screen.ImageScreen;
+import com.github.st1hy.core.screen.ScreenManager;
 
 public class ImageGdxCore implements ApplicationListener {
     private final Color background;
-    private final SceneManager sceneManager;
+    private final ScreenManager screenManager;
+    private final TextureManager textureManager;
 
     public ImageGdxCore(Color backgroundColor) {
         this.background = backgroundColor;
-        sceneManager = new SceneManager();
+        screenManager = new ScreenManager();
+        textureManager = new TextureManager();
     }
 
     public ImageGdxCore() {
         this(new Color());
     }
 
-    public ImageScene setImage(Texture image) {
-        ImageScene scene = new ImageScene(image);
-        sceneManager.setCurrentScene(scene);
+    public ImageScreen setImage(Texture image) {
+        ImageScreen scene = new ImageScreen(image);
+        screenManager.setCurrentScene(scene);
         return scene;
     }
 
     @Override
     public void create() {
         Gdx.graphics.setContinuousRendering(false);
-        sceneManager.create();
+        screenManager.create();
     }
 
     @Override
     public void resize(int width, int height) {
-        sceneManager.resize(width, height);
+        screenManager.resize(width, height);
     }
 
     @Override
     public void render() {
         Gdx.gl.glClearColor(background.r, background.g, background.b, background.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        sceneManager.render();
+        screenManager.render();
     }
 
     @Override
     public void resume() {
-        sceneManager.resume();
+        screenManager.resume();
     }
 
     @Override
     public void pause() {
-        sceneManager.pause();
+        screenManager.pause();
     }
 
     @Override
     public void dispose() {
-        sceneManager.dispose();
+        screenManager.dispose();
+        textureManager.dispose();
+    }
+
+    public TextureManager getTextureManager() {
+        return textureManager;
     }
 }

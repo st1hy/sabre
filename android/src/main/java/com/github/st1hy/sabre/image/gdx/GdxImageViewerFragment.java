@@ -2,6 +2,7 @@ package com.github.st1hy.sabre.image.gdx;
 
 import android.app.ActionBar;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
@@ -17,9 +18,8 @@ import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.github.st1hy.core.Color;
 import com.github.st1hy.core.ImageGdxCore;
-import com.github.st1hy.core.ImageScene;
+import com.github.st1hy.core.screen.ImageScreen;
 import com.github.st1hy.core.utils.MissingInterfaceException;
 import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
@@ -45,7 +45,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     private ImageTouchController imageTouchController;
     private final UiThreadHandler handler = new UiThreadHandler();
 
-    private Bitmap lastDrawn;
+    private Texture sharedImageTexture;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -59,13 +59,13 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         MissingInterfaceException.parentSanityCheck(this, ImageActivity.class);
     }
 
-    private Color getBackground() {
+    private com.badlogic.gdx.graphics.Color getBackground() {
         int color = Utils.getColor(getActivity(), R.color.image_surface_background);
-        float r = android.graphics.Color.red(color) / 255f;
-        float g = android.graphics.Color.green(color) / 255f;
-        float b = android.graphics.Color.blue(color) / 255f;
-        float a = android.graphics.Color.alpha(color) / 255f;
-        return new Color(r, g, b, a);
+        float r = Color.red(color) / 255f;
+        float g = Color.green(color) / 255f;
+        float b = Color.blue(color) / 255f;
+        float a = Color.alpha(color) / 255f;
+        return new com.badlogic.gdx.graphics.Color(r, g, b, a);
     }
 
     @Override
@@ -144,10 +144,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
 
     @Override
     public void onImageLoaded() {
-    }
-
-    @Override
-    public void redrawNeeded() {
         final Bitmap bitmap = imageReceiver.getImage();
         if (bitmap == null) {
             if (Config.DEBUG) {
@@ -155,32 +151,34 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
             }
             return;
         }
-        if (Config.DEBUG) {
-            Timber.v("Redrawing bitmap");
-        }
-        if (bitmap != lastDrawn) {
-            lastDrawn = bitmap;
-            Gdx.app.postRunnable(new Runnable() {
-                @Override
-                public void run() {
-                    if (Config.DEBUG) {
-                        Timber.v("Loading texture");
-                    }
-                    Texture tex = new Texture(bitmap.getWidth(), bitmap.getHeight(), Pixmap.Format.RGBA8888);
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex.getTextureObjectHandle());
-                    GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-                    final ImageScene imageScene = imageGdxCore.setImage(tex);
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            imageTouchController.setImageScene(imageScene);
-                            onLoadingFinished();
-                        }
-                    });
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                if (Config.DEBUG) {
+                    Timber.v("Loading texture");
                 }
-            });
-        }
+                if (sharedImageTexture != null) {
+                    Timber.v("Nothing to draw despite caller says otherwise!");
+                    sharedImageTexture.dispose();
+                }
+                Texture tex = new Texture(bitmap.getWidth(), bitmap.getHeight(), Pixmap.Format.RGBA8888);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex.getTextureObjectHandle());
+                GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+                final ImageScreen imageScreen = imageGdxCore.setImage(tex);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        imageTouchController.setImageScene(imageScreen);
+                        onLoadingFinished();
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    public void redrawNeeded() {
     }
 
     @Override
