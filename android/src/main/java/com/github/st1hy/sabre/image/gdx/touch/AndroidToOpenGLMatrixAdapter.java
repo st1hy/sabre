@@ -1,7 +1,8 @@
-package com.github.st1hy.sabre.image.gdx.touch.transform;
+package com.github.st1hy.sabre.image.gdx.touch;
 
 import android.graphics.Matrix;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import com.badlogic.gdx.math.Matrix3;
 import com.github.st1hy.core.Matrix3ChangedListener;
@@ -12,36 +13,35 @@ import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
  * Transforms memory order of matrix from default android row-major order to openGL column-major order.
  */
 public class AndroidToOpenGLMatrixAdapter implements MatrixTransformationDetector.Listener {
-    private final Matrix3ChangedListener dispatch;
     private float[] valuesTemp = new float[9];
     private float[] valuesTempColumnMajor = new float[9];
-    private Matrix3 startingMatrix = new Matrix3();
-    private Matrix3 matrix3Temp = new Matrix3();
-    private Matrix3 matrix3Multiplied = new Matrix3();
+    private final Matrix3 matrix3Temp = new Matrix3();
+    private Matrix3ChangedListener dispatch;
 
-    public AndroidToOpenGLMatrixAdapter(@NonNull Matrix3ChangedListener dispatch) {
+    public AndroidToOpenGLMatrixAdapter(@Nullable Matrix3ChangedListener dispatch) {
         this.dispatch = dispatch;
     }
 
-    public void reset() {
-        valuesTemp = new float[9];
-        valuesTempColumnMajor = new float[9];
-        startingMatrix = new Matrix3();
-        matrix3Temp = new Matrix3();
-        matrix3Multiplied = new Matrix3();
+    public AndroidToOpenGLMatrixAdapter() {
+        this(null);
+    }
+
+    public void setDispatch(@Nullable Matrix3ChangedListener dispatch) {
+        this.dispatch = dispatch;
     }
 
     @Override
-    public void onMatrix(GestureEventState state, Matrix matrix) {
-        if (state.equals(GestureEventState.STARTED)) {
-            startingMatrix.set(matrix3Multiplied);
-        }
+    public void onMatrix(@NonNull GestureEventState state, @NonNull Matrix matrix) {
+        Matrix3ChangedListener dispatch = this.dispatch;
+        if (dispatch == null) return;
         matrix.getValues(valuesTemp);
         changeMemoryOrder(valuesTemp, valuesTempColumnMajor);
         matrix3Temp.set(valuesTempColumnMajor);
-        matrix3Multiplied.set(matrix3Temp);
-        matrix3Multiplied.mul(startingMatrix);
-        dispatch.onMatrix3Changed(matrix3Multiplied);
+        dispatch.onMatrix3Changed(from(state), matrix3Temp);
+    }
+
+    public void reset() {
+        if (dispatch != null) dispatch.onMatrix3Reset();
     }
 
     private static void changeMemoryOrder(float[] rowMajorInput, float[] columnMajorOutput) {
@@ -54,5 +54,18 @@ public class AndroidToOpenGLMatrixAdapter implements MatrixTransformationDetecto
         columnMajorOutput[6] = rowMajorInput[2];
         columnMajorOutput[7] = rowMajorInput[5];
         columnMajorOutput[8] = rowMajorInput[8];
+    }
+
+    private static Matrix3ChangedListener.State from(GestureEventState state) {
+        switch (state) {
+            case STARTED:
+                return Matrix3ChangedListener.State.STARTED;
+            case IN_PROGRESS:
+                return Matrix3ChangedListener.State.IN_PROGRESS;
+            case ENDED:
+                return Matrix3ChangedListener.State.ENDED;
+            default:
+                throw new UnsupportedOperationException();
+        }
     }
 }

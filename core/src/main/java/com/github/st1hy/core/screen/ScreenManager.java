@@ -8,10 +8,12 @@ public class ScreenManager implements ApplicationListener {
     private ApplicationListener currentScene;
     private State state = State.DISPOSED;
 
-    public void setCurrentScene(ApplicationListener newScene) {
+    public void setCurrentScreen(ApplicationListener newScene) {
         if (currentScene != null) {
-            currentScene.pause();
-            currentScene.dispose();
+            if (state != State.DISPOSED) {
+                if (state == State.RESUMED) currentScene.pause();
+                currentScene.dispose();
+            }
         }
         this.currentScene = newScene;
         if (newScene != null) {

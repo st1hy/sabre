@@ -24,9 +24,9 @@ public class ImageGdxCore implements ApplicationListener {
     }
 
     public ImageScreen setImage(Texture image) {
-        ImageScreen scene = new ImageScreen(image);
-        screenManager.setCurrentScene(scene);
-        return scene;
+        ImageScreen screen = new ImageScreen(image);
+        screenManager.setCurrentScreen(screen);
+        return screen;
     }
 
     @Override

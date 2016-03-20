@@ -45,8 +45,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     private ImageTouchController imageTouchController;
     private final UiThreadHandler handler = new UiThreadHandler();
 
-    private Texture sharedImageTexture;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,6 +135,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     @Override
     public void onDestroy() {
         super.onDestroy();
+        imageTouchController.onDestroy();
         imageWorker.setExitTasksEarly(true);
         imageWorker.cancelWork(imageReceiver);
         handler.removeAll();
@@ -157,10 +156,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                 if (Config.DEBUG) {
                     Timber.v("Loading texture");
                 }
-                if (sharedImageTexture != null) {
-                    Timber.v("Nothing to draw despite caller says otherwise!");
-                    sharedImageTexture.dispose();
-                }
                 Texture tex = new Texture(bitmap.getWidth(), bitmap.getHeight(), Pixmap.Format.RGBA8888);
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex.getTextureObjectHandle());
                 GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
@@ -169,7 +164,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        imageTouchController.setImageScene(imageScreen);
+                        imageTouchController.setTransformationDispatch(imageScreen);
                         onLoadingFinished();
                     }
                 });
