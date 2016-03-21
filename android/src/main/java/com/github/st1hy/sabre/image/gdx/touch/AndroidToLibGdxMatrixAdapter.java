@@ -6,23 +6,24 @@ import android.support.annotation.Nullable;
 
 import com.badlogic.gdx.math.Matrix3;
 import com.github.st1hy.core.Matrix3ChangedListener;
+import com.github.st1hy.core.State;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 
 /**
  * Transforms memory order of matrix from default android row-major order to openGL column-major order.
  */
-public class AndroidToOpenGLMatrixAdapter implements MatrixTransformationDetector.Listener {
+public class AndroidToLibGdxMatrixAdapter implements MatrixTransformationDetector.Listener {
     private float[] valuesTemp = new float[9];
     private float[] valuesTempColumnMajor = new float[9];
     private final Matrix3 matrix3Temp = new Matrix3();
     private Matrix3ChangedListener dispatch;
 
-    public AndroidToOpenGLMatrixAdapter(@Nullable Matrix3ChangedListener dispatch) {
+    public AndroidToLibGdxMatrixAdapter(@Nullable Matrix3ChangedListener dispatch) {
         this.dispatch = dispatch;
     }
 
-    public AndroidToOpenGLMatrixAdapter() {
+    public AndroidToLibGdxMatrixAdapter() {
         this(null);
     }
 
@@ -56,14 +57,14 @@ public class AndroidToOpenGLMatrixAdapter implements MatrixTransformationDetecto
         columnMajorOutput[8] = rowMajorInput[8];
     }
 
-    private static Matrix3ChangedListener.State from(GestureEventState state) {
+    public static State from(GestureEventState state) {
         switch (state) {
             case STARTED:
-                return Matrix3ChangedListener.State.STARTED;
+                return State.STARTED;
             case IN_PROGRESS:
-                return Matrix3ChangedListener.State.IN_PROGRESS;
+                return State.IN_PROGRESS;
             case ENDED:
-                return Matrix3ChangedListener.State.ENDED;
+                return State.ENDED;
             default:
                 throw new UnsupportedOperationException();
         }

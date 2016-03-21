@@ -5,9 +5,9 @@ import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
+import com.github.st1hy.core.State;
 
 public abstract class AbstractScreen implements TransformableScreen {
-    private static final Matrix4 IDT = new Matrix4();
     private final Matrix4 initialTransformation = new Matrix4();
     private final Matrix4 outputTransformation = new Matrix4();
     private final Vector3 translation = new Vector3();

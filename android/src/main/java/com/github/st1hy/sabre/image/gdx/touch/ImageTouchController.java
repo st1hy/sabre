@@ -11,6 +11,9 @@ import android.view.View;
 import com.badlogic.gdx.Gdx;
 import com.github.st1hy.core.ImageGdxCore;
 import com.github.st1hy.core.Matrix3ChangedListener;
+import com.github.st1hy.core.mode.UiModeChangeListener;
+import com.github.st1hy.core.screen.OnPathChangedListener;
+import com.github.st1hy.core.utils.EventBus;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MultipleGestureDetector;
@@ -29,25 +32,29 @@ import java.util.Map;
 public class ImageTouchController extends SimpleGestureListener implements GestureDetector {
     private final Context context;
     private final ImageGdxCore core;
-    private final AndroidToOpenGLMatrixAdapter adapter;
+    private final AndroidToLibGdxMatrixAdapter adapter;
+    private final EditModePredicate editModePredicate;
+    private final PathGestureDetector pathGestureDetector;
     private final SelectorOnTouchListener<GestureDetector> delegate;
-//    private final EditModePredicate editModePredicate;
 
     public ImageTouchController(@NonNull Context context, @NonNull ImageGdxCore core) {
         this.context = context;
         this.core = core;
-        adapter = new AndroidToOpenGLMatrixAdapter();
+        adapter = new AndroidToLibGdxMatrixAdapter();
+        editModePredicate = new EditModePredicate();
+        pathGestureDetector = new PathGestureDetector(context).setRevertY(true);
         delegate = buildSelector();
-//        editModePredicate = new EditModePredicate();
-//        EventBus.INSTANCE.add(UiModeChangeListener.class, editModePredicate);
+        EventBus.INSTANCE.add(UiModeChangeListener.class, editModePredicate);
     }
 
-    public void setTransformationDispatch(@Nullable Matrix3ChangedListener dispatch) {
-        adapter.setDispatch(dispatch);
+    public void setDispatch(@Nullable Matrix3ChangedListener screenTransformation,
+                            @Nullable OnPathChangedListener pathDrawingListener) {
+        adapter.setDispatch(screenTransformation);
+        pathGestureDetector.setListener(pathDrawingListener);
     }
 
     public void onDestroy() {
-//        EventBus.INSTANCE.remove(UiModeChangeListener.class, editModePredicate);
+        EventBus.INSTANCE.remove(UiModeChangeListener.class, editModePredicate);
     }
 
     @NonNull
@@ -57,13 +64,13 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
         TouchPredicate deadZone = new DeadZoneTouchPredicate();
         conditionMap.put(deadZone, null);
 
-//        TouchPredicate isEditMode = editModePredicate;
-//        conditionMap.put(isEditMode, )
+        TouchPredicate isEditMode = editModePredicate;
+        conditionMap.put(isEditMode, pathGestureDetector);
 
         TouchPredicate allElse = new SimpleTouchPredicate(true);
         conditionMap.put(allElse, buildViewPortTransformationDetector());
 
-        List<TouchPredicate> order = Lists.newArrayList(deadZone, allElse);
+        List<TouchPredicate> order = Lists.newArrayList(deadZone, isEditMode, allElse);
         return new SelectorOnTouchListener<>(conditionMap, order);
     }
 

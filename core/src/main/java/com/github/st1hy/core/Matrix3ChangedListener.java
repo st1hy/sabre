@@ -8,7 +8,4 @@ public interface Matrix3ChangedListener {
 
     void onMatrix3Reset();
 
-    enum State {
-        STARTED, IN_PROGRESS, ENDED
-    }
 }

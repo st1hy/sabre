@@ -164,7 +164,8 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        imageTouchController.setTransformationDispatch(imageScreen);
+                        imageTouchController.setDispatch(imageScreen.getScreenTransformationListener(),
+                                imageScreen.getPathDrawingListener());
                         onLoadingFinished();
                     }
                 });
