@@ -60,6 +60,7 @@ public class ImageScreen extends AbstractScreen {
     protected void setTransformation(Matrix4 matrix4, Quaternion rotation, Vector3 translation, float scaleZ) {
         batch.getTransformMatrix().set(matrix4);
         shapeRenderer.setTransformMatrix(matrix4);
+        pathRenderer.setTransformation(matrix4);
     }
 
     @Override
@@ -103,5 +104,6 @@ public class ImageScreen extends AbstractScreen {
         batch.dispose();
         texture.dispose();
         shapeRenderer.dispose();
+        pathRenderer.dispose();
     }
 }

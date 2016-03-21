@@ -14,19 +14,19 @@ import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.TranslationDetector;
-import com.github.st1hy.sabre.BuildConfig;
 
 /**
  * Creates {@link FloatArray} from touch events.
  */
 public class PathGestureDetector implements GestureDetector, TranslationDetector.Listener {
     private final TranslationDetector translationDetector;
-    private final FloatArray points = new FloatArray();
     private final float minimalDistanceBetweenPoint;
     private OnPathChangedListener listener;
     private State state = State.ENDED;
     private boolean revertY = false;
     private int height;
+    private int pathSize = 0;
+    private float previousX, previousY, x, y;
 
     public PathGestureDetector(@NonNull Context context, @Nullable OnPathChangedListener listener) {
         this.listener = listener;
@@ -52,8 +52,7 @@ public class PathGestureDetector implements GestureDetector, TranslationDetector
     @Override
     public void invalidate() {
         translationDetector.invalidate();
-        points.clear();
-        points.shrink();
+        pathSize = 0;
     }
 
     @Override
@@ -65,16 +64,19 @@ public class PathGestureDetector implements GestureDetector, TranslationDetector
     @Override
     public void onTranslate(GestureEventState state, PointF startPoint, float x, float y, float _dx, float _dy, double _distance) {
         boolean newPointsAdded = state == GestureEventState.STARTED ||
-                points.size > 0 && movedMinimalDistance(x,y);
+                pathSize > 0 && movedMinimalDistance(x,y);
         if (newPointsAdded) {
-            points.add(startPoint.x + x);
+            previousX = this.x;
+            previousY = this.y;
+            this.x = startPoint.x + x;
             float realY = startPoint.y + y;
             if (revertY) realY = height - realY;
-            points.add(realY);
+            this.y = realY;
+            pathSize++;
         }
         if (state == GestureEventState.ENDED) {
             onTranslationEnded();
-        } else if (newPointsAdded && points.size >= 4) {
+        } else if (newPointsAdded && pathSize >= 2) {
             switchToNextWorkingState();
             notifyAboutPath();
         }
@@ -92,11 +94,8 @@ public class PathGestureDetector implements GestureDetector, TranslationDetector
     }
 
     private boolean movedMinimalDistance(float x, float y) {
-        int size = points.size;
-        float lastX = points.get(size - 2);
-        float lastY = points.get(size - 1);
-        float dx = x - lastX;
-        float dy = y - lastY;
+        float dx = x - previousX;
+        float dy = y - previousY;
         double distance = distance(dx, dy);
         return distance > minimalDistanceBetweenPoint;
     }
@@ -106,15 +105,11 @@ public class PathGestureDetector implements GestureDetector, TranslationDetector
             state = State.ENDED;
             notifyAboutPath();
         }
-        points.clear();
-        points.shrink();
+        pathSize = 0;
     }
 
     private void notifyAboutPath() {
-        if (BuildConfig.DEBUG) {
-//            Timber.d("Path %s: %s", state.name(), points.toString());
-        }
-        if (listener != null) listener.onPathChanged(state, points);
+        if (listener != null) listener.onPathChanged(state, x, y, previousX, previousY);
     }
 
     protected static double distance(float a, float b) {
