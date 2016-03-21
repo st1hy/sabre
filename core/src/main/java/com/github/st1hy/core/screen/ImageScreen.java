@@ -5,18 +5,16 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Vector3;
 import com.github.st1hy.core.Matrix3ChangedListener;
 
 public class ImageScreen extends AbstractScreen {
-    private int startX,startY, imgWidthOut, imgHeightOut;
     private Texture texture;
 
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
     private PathRenderer pathRenderer;
-    private int width, height;
+
+    private Matrix4 imageToScreenTransformation = new Matrix4();
 
     /**
      * @param texture texture to be displayed. This reference is not managed by this scene.
@@ -44,23 +42,20 @@ public class ImageScreen extends AbstractScreen {
 
     @Override
     public void resize(int width, int height) {
-        this.width = width;
-        this.height = height;
         int imgWidth = texture.getWidth();
         int imgHeight = texture.getHeight();
         float scale = Math.min((float) width / (float) imgWidth,
                 (float) height / (float) imgHeight);
-        startX = (int) ((width - imgWidth * scale) * 0.5f + 0.5f);
-        startY = (int) ((height - imgHeight * scale) * 0.5f + 0.5f);
-        imgWidthOut = (int) Math.ceil(imgWidth * scale);
-        imgHeightOut = (int) Math.ceil(imgHeight * scale);
+        imageToScreenTransformation.idt().scale(scale, scale, 1)
+                .translate((width / scale - imgWidth) / 2, (height / scale - imgHeight) / 2, 0);
+        setTransformation(batch.getTransformMatrix().idt());
     }
 
     @Override
-    protected void setTransformation(Matrix4 matrix4, Quaternion rotation, Vector3 translation, float scaleZ) {
-        batch.getTransformMatrix().set(matrix4);
-        shapeRenderer.setTransformMatrix(matrix4);
-        pathRenderer.setTransformation(matrix4);
+    protected void setTransformation(Matrix4 screenTransformation) {
+        Matrix4 transform = batch.getTransformMatrix().set(screenTransformation).mul(imageToScreenTransformation);
+        shapeRenderer.setTransformMatrix(transform);
+        pathRenderer.setTransformation(transform);
     }
 
     @Override
@@ -72,15 +67,15 @@ public class ImageScreen extends AbstractScreen {
 
     private void renderImage() {
         batch.begin();
-        batch.draw(texture, startX, startY, imgWidthOut, imgHeightOut);
+        batch.draw(texture, 0, 0, texture.getWidth(), texture.getHeight());
         batch.end();
     }
 
     private void renderShapes() {
-        int width = imgWidthOut;
-        int height = imgHeightOut;
-        int x = startX;
-        int y = startY;
+        int width = texture.getWidth();
+        int height = texture.getHeight();
+        int x = 0;
+        int y = 0;
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(Color.RED);
         shapeRenderer.line(x, y, x + width, y + height);

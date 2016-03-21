@@ -3,15 +3,11 @@ package com.github.st1hy.core.screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Quaternion;
-import com.badlogic.gdx.math.Vector3;
 import com.github.st1hy.core.State;
 
 public abstract class AbstractScreen implements TransformableScreen {
     private final Matrix4 initialTransformation = new Matrix4();
     private final Matrix4 outputTransformation = new Matrix4();
-    private final Vector3 translation = new Vector3();
-    private final Quaternion rotation = new Quaternion();
 
     @Override
     public void create() {
@@ -35,13 +31,5 @@ public abstract class AbstractScreen implements TransformableScreen {
         setTransformation(outputTransformation);
     }
 
-    private void setTransformation(Matrix4 matrix4) {
-//        matrix4.getTranslation(translation);
-//        matrix4.getRotation(rotation);
-//        float scaleZ = matrix4.getScaleZ();
-        setTransformation(matrix4, rotation, translation, 1f);
-    }
-
-    protected abstract void setTransformation(Matrix4 matrix4, Quaternion rotation, Vector3 translation, float scaleZ);
-
+    protected abstract void setTransformation(Matrix4 matrix4);
 }
