@@ -1,14 +1,12 @@
 package com.github.st1hy.core.screen;
 
-import com.badlogic.gdx.ApplicationListener;
-
-public class ScreenManager implements ApplicationListener {
+public class ScreenManager implements Screen {
     private static final int UNKNOWN_SIZE = -1;
     private int width = UNKNOWN_SIZE, height = UNKNOWN_SIZE;
-    private ApplicationListener currentScene;
+    private Screen currentScene;
     private State state = State.DISPOSED;
 
-    public void setCurrentScreen(ApplicationListener newScene) {
+    public void setCurrentScreen(Screen newScene) {
         if (currentScene != null) {
             if (state != State.DISPOSED) {
                 if (state == State.RESUMED) currentScene.pause();
@@ -38,6 +36,11 @@ public class ScreenManager implements ApplicationListener {
         if (currentScene != null) {
             currentScene.resize(width, height);
         }
+    }
+
+    @Override
+    public void prerender() {
+        if (currentScene != null) currentScene.prerender();
     }
 
     @Override

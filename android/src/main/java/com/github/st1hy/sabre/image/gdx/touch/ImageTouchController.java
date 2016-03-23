@@ -11,8 +11,9 @@ import android.view.View;
 import com.badlogic.gdx.Gdx;
 import com.github.st1hy.core.ImageGdxCore;
 import com.github.st1hy.core.Matrix3ChangedListener;
+import com.github.st1hy.core.mode.UiMode;
 import com.github.st1hy.core.mode.UiModeChangeListener;
-import com.github.st1hy.core.screen.OnPathChangedListener;
+import com.github.st1hy.core.screen.path.OnPathChangedListener;
 import com.github.st1hy.core.utils.EventBus;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
@@ -33,7 +34,7 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
     private final Context context;
     private final ImageGdxCore core;
     private final AndroidToLibGdxMatrixAdapter adapter;
-    private final EditModePredicate editModePredicate;
+    private final ModePredicate editModePredicate;
     private final PathGestureDetector pathGestureDetector;
     private final SelectorOnTouchListener<GestureDetector> delegate;
 
@@ -41,7 +42,7 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
         this.context = context;
         this.core = core;
         adapter = new AndroidToLibGdxMatrixAdapter();
-        editModePredicate = new EditModePredicate();
+        editModePredicate = new ModePredicate(UiMode.CUT_ELEMENT);
         pathGestureDetector = new PathGestureDetector(context).setRevertY(true);
         delegate = buildSelector();
         EventBus.INSTANCE.add(UiModeChangeListener.class, editModePredicate);

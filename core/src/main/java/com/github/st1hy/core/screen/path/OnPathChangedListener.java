@@ -1,4 +1,4 @@
-package com.github.st1hy.core.screen;
+package com.github.st1hy.core.screen.path;
 
 import com.github.st1hy.core.State;
 

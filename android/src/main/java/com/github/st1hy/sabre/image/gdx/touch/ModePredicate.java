@@ -7,12 +7,17 @@ import com.github.st1hy.core.mode.UiMode;
 import com.github.st1hy.core.mode.UiModeChangeListener;
 import com.github.st1hy.view.TouchPredicate;
 
-public class EditModePredicate implements TouchPredicate, UiModeChangeListener {
+public class ModePredicate implements TouchPredicate, UiModeChangeListener {
     private UiMode mode = UiMode.DEFAULT;
+    private final UiMode expected;
+
+    public ModePredicate(UiMode expected) {
+        this.expected = expected;
+    }
 
     @Override
     public boolean canForward(View v, MotionEvent event) {
-        return mode == UiMode.CUT_ELEMENT;
+        return mode == expected;
     }
 
     @Override

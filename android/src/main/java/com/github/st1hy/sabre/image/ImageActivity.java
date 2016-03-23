@@ -14,6 +14,7 @@ import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.github.st1hy.core.mode.UiMode;
 import com.github.st1hy.core.mode.UiModeChangeListener;
 import com.github.st1hy.core.utils.EventBus;
+import com.github.st1hy.core.utils.EventMethod;
 import com.github.st1hy.core.utils.SystemUIMode;
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.dao.DaoMaster;
@@ -24,7 +25,6 @@ import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.CacheUtils;
 import com.github.st1hy.sabre.core.ImageCacheProvider;
-import com.google.common.base.Function;
 import com.rey.material.widget.FloatingActionButton;
 
 import java.util.Date;
@@ -167,11 +167,10 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
         Drawable icon = Utils.getDrawable(this, drawableResId);
         fab.setIcon(icon, animate);
         final UiMode mode = isInEdit ? UiMode.CUT_ELEMENT : UiMode.MOVE_CAMERA;
-        EventBus.INSTANCE.apply(UiModeChangeListener.class, new Function<UiModeChangeListener, Void>() {
+        EventBus.INSTANCE.apply(UiModeChangeListener.class, new EventMethod<UiModeChangeListener>() {
             @Override
-            public Void apply(@Nullable UiModeChangeListener input) {
+            public void apply(@Nullable UiModeChangeListener input) {
                 if (input != null) input.onUiModeChanged(mode);
-                return null;
             }
         });
     }

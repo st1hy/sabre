@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.github.st1hy.core.Matrix3ChangedListener;
+import com.github.st1hy.core.screen.fragments.ImageFragments;
+import com.github.st1hy.core.screen.path.PathRenderer;
 
 public class ImageScreen extends AbstractScreen {
     private Texture texture;
@@ -13,11 +15,12 @@ public class ImageScreen extends AbstractScreen {
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
     private PathRenderer pathRenderer;
+    private ImageFragments imageFragments;
 
     private Matrix4 imageToScreenTransformation = new Matrix4();
 
     /**
-     * @param texture texture to be displayed. This reference is not managed by this scene.
+     * @param texture texture to be displayed. This reference is owned and disposed by this screen.
      */
     public ImageScreen(Texture texture) {
         super();
@@ -28,7 +31,7 @@ public class ImageScreen extends AbstractScreen {
         return this;
     }
 
-    public OnPathChangedListener getPathDrawingListener() {
+    public com.github.st1hy.core.screen.path.OnPathChangedListener getPathDrawingListener() {
         return pathRenderer;
     }
 
@@ -36,8 +39,10 @@ public class ImageScreen extends AbstractScreen {
     public void create() {
         super.create();
         batch = new SpriteBatch();
+        batch.disableBlending();
         shapeRenderer = new ShapeRenderer();
-        pathRenderer = new PathRenderer();
+        imageFragments = new ImageFragments(texture);
+        pathRenderer = new PathRenderer(imageFragments);
     }
 
     @Override
@@ -56,6 +61,12 @@ public class ImageScreen extends AbstractScreen {
         Matrix4 transform = batch.getTransformMatrix().set(screenTransformation).mul(imageToScreenTransformation);
         shapeRenderer.setTransformMatrix(transform);
         pathRenderer.setTransformation(transform);
+        imageFragments.setTransformation(transform);
+    }
+
+    @Override
+    public void prerender() {
+        imageFragments.prerender();
     }
 
     @Override
@@ -69,6 +80,7 @@ public class ImageScreen extends AbstractScreen {
         batch.begin();
         batch.draw(texture, 0, 0, texture.getWidth(), texture.getHeight());
         batch.end();
+        imageFragments.render(batch);
     }
 
     private void renderShapes() {
@@ -99,6 +111,7 @@ public class ImageScreen extends AbstractScreen {
         batch.dispose();
         texture.dispose();
         shapeRenderer.dispose();
+        imageFragments.dispose();
         pathRenderer.dispose();
     }
 }

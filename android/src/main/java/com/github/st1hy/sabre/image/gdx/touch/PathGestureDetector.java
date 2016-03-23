@@ -9,7 +9,7 @@ import android.view.View;
 
 import com.badlogic.gdx.utils.FloatArray;
 import com.github.st1hy.core.State;
-import com.github.st1hy.core.screen.OnPathChangedListener;
+import com.github.st1hy.core.screen.path.OnPathChangedListener;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.Options;

@@ -42,6 +42,7 @@ public class ImageGdxCore implements ApplicationListener {
 
     @Override
     public void render() {
+        screenManager.prerender();
         Gdx.gl.glClearColor(background.r, background.g, background.b, background.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         screenManager.render();
