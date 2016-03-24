@@ -1,6 +1,7 @@
 package com.github.st1hy.core.screen.fragments;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
@@ -12,23 +13,42 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.EarClippingTriangulator;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Polygon;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.FloatArray;
+import com.github.st1hy.core.math.MeasuringRect;
+import com.github.st1hy.core.math.VerticesBoundsUtils;
 
 public class ImageFragment implements Disposable {
     private FrameBuffer fbo;
     private Sprite sprite;
     private PendingSprite pendingSprite;
 
-    public ImageFragment(FloatArray vertices, Texture image) {
+    private ImageFragment(float[] vertices, Texture image) {
         pendingSprite = new PendingSprite(vertices, image);
     }
 
+    /**
+     * Creates new fragment from vertices and image. Cuts vertices that are outside of image bounds.
+     * If no vertices remain returns null.
+     */
+    public static ImageFragment createNewFragment(FloatArray vertices, Texture image) {
+        MeasuringRect rect = new MeasuringRect(0, image.getWidth(), 0, image.getHeight());
+        FloatArray cutVertices = VerticesBoundsUtils.cropVertices(vertices, rect);
+        if (cutVertices != null) {
+            return new ImageFragment(cutVertices.toArray(), image);
+        } else {
+            return null;
+        }
+    }
+
     public void prerender() {
-        if (sprite == null) {
+        if (sprite == null && pendingSprite != null) {
             pendingSprite.setupSprite();
+            pendingSprite = null;
         }
     }
 
@@ -37,10 +57,8 @@ public class ImageFragment implements Disposable {
 
     public void render(SpriteBatch batch) {
         if (sprite != null) {
-            batch.begin();
             batch.enableBlending();
             sprite.draw(batch);
-            batch.end();
         }
     }
 
@@ -53,8 +71,8 @@ public class ImageFragment implements Disposable {
         private final float[] vertices;
         private final Texture texture;
 
-        public PendingSprite(FloatArray vertices, Texture texture) {
-            this.vertices = vertices.toArray();
+        public PendingSprite(float[] vertices, Texture texture) {
+            this.vertices = vertices;
             this.texture = texture;
         }
 
@@ -63,32 +81,31 @@ public class ImageFragment implements Disposable {
 
             EarClippingTriangulator triangulator = new EarClippingTriangulator();
             Polygon polygon = new Polygon(vertices);
-//            Rectangle bounds = polygon.getBoundingRectangle();
-            int width = texture.getWidth();
-            int height =  texture.getHeight();
+            Rectangle bounds = polygon.getBoundingRectangle();
             short[] triangles = triangulator.computeTriangles(vertices).items;
-            TextureRegion textureRegion = new TextureRegion(texture, 0, 0, width, height);
+            TextureRegion textureRegion = new TextureRegion(texture, 0, 0, texture.getWidth(), texture.getHeight());
             PolygonRegion polygonRegion = new PolygonRegion(textureRegion, polygon.getVertices(), triangles);
             PolygonSprite polygonSprite = new PolygonSprite(polygonRegion);
-//            polygonSprite.setColor(Color.GOLD);
-
+            polygonSprite.setColor(Color.GOLD);
 
             PolygonSpriteBatch fb = new PolygonSpriteBatch();
-            fb.getProjectionMatrix().setToOrtho2D(0, 0, width, height);
-
+            int x = MathUtils.floor(bounds.x);
+            int y = MathUtils.floor(bounds.y);
+            int width = MathUtils.ceil(bounds.width);
+            int height = MathUtils.ceil(bounds.height);
             FrameBuffer fbo = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
+            fb.getProjectionMatrix().setToOrtho2D(x, y, width, height);
 
             fbo.begin();
 
-//            fb.enableBlending();
-//            Gdx.gl.glBlendFuncSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            fb.enableBlending();
+            Gdx.gl.glBlendFuncSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
             Gdx.gl.glClearColor(0f, 0f, 0f, 0f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
             fb.begin();
 
-//            fb.draw(texture, vertices, 0, vertices.length, triangles, 0, triangles.length);
             polygonSprite.draw(fb);
 
             fb.end();
@@ -98,9 +115,9 @@ public class ImageFragment implements Disposable {
             ImageFragment.this.sprite = new Sprite(fbo.getColorBufferTexture());
             sprite.getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
             sprite.flip(false, true);
-            sprite.translate(0, 100);//Example value, so its visible
+            sprite.translate(x, y);
             ImageFragment.this.fbo = fbo;
-            pendingSprite = null;
         }
+
     }
 }

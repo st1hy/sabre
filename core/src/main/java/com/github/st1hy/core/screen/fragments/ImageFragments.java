@@ -18,9 +18,14 @@ public class ImageFragments implements ImageFragmentCreator {
     }
 
     @Override
-    public void addNew(FloatArray outline) {
-//        fragments.clear();
-        fragments.add(new ImageFragment(outline, image));
+    public boolean addNew(FloatArray outline) {
+        ImageFragment fragment = ImageFragment.createNewFragment(outline, image);
+        if (fragment != null) {
+            fragments.add(fragment);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public void setTransformation(Matrix4 screenTransformation) {
@@ -37,8 +42,6 @@ public class ImageFragments implements ImageFragmentCreator {
 
     public void render(SpriteBatch batch) {
         for (int i = 0; i < fragments.size; ++i) {
-            batch.flush();
-//            fragments.get(i).render(batch);
             fragments.get(i).render(batch);
         }
     }

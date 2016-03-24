@@ -4,5 +4,5 @@ import com.badlogic.gdx.utils.FloatArray;
 
 public interface ImageFragmentCreator {
 
-    void addNew(FloatArray outline);
+    boolean addNew(FloatArray outline);
 }

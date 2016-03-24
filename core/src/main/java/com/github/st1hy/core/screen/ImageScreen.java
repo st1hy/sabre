@@ -79,8 +79,8 @@ public class ImageScreen extends AbstractScreen {
     private void renderImage() {
         batch.begin();
         batch.draw(texture, 0, 0, texture.getWidth(), texture.getHeight());
-        batch.end();
         imageFragments.render(batch);
+        batch.end();
     }
 
     private void renderShapes() {

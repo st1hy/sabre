@@ -7,10 +7,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.FloatArray;
 import com.github.st1hy.core.State;
-import com.github.st1hy.core.mode.UiMode;
-import com.github.st1hy.core.mode.UiModeChangeListener;
 import com.github.st1hy.core.screen.fragments.ImageFragmentCreator;
-import com.github.st1hy.core.utils.EventMethod;
 
 public class PathRenderer implements OnPathChangedListener {
     private final FloatArray polyLineArray = new FloatArray();
@@ -79,14 +76,15 @@ public class PathRenderer implements OnPathChangedListener {
     private Vector2 screenToWorldCoordinates(float x, float y) {
         tempVector3.set(x, y, 0);
         tempVector3.mul(invTransformation);
-        tempVector2.set(tempVector3.x, tempVector3. y);
+        tempVector2.set(tempVector3.x, tempVector3.y);
         return tempVector2;
     }
-    private final EventMethod<UiModeChangeListener> setObjectMode = new EventMethod<UiModeChangeListener>() {
-        @Override
-        public void apply(UiModeChangeListener uiModeChangeListener) {
-            if (uiModeChangeListener != null) uiModeChangeListener.onUiModeChanged(UiMode.MOVE_ELEMENT);
-        }
-    };
+
+//    private final EventMethod<UiModeChangeListener> setObjectMode = new EventMethod<UiModeChangeListener>() {
+//        @Override
+//        public void apply(UiModeChangeListener uiModeChangeListener) {
+//            if (uiModeChangeListener != null) uiModeChangeListener.onUiModeChanged(UiMode.MOVE_ELEMENT);
+//        }
+//    };
 
 }
