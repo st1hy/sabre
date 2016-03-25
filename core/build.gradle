@@ -10,4 +10,5 @@ repositories {
 dependencies {
     compile "com.badlogicgames.gdx:gdx:$rootProject.ext.gdxVersion"
     compile "com.badlogicgames.gdx:gdx-box2d:$rootProject.ext.gdxVersion"
+    testCompile "junit:junit:4.12"
 }

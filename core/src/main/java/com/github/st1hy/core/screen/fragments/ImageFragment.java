@@ -19,27 +19,26 @@ import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.FloatArray;
-import com.github.st1hy.core.math.MeasuringRect;
-import com.github.st1hy.core.math.VerticesBoundsUtils;
+import com.github.st1hy.core.math.GeometryUtils2;
 
 public class ImageFragment implements Disposable {
     private FrameBuffer fbo;
     private Sprite sprite;
     private PendingSprite pendingSprite;
 
-    private ImageFragment(float[] vertices, Texture image) {
-        pendingSprite = new PendingSprite(vertices, image);
+    private ImageFragment(Polygon polygon, TextureRectangle textureRectangle) {
+        pendingSprite = new PendingSprite(polygon, textureRectangle);
     }
 
     /**
-     * Creates new fragment from vertices and image. Cuts vertices that are outside of image bounds.
-     * If no vertices remain returns null.
+     * Creates new fragment from an intersection of image and area created by path.
+     * If path is located outside of image returns null;
      */
     public static ImageFragment createNewFragment(FloatArray vertices, Texture image) {
-        MeasuringRect rect = new MeasuringRect(0, image.getWidth(), 0, image.getHeight());
-        FloatArray cutVertices = VerticesBoundsUtils.cropVertices(vertices, rect);
-        if (cutVertices != null) {
-            return new ImageFragment(cutVertices.toArray(), image);
+        TextureRectangle textureRectangle = new TextureRectangle(image);
+        Polygon polygon = new MPolygon(vertices.toArray());
+        if (polygon.getBoundingRectangle().overlaps(textureRectangle.getBounds())) {
+            return new ImageFragment(polygon, textureRectangle);
         } else {
             return null;
         }
@@ -68,31 +67,27 @@ public class ImageFragment implements Disposable {
     }
 
     private class PendingSprite {
-        private final float[] vertices;
-        private final Texture texture;
+        private final Polygon polygon;
+        private final TextureRectangle textureRectangle;
 
-        public PendingSprite(float[] vertices, Texture texture) {
-            this.vertices = vertices;
-            this.texture = texture;
+        public PendingSprite(Polygon polygon, TextureRectangle textureRectangle) {
+            this.polygon = polygon;
+            this.textureRectangle = textureRectangle;
         }
 
         public void setupSprite() {
             if (sprite != null) return;
 
-            EarClippingTriangulator triangulator = new EarClippingTriangulator();
-            Polygon polygon = new Polygon(vertices);
-            Rectangle bounds = polygon.getBoundingRectangle();
-            short[] triangles = triangulator.computeTriangles(vertices).items;
-            TextureRegion textureRegion = new TextureRegion(texture, 0, 0, texture.getWidth(), texture.getHeight());
-            PolygonRegion polygonRegion = new PolygonRegion(textureRegion, polygon.getVertices(), triangles);
-            PolygonSprite polygonSprite = new PolygonSprite(polygonRegion);
+            PolygonSprite polygonSprite = textureRectangle.toPolygonSprite(polygon);
             polygonSprite.setColor(Color.GOLD);
 
             PolygonSpriteBatch fb = new PolygonSpriteBatch();
-            int x = MathUtils.floor(bounds.x);
-            int y = MathUtils.floor(bounds.y);
-            int width = MathUtils.ceil(bounds.width);
-            int height = MathUtils.ceil(bounds.height);
+            Rectangle intersection = GeometryUtils2.intersect(polygon.getBoundingRectangle(),
+                    textureRectangle.getBounds());
+            int x = MathUtils.floor(intersection.x);
+            int y = MathUtils.floor(intersection.y);
+            int width = MathUtils.ceil(intersection.width);
+            int height = MathUtils.ceil(intersection.height);
             FrameBuffer fbo = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
             fb.getProjectionMatrix().setToOrtho2D(x, y, width, height);
 
@@ -119,5 +114,48 @@ public class ImageFragment implements Disposable {
             ImageFragment.this.fbo = fbo;
         }
 
+    }
+
+    private static class MPolygon extends Polygon {
+        private Rectangle bounds;
+
+        public MPolygon(float[] vertices) {
+            super(vertices);
+        }
+
+        @Override
+        public Rectangle getBoundingRectangle() {
+            if (bounds == null) {
+                bounds = super.getBoundingRectangle();
+            }
+            return bounds;
+        }
+    }
+
+    private static class TextureRectangle {
+        private final Texture texture;
+        private Rectangle bounds;
+
+        public TextureRectangle(Texture texture) {
+            this.texture = texture;
+        }
+
+        public Rectangle getBounds() {
+            if (bounds == null) {
+                bounds = new Rectangle(0, 0, texture.getWidth(), texture.getHeight());
+            }
+            return bounds;
+        }
+
+        public Texture getTexture() {
+            return texture;
+        }
+
+        public PolygonSprite toPolygonSprite(Polygon polygon) {
+            TextureRegion textureRegion = new TextureRegion(texture);
+            short[] triangles = new EarClippingTriangulator().computeTriangles(polygon.getVertices()).items;
+            PolygonRegion polygonRegion = new PolygonRegion(textureRegion, polygon.getVertices(), triangles);
+           return new PolygonSprite(polygonRegion);
+        }
     }
 }
