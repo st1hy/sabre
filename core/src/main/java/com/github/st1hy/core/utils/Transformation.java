@@ -16,7 +16,7 @@ public class Transformation {
      * Treat new transformation as relative to current transformation.
      *
      * Internally: Initial transformation is set to old value, then current value is the
-     * result of
+     * result of multiplication current by initial matrix.
      *
      */
     public void applyTransformationRelative(Matrix4 transformation) {
@@ -28,7 +28,7 @@ public class Transformation {
      * Treat new transformation as relative to current transformation.
      *
      * Internally: Initial transformation is set to old value, then current value is the
-     * result of
+     * result of multiplication current by initial matrix.
      *
      */
     public void applyTransformationRelative(Matrix3 transformation) {

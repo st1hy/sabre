@@ -29,6 +29,9 @@ public class ImageFragment implements Disposable {
     private final Transformation fragmentTransformation = new Transformation();
     private final Transformation worldTransformation;
     private Matrix4 imageTransformation = new Matrix4();
+    private float elevation = 10f;
+    private Matrix4 tempMatrix4 = new Matrix4(), tempShadowMatrix4 = new Matrix4();
+
 
     private ImageFragment(Polygon polygon, Texture texture, Rectangle intersection, Transformation worldTransformation) {
         this.worldTransformation = worldTransformation;
@@ -65,14 +68,23 @@ public class ImageFragment implements Disposable {
     public void render(SpriteBatch batch) {
         if (sprite != null) {
             batch.enableBlending();
-            batch.setTransformMatrix(
-                    batch.getTransformMatrix()
-                            .set(worldTransformation.getTransformation())
-                            .mul(imageTransformation)
-            );
+            tempMatrix4.set(worldTransformation.getTransformation()).mul(imageTransformation);
+            renderShadow(batch, tempMatrix4);
+            batch.setTransformMatrix(tempMatrix4);
             sprite.draw(batch);
         }
     }
+
+    private void renderShadow(SpriteBatch batch, Matrix4 transformation) {
+        tempShadowMatrix4.idt().setTranslation(elevation, -elevation, 0).mul(transformation);
+        batch.setTransformMatrix(tempShadowMatrix4);
+        sprite.setColor(Color.BLACK);
+        sprite.setAlpha(0.3f);
+        sprite.draw(batch);
+        sprite.setColor(Color.WHITE);
+        sprite.setAlpha(1f);
+    }
+
 
     @Override
     public void dispose() {
@@ -83,6 +95,10 @@ public class ImageFragment implements Disposable {
         imageTransformation.set(worldTransformation.getInvTransformation())
                 .mul(fragmentTransformation.getTransformation())
                 .mul(worldTransformation.getTransformation());
+    }
+
+    public void setElevation(float elevation) {
+        this.elevation = elevation;
     }
 
     private class PendingSprite {
@@ -100,7 +116,6 @@ public class ImageFragment implements Disposable {
             if (sprite != null) return;
 
             PolygonSprite polygonSprite = createPolygonSprite(texture, polygon);
-            polygonSprite.setColor(Color.GOLD);
 
             PolygonSpriteBatch fb = new PolygonSpriteBatch();
             int x = MathUtils.floor(intersection.x);
