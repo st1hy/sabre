@@ -29,6 +29,7 @@ import com.github.st1hy.imagecache.worker.ImageWorker;
 import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
 import com.github.st1hy.imagecache.worker.creator.BitmapCreator;
+import com.github.st1hy.sabre.BuildConfig;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.ImageCacheProvider;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
@@ -51,6 +52,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         sanityCheck();
         this.imageGdxCore = new ImageGdxCore(getBackground());
         imageTouchController = new ImageTouchController(getActivity(), imageGdxCore);
+        if (BuildConfig.DEBUG) setLogLevel(LOG_DEBUG);
     }
 
     private void sanityCheck() {

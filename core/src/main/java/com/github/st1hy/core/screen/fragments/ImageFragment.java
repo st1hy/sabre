@@ -20,13 +20,18 @@ import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.FloatArray;
+import com.github.st1hy.core.utils.Transformation;
 
 public class ImageFragment implements Disposable {
     private FrameBuffer fbo;
     private Sprite sprite;
     private PendingSprite pendingSprite;
+    private final Transformation fragmentTransformation = new Transformation();
+    private final Transformation worldTransformation;
+    private Matrix4 imageTransformation = new Matrix4();
 
-    private ImageFragment(Polygon polygon, Texture texture, Rectangle intersection) {
+    private ImageFragment(Polygon polygon, Texture texture, Rectangle intersection, Transformation worldTransformation) {
+        this.worldTransformation = worldTransformation;
         this.pendingSprite = new PendingSprite(polygon, texture, intersection);
     }
 
@@ -34,13 +39,13 @@ public class ImageFragment implements Disposable {
      * Creates new fragment from an intersection of image and area created by path.
      * If path is located outside of image returns null;
      */
-    public static ImageFragment createNewFragment(FloatArray vertices, Texture texture) {
+    public static ImageFragment createNewFragment(FloatArray vertices, Texture texture, Transformation worldTransformation) {
         Polygon polygon = new Polygon(vertices.toArray());
         Rectangle polygonBounds = polygon.getBoundingRectangle();
         Rectangle textureBounds = new Rectangle(0, 0, texture.getWidth(), texture.getHeight());
         Rectangle intersection = new Rectangle();
         if (Intersector.intersectRectangles(polygonBounds, textureBounds, intersection)) {
-            return new ImageFragment(polygon, texture, intersection);
+            return new ImageFragment(polygon, texture, intersection, worldTransformation);
         } else {
             return null;
         }
@@ -53,12 +58,18 @@ public class ImageFragment implements Disposable {
         }
     }
 
-    public void setTransformation(Matrix4 transformation) {
+    public Transformation getFragmentTransformation() {
+        return fragmentTransformation;
     }
 
     public void render(SpriteBatch batch) {
         if (sprite != null) {
             batch.enableBlending();
+            batch.setTransformMatrix(
+                    batch.getTransformMatrix()
+                            .set(worldTransformation.getTransformation())
+                            .mul(imageTransformation)
+            );
             sprite.draw(batch);
         }
     }
@@ -66,6 +77,12 @@ public class ImageFragment implements Disposable {
     @Override
     public void dispose() {
         if (fbo != null) fbo.dispose();
+    }
+
+    public void setupTransformation() {
+        imageTransformation.set(worldTransformation.getInvTransformation())
+                .mul(fragmentTransformation.getTransformation())
+                .mul(worldTransformation.getTransformation());
     }
 
     private class PendingSprite {
