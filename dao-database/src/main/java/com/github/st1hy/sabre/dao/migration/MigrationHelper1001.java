@@ -1,4 +1,4 @@
-package com.github.st1hy.dao.mitigation;
+package com.github.st1hy.sabre.dao.migration;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -17,7 +17,7 @@ import timber.log.Timber;
 /**
  * Performs database update from scheme version 1000 to scheme 1001.
  */
-public class MitigationHelper1001 implements MitigationHelper {
+public class MigrationHelper1001 implements MigrationHelper {
     public static final int FROM = 1000, TO = 1001;
 
     private static final String TABLE = "OPENED_IMAGE";
@@ -29,7 +29,7 @@ public class MitigationHelper1001 implements MitigationHelper {
 
     private final Context context;
 
-    public MitigationHelper1001(@NonNull Context context) {
+    public MigrationHelper1001(@NonNull Context context) {
         this.context = context;
     }
 
@@ -42,7 +42,7 @@ public class MitigationHelper1001 implements MitigationHelper {
             db.execSQL("alter table " + TABLE + " rename to " + TABLE_OLD);
             createTable1001(db);
 
-            String[] columns = new String[] {ID, URI, DATE};
+            String[] columns = new String[]{ID, URI, DATE};
             Cursor cursor = db.query(TABLE_OLD, columns, null, null, null, null, null);
             while (cursor.moveToNext()) {
                 ContentValues values = new ContentValues();

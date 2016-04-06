@@ -1,4 +1,4 @@
-package com.github.st1hy.dao;
+package com.github.st1hy.sabre.dao;
 
 import android.content.ContentProvider;
 import android.content.ContentResolver;
@@ -16,13 +16,13 @@ import de.greenrobot.dao.DaoLog;
 <application> element:
 
     <provider
-            android:name="com.github.st1hy.dao.OpenedImageContentProvider"
-            android:authorities="com.github.st1hy.dao.provider"/>
+            android:name="com.github.st1hy.sabre.dao.OpenedImageContentProvider"
+            android:authorities="com.github.st1hy.sabre.dao.provider"/>
     */
 
 public class OpenedImageContentProvider extends ContentProvider {
 
-    public static final String AUTHORITY = "com.github.st1hy.dao.provider";
+    public static final String AUTHORITY = "com.github.st1hy.sabre.dao.provider";
     public static final String BASE_PATH = "imageHistory";
     public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + BASE_PATH);
     public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE

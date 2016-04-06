@@ -1,4 +1,4 @@
-package com.github.st1hy.dao;
+package com.github.st1hy.sabre.dao;
 
 import de.greenrobot.daogenerator.ContentProvider;
 import de.greenrobot.daogenerator.DaoGenerator;
@@ -8,7 +8,7 @@ import de.greenrobot.daogenerator.Schema;
 public class SabreDaoGenerator {
 
     public static void main(String[] args) throws Exception {
-        Schema schema = new Schema(1001, "com.github.st1hy.dao");
+        Schema schema = new Schema(1001, "com.github.st1hy.sabre.dao");
         addOpenedImage(schema);
 
         new DaoGenerator().generateAll(schema, "dao-database/src/main/java");

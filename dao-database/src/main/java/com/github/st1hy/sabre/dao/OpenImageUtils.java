@@ -1,4 +1,4 @@
-package com.github.st1hy.dao;
+package com.github.st1hy.sabre.dao;
 
 import android.content.Context;
 import android.net.Uri;

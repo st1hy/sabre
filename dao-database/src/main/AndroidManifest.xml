@@ -7,8 +7,8 @@
         >
 
         <provider
-            android:name="com.github.st1hy.dao.OpenedImageContentProvider"
-            android:authorities="com.github.st1hy.dao.provider"
+            android:name="com.github.st1hy.sabre.dao.OpenedImageContentProvider"
+            android:authorities="com.github.st1hy.sabre.dao.provider"
             android:exported="false"/>
     </application>
 

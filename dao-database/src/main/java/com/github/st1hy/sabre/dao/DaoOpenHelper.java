@@ -1,9 +1,9 @@
-package com.github.st1hy.dao;
+package com.github.st1hy.sabre.dao;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.github.st1hy.dao.mitigation.MitigationHelper1001;
+import com.github.st1hy.sabre.dao.migration.MigrationHelper1001;
 
 import timber.log.Timber;
 
@@ -30,8 +30,8 @@ public class DaoOpenHelper extends DaoMaster.OpenHelper {
 
     private boolean upgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         boolean success = false;
-        if (oldVersion == MitigationHelper1001.FROM && newVersion == MitigationHelper1001.TO) {
-            success = new MitigationHelper1001(context).onUpgrade(db, oldVersion, newVersion);
+        if (oldVersion == MigrationHelper1001.FROM && newVersion == MigrationHelper1001.TO) {
+            success = new MigrationHelper1001(context).onUpgrade(db, oldVersion, newVersion);
         }
         return success;
     }

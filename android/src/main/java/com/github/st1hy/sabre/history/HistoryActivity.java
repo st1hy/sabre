@@ -19,8 +19,8 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
-import com.github.st1hy.dao.DaoMaster;
-import com.github.st1hy.dao.OpenedImageContentProvider;
+import com.github.st1hy.sabre.dao.DaoMaster;
+import com.github.st1hy.sabre.dao.OpenedImageContentProvider;
 import com.github.st1hy.imagecache.ImageCacheHandler;
 import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;

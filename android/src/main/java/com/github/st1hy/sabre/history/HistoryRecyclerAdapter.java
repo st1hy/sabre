@@ -16,8 +16,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.github.st1hy.dao.OpenedImageContentProvider;
-import com.github.st1hy.dao.OpenedImageDao;
+import com.github.st1hy.sabre.dao.OpenedImageContentProvider;
+import com.github.st1hy.sabre.dao.OpenedImageDao;
 import com.github.st1hy.imagecache.ImageCache;
 import com.github.st1hy.imagecache.worker.ImageWorkerImp;
 import com.github.st1hy.imagecache.worker.ImageWorker;
