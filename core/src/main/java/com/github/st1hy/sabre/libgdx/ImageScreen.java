@@ -7,16 +7,14 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix3;
 import com.github.st1hy.coregdx.Matrix3ChangedListener;
-import com.github.st1hy.coregdx.TouchEventState;
-import com.github.st1hy.sabre.libgdx.fragments.ImageFragments;
-import com.github.st1hy.sabre.libgdx.mode.UiMode;
-import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
-import com.github.st1hy.coregdx.screen.TransformableScreen;
-import com.github.st1hy.coregdx.Transformation;
 import com.github.st1hy.coregdx.OnPathChangedListener;
-import com.github.st1hy.utils.EventBus;
+import com.github.st1hy.coregdx.TouchEventState;
+import com.github.st1hy.coregdx.Transformation;
+import com.github.st1hy.coregdx.screen.TransformableScreen;
+import com.github.st1hy.sabre.libgdx.fragments.ImageFragmentSelector;
+import com.github.st1hy.sabre.libgdx.fragments.ImageFragments;
 
-public class ImageScreen implements UiModeChangeListener, TransformableScreen {
+public class ImageScreen implements TransformableScreen {
     private Texture texture;
 
     private SpriteBatch batch;
@@ -26,7 +24,6 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
 
     private Transformation screenTransformation = new Transformation();
     private Transformation worldTransformation = new Transformation();
-    private UiMode uiMode = UiMode.DEFAULT;
 
     /**
      * @param texture texture to be displayed. This reference is owned and disposed by this screen.
@@ -44,6 +41,10 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
         return selectionRenderer;
     }
 
+    public ImageFragmentSelector getImageFragmentSelector() {
+        return imageFragments;
+    }
+
     @Override
     public void create() {
         batch = new SpriteBatch();
@@ -53,7 +54,6 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
         selectionRenderer = new SelectionRenderer(imageFragments, worldTransformation);
         screenTransformation.idt();
         worldTransformation.idt();
-        EventBus.INSTANCE.add(UiModeChangeListener.class, this);
     }
 
     @Override
@@ -70,25 +70,23 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
 
     @Override
     public void onMatrix3Changed(TouchEventState state, Matrix3 matrix3) {
-        Transformation transformation = null;
-        if (uiMode == UiMode.MOVE_CAMERA) {
-            transformation = screenTransformation;
-        } else if (uiMode == UiMode.MOVE_ELEMENT) {
-            transformation = imageFragments.getCurrentFragmentTransformation();
-        }
-        if (transformation != null) {
-            if (state == TouchEventState.STARTED) {
-                transformation.applyTransformationRelative(matrix3);
-            } else {
-                transformation.applyTransformation(matrix3);
-            }
-        }
-        if (uiMode == UiMode.MOVE_CAMERA) {
+        Transformation transformation = imageFragments.getCurrentFragmentTransformation();
+        if (transformation == null) {
+            applyTransformation(screenTransformation, state, matrix3);
             setupWorldTransformation();
-        } else if (uiMode == UiMode.MOVE_ELEMENT) {
+        } else {
+            applyTransformation(transformation, state, matrix3);
             imageFragments.setupCurrentFragmentTransformation();
         }
         Gdx.graphics.requestRendering();
+    }
+
+    private void applyTransformation(Transformation transformation, TouchEventState state, Matrix3 matrix3) {
+        if (state == TouchEventState.STARTED) {
+            transformation.applyTransformationRelative(matrix3);
+        } else {
+            transformation.applyTransformation(matrix3);
+        }
     }
 
     @Override
@@ -99,16 +97,11 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
     private void resetWorld() {
         screenTransformation.idt();
         setupWorldTransformation();
+        Gdx.graphics.requestRendering();
     }
 
     private void setupWorldTransformation() {
         worldTransformation.applyTransformation(screenTransformation.getTransformation());
-    }
-
-    @Override
-    public void onUiModeChanged(UiMode newUiMode) {
-        Gdx.app.debug("IMAGE_SCREEN", "Mode: " + newUiMode);
-        uiMode = newUiMode;
     }
 
     @Override
@@ -162,6 +155,5 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
         shapeRenderer.dispose();
         imageFragments.dispose();
         selectionRenderer.dispose();
-        EventBus.INSTANCE.remove(UiModeChangeListener.class, this);
     }
 }

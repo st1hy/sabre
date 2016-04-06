@@ -18,24 +18,31 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.FloatArray;
 import com.github.st1hy.coregdx.Transformation;
 
 public class ImageFragment implements Disposable {
-    private FrameBuffer fbo;
-    private Sprite sprite;
-    private PendingSprite pendingSprite;
-    private final Transformation fragmentTransformation = new Transformation();
+    private final Polygon polygon;
+    private final Texture texture;
+    private final Rectangle intersection;
     private final Transformation worldTransformation;
+    private final Transformation fragmentTransformation = new Transformation();
+
+    private FrameBuffer fbo = null;
+    private Sprite sprite = null;
     private Matrix4 imageTransformation = new Matrix4();
     private float elevation = 10f;
     private Matrix4 tempMatrix4 = new Matrix4(), tempShadowMatrix4 = new Matrix4();
+    private Vector3 tempVector3 = new Vector3();
 
 
     private ImageFragment(Polygon polygon, Texture texture, Rectangle intersection, Transformation worldTransformation) {
+        this.polygon = polygon;
+        this.texture = texture;
+        this.intersection = intersection;
         this.worldTransformation = worldTransformation;
-        this.pendingSprite = new PendingSprite(polygon, texture, intersection);
     }
 
     /**
@@ -55,9 +62,8 @@ public class ImageFragment implements Disposable {
     }
 
     public void prerender() {
-        if (sprite == null && pendingSprite != null) {
-            pendingSprite.setupSprite();
-            pendingSprite = null;
+        if (sprite == null ) {
+            getSpriteLazy();
         }
     }
 
@@ -101,59 +107,70 @@ public class ImageFragment implements Disposable {
         this.elevation = elevation;
     }
 
-    private class PendingSprite {
-        private final Polygon polygon;
-        private final Texture texture;
-        private final Rectangle intersection;
+    /**
+     * x,y coordinates are in image space
+     */
+    public boolean isWithinBounds(float x, float y) {
+//        tempMatrix4.set(worldTransformation.getTransformation()).mul(imageTransformation);
+//        tempVector3.set(x, y, 0).mul(tempMatrix4);
+//        x = tempVector3.x;
+//        y = tempVector3.y;
 
-        public PendingSprite(Polygon polygon, Texture texture, Rectangle intersection) {
-            this.polygon = polygon;
-            this.texture = texture;
-            this.intersection = intersection;
+        float[] vertices = polygon.getVertices();
+        boolean isWithinBounds = intersection.contains(x, y);
+        boolean isInPolygon = false;
+        if (isWithinBounds) {
+            isInPolygon = Intersector.isPointInPolygon(vertices, 0, vertices.length, x, y);
         }
+        Gdx.app.debug("IMG_FRAG", String.format("Checking selection touched at: %f.2x%f.2, bounds: %f.2x%f.2 to %f.2x%f.2\ninBounds: %b, inPolygon: %b",
+                x, y, intersection.x, intersection.y, intersection.x + intersection.width,
+                intersection.y + intersection.height, isWithinBounds, isInPolygon));
+        return isWithinBounds && isInPolygon;
+    }
 
-        public void setupSprite() {
-            if (sprite != null) return;
+    public Sprite getSpriteLazy() {
+        if (sprite != null) return sprite;
 
-            PolygonSprite polygonSprite = createPolygonSprite(texture, polygon);
+        PolygonSprite polygonSprite = createPolygonSprite(texture, polygon);
 
-            PolygonSpriteBatch fb = new PolygonSpriteBatch();
-            int x = MathUtils.floor(intersection.x);
-            int y = MathUtils.floor(intersection.y);
-            int width = MathUtils.ceil(intersection.width);
-            int height = MathUtils.ceil(intersection.height);
-            FrameBuffer fbo = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
-            fb.getProjectionMatrix().setToOrtho2D(x, y, width, height);
+        PolygonSpriteBatch fb = new PolygonSpriteBatch();
+        int x = MathUtils.floor(intersection.x);
+        int y = MathUtils.floor(intersection.y);
+        int width = MathUtils.ceil(intersection.width);
+        int height = MathUtils.ceil(intersection.height);
+        FrameBuffer fbo = new FrameBuffer(Pixmap.Format.RGBA8888, width, height, false);
+        fb.getProjectionMatrix().setToOrtho2D(x, y, width, height);
 
-            fbo.begin();
+        fbo.begin();
 
-            fb.enableBlending();
-            Gdx.gl.glBlendFuncSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        fb.enableBlending();
+        Gdx.gl.glBlendFuncSeparate(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA, GL20.GL_ONE, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-            Gdx.gl.glClearColor(0f, 0f, 0f, 0f);
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClearColor(0f, 0f, 0f, 0f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-            fb.begin();
+        fb.begin();
 
-            polygonSprite.draw(fb);
+        polygonSprite.draw(fb);
 
-            fb.end();
+        fb.end();
 
-            fbo.end();
+        fbo.end();
 
-            ImageFragment.this.sprite = new Sprite(fbo.getColorBufferTexture());
-            sprite.getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-            sprite.flip(false, true);
-            sprite.translate(x, y);
-            ImageFragment.this.fbo = fbo;
-        }
+        Sprite sprite = new Sprite(fbo.getColorBufferTexture());
+        sprite.getTexture().setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        sprite.flip(false, true);
+        sprite.translate(x, y);
 
-        public PolygonSprite createPolygonSprite(Texture texture, Polygon polygon) {
-            TextureRegion textureRegion = new TextureRegion(texture);
-            short[] triangles = new EarClippingTriangulator().computeTriangles(polygon.getVertices()).items;
-            PolygonRegion polygonRegion = new PolygonRegion(textureRegion, polygon.getVertices(), triangles);
-            return new PolygonSprite(polygonRegion);
-        }
+        this.sprite = sprite;
+        this.fbo = fbo;
+        return sprite;
+    }
 
+    private static PolygonSprite createPolygonSprite(Texture texture, Polygon polygon) {
+        TextureRegion textureRegion = new TextureRegion(texture);
+        short[] triangles = new EarClippingTriangulator().computeTriangles(polygon.getVertices()).items;
+        PolygonRegion polygonRegion = new PolygonRegion(textureRegion, polygon.getVertices(), triangles);
+        return new PolygonSprite(polygonRegion);
     }
 }

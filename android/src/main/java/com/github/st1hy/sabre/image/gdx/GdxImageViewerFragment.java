@@ -51,7 +51,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         super.onCreate(savedInstanceState);
         sanityCheck();
         this.imageGdxCore = new ImageGdxCore(getBackground());
-        imageTouchController = new ImageTouchController(getActivity(), imageGdxCore);
+        imageTouchController = new ImageTouchController(getActivity());
         if (BuildConfig.DEBUG) setLogLevel(LOG_DEBUG);
     }
 
@@ -103,6 +103,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     public void onDestroyView() {
         super.onDestroyView();
         viewHolder.unbind();
+        imageTouchController.invalidate();
     }
 
     private AndroidApplicationConfiguration initConfig() {
@@ -119,7 +120,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     public void setImageURI(@NonNull final Uri uri) {
         onLoadingStarted();
         imageWorker.loadImage(uri, imageReceiver);
-        imageTouchController.reset();
+        imageTouchController.resetViewPort();
     }
 
     @Override
@@ -167,7 +168,8 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                     @Override
                     public void run() {
                         imageTouchController.setDispatch(imageScreen.getScreenTransformationListener(),
-                                imageScreen.getPathDrawingListener());
+                                imageScreen.getPathDrawingListener(),
+                                imageScreen.getImageFragmentSelector());
                         onLoadingFinished();
                     }
                 });

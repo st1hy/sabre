@@ -1,16 +1,12 @@
 package com.github.st1hy.sabre.image.gdx.touch;
 
-import android.content.Context;
 import android.graphics.PointF;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.view.MotionEvent;
-import android.view.View;
 
 import com.badlogic.gdx.utils.FloatArray;
-import com.github.st1hy.coregdx.TouchEventState;
 import com.github.st1hy.coregdx.OnPathChangedListener;
-import com.github.st1hy.gesturedetector.GestureDetector;
+import com.github.st1hy.coregdx.TouchEventState;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.TranslationDetector;
@@ -18,47 +14,27 @@ import com.github.st1hy.gesturedetector.TranslationDetector;
 /**
  * Creates {@link FloatArray} from touch events.
  */
-public class PathGestureDetector implements GestureDetector, TranslationDetector.Listener {
-    private final TranslationDetector translationDetector;
+public class PathGestureDetector implements TranslationDetector.Listener {
     private final float minimalDistanceBetweenPoint;
     private OnPathChangedListener listener;
     private TouchEventState state = TouchEventState.ENDED;
-    private boolean revertY = false;
-    private int height;
     private int pathSize = 0;
     private float previousX, previousY, x, y;
 
-    public PathGestureDetector(@NonNull Context context, @Nullable OnPathChangedListener listener) {
+    public PathGestureDetector(@NonNull Options options, @Nullable OnPathChangedListener listener) {
         this.listener = listener;
-        Options options = new Options(context.getResources());
-        options.setFlag(Options.Flag.TRANSLATION_STRICT_ONE_FINGER, true);
         minimalDistanceBetweenPoint = options.get(Options.Constant.TRANSLATION_START_THRESHOLD);
-        this.translationDetector = new TranslationDetector(this, options);
     }
 
-    public PathGestureDetector(@NonNull Context context) {
-        this(context, null);
+    public PathGestureDetector(@NonNull Options options) {
+        this(options, null);
     }
 
     public void setListener(@Nullable OnPathChangedListener listener) {
         this.listener = listener;
     }
-
-    public PathGestureDetector setRevertY(boolean revertY) {
-        this.revertY = revertY;
-        return this;
-    }
-
-    @Override
     public void invalidate() {
-        translationDetector.invalidate();
         pathSize = 0;
-    }
-
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) height = v.getHeight();
-        return translationDetector.onTouch(v, event);
     }
 
     @Override
@@ -69,9 +45,7 @@ public class PathGestureDetector implements GestureDetector, TranslationDetector
             previousX = this.x;
             previousY = this.y;
             this.x = startPoint.x + x;
-            float realY = startPoint.y + y;
-            if (revertY) realY = height - realY;
-            this.y = realY;
+            this.y = startPoint.y + y;
             pathSize++;
         }
         if (state == GestureEventState.ENDED) {

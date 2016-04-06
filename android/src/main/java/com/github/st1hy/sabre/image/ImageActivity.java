@@ -11,20 +11,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
-import com.github.st1hy.sabre.libgdx.mode.UiMode;
-import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
-import com.github.st1hy.utils.EventBus;
-import com.github.st1hy.utils.EventMethod;
 import com.github.st1hy.core.utils.SystemUIMode;
+import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
-import com.github.st1hy.sabre.dao.DaoMaster;
-import com.github.st1hy.sabre.dao.DaoSession;
-import com.github.st1hy.sabre.dao.OpenImageUtils;
 import com.github.st1hy.imagecache.ImageCacheHandler;
 import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.core.CacheUtils;
 import com.github.st1hy.sabre.core.ImageCacheProvider;
+import com.github.st1hy.sabre.dao.DaoMaster;
+import com.github.st1hy.sabre.dao.DaoSession;
+import com.github.st1hy.sabre.dao.OpenImageUtils;
+import com.github.st1hy.sabre.libgdx.mode.UiMode;
+import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
 import com.rey.material.widget.FloatingActionButton;
 
 import java.util.Date;
@@ -34,13 +33,15 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import timber.log.Timber;
 
-public class ImageActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks, ImageCacheProvider {
+public class ImageActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks,
+        ImageCacheProvider, UiModeChangeListener {
     private ImageCacheHandler imageCacheHandler;
     private Uri imageUriFromIntent;
     @Bind(R.id.image_fab)
     FloatingActionButton floatingButton;
     private static final String SAVE_EDIT_MODE_STATE = "ImageActivity.isInEditMode";
-    private boolean isInEditMode = false;
+    private UiMode uiMode = UiMode.DEFAULT;
+    private UiThreadHandler handler = new UiThreadHandler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +66,12 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     }
 
     private void restoreState(@NonNull Bundle savedInstanceState) {
-        isInEditMode = savedInstanceState.getBoolean(SAVE_EDIT_MODE_STATE, false);
-        if (isInEditMode) setEditMode(floatingButton, true, false);
+        UiMode mode = (UiMode) savedInstanceState.getSerializable(SAVE_EDIT_MODE_STATE);
+        if (mode != null && mode != UiMode.MOVE_CAMERA) {
+            uiMode = mode;
+            setEditMode(floatingButton, uiMode, false);
+            notifyNewUiMode(uiMode);
+        }
     }
 
     @Nullable
@@ -92,7 +97,7 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(SAVE_EDIT_MODE_STATE, isInEditMode);
+        outState.putSerializable(SAVE_EDIT_MODE_STATE, uiMode);
     }
 
     @Nullable
@@ -103,6 +108,24 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     @Override
     public void exit() {
         finish();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        UiMode.registerChangeListener(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        UiMode.unregisterChangeListener(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeAll();
     }
 
     public void onImageFailedToLoad() {
@@ -157,21 +180,36 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
 
     @OnClick(R.id.image_fab)
     void onFloatingButtonPressed(@NonNull FloatingActionButton fab) {
-        isInEditMode = !isInEditMode;
-        setEditMode(fab, isInEditMode, true);
+        if (uiMode != UiMode.MOVE_CAMERA) {
+            uiMode = UiMode.MOVE_CAMERA;
+        } else {
+            uiMode = UiMode.CUT_ELEMENT;
+        }
+        setEditMode(fab, uiMode, true);
+        notifyNewUiMode(uiMode);
     }
 
-    private void setEditMode(@NonNull FloatingActionButton fab, boolean isInEdit, boolean animate) {
-        int drawableResId = isInEdit ? R.drawable.ic_clear_white_24dp :
+    private void setEditMode(@NonNull FloatingActionButton fab, final UiMode mode, boolean animate) {
+        int drawableResId = mode != UiMode.MOVE_CAMERA ? R.drawable.ic_clear_white_24dp :
                 R.drawable.ic_content_cut_white_24dp;
         Drawable icon = Utils.getDrawable(this, drawableResId);
         fab.setIcon(icon, animate);
-        final UiMode mode = isInEdit ? UiMode.CUT_ELEMENT : UiMode.MOVE_CAMERA;
-        EventBus.INSTANCE.apply(UiModeChangeListener.class, new EventMethod<UiModeChangeListener>() {
-            @Override
-            public void apply(@Nullable UiModeChangeListener input) {
-                if (input != null) input.onUiModeChanged(mode);
-            }
-        });
+    }
+
+    private static void notifyNewUiMode(final UiMode mode) {
+        UiMode.setGlobalMode(mode);
+    }
+
+    @Override
+    public void onUiModeChanged(final UiMode newUiMode) {
+        if (newUiMode != uiMode) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    uiMode = newUiMode;
+                    setEditMode(floatingButton, uiMode, true);
+                }
+            });
+        }
     }
 }
