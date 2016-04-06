@@ -1,6 +1,4 @@
-package com.github.st1hy.core.screen.path;
-
-import com.github.st1hy.core.State;
+package com.github.st1hy.coregdx;
 
 public interface OnPathChangedListener {
     /**
@@ -11,5 +9,5 @@ public interface OnPathChangedListener {
      * @param oldX x coordinate of previous point in path
      * @param oldY y coordinate of previous point in path
      */
-    void onPathChanged(State state, float x, float y, float oldX, float oldY);
+    void onPathChanged(TouchEventState state, float x, float y, float oldX, float oldY);
 }

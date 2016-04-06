@@ -1,4 +1,4 @@
-package com.github.st1hy.core;
+package com.github.st1hy.coregdx;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.graphics.Texture;

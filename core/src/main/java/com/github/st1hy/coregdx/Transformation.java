@@ -1,4 +1,4 @@
-package com.github.st1hy.core.utils;
+package com.github.st1hy.coregdx;
 
 import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;

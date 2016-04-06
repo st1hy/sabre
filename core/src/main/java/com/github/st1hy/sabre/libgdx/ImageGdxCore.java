@@ -1,12 +1,12 @@
-package com.github.st1hy.core;
+package com.github.st1hy.sabre.libgdx;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.github.st1hy.core.screen.ImageScreen;
-import com.github.st1hy.core.screen.ScreenManager;
+import com.github.st1hy.coregdx.TextureManager;
+import com.github.st1hy.coregdx.screen.ScreenManager;
 
 public class ImageGdxCore implements ApplicationListener {
     private final Color background;

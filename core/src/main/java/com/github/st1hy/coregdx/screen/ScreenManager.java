@@ -1,4 +1,4 @@
-package com.github.st1hy.core.screen;
+package com.github.st1hy.coregdx.screen;
 
 public class ScreenManager implements Screen {
     private static final int UNKNOWN_SIZE = -1;

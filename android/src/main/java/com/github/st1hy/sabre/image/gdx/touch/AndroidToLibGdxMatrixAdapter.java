@@ -5,8 +5,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.badlogic.gdx.math.Matrix3;
-import com.github.st1hy.core.Matrix3ChangedListener;
-import com.github.st1hy.core.State;
+import com.github.st1hy.coregdx.Matrix3ChangedListener;
+import com.github.st1hy.coregdx.TouchEventState;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 
@@ -57,14 +57,14 @@ public class AndroidToLibGdxMatrixAdapter implements MatrixTransformationDetecto
         columnMajorOutput[8] = rowMajorInput[8];
     }
 
-    public static State from(GestureEventState state) {
+    public static TouchEventState from(GestureEventState state) {
         switch (state) {
             case STARTED:
-                return State.STARTED;
+                return TouchEventState.STARTED;
             case IN_PROGRESS:
-                return State.IN_PROGRESS;
+                return TouchEventState.IN_PROGRESS;
             case ENDED:
-                return State.ENDED;
+                return TouchEventState.ENDED;
             default:
                 throw new UnsupportedOperationException();
         }

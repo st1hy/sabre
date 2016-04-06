@@ -1,4 +1,4 @@
-package com.github.st1hy.core.utils;
+package com.github.st1hy.utils;
 
 import com.badlogic.gdx.utils.Array;
 

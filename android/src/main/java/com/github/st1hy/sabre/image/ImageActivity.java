@@ -11,10 +11,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
-import com.github.st1hy.core.mode.UiMode;
-import com.github.st1hy.core.mode.UiModeChangeListener;
-import com.github.st1hy.core.utils.EventBus;
-import com.github.st1hy.core.utils.EventMethod;
+import com.github.st1hy.sabre.libgdx.mode.UiMode;
+import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
+import com.github.st1hy.utils.EventBus;
+import com.github.st1hy.utils.EventMethod;
 import com.github.st1hy.core.utils.SystemUIMode;
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.sabre.dao.DaoMaster;

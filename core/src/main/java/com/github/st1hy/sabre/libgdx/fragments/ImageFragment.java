@@ -1,4 +1,4 @@
-package com.github.st1hy.core.screen.fragments;
+package com.github.st1hy.sabre.libgdx.fragments;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -20,7 +20,7 @@ import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.FloatArray;
-import com.github.st1hy.core.utils.Transformation;
+import com.github.st1hy.coregdx.Transformation;
 
 public class ImageFragment implements Disposable {
     private FrameBuffer fbo;

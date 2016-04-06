@@ -3,8 +3,8 @@ package com.github.st1hy.sabre.image.gdx.touch;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.github.st1hy.core.mode.UiMode;
-import com.github.st1hy.core.mode.UiModeChangeListener;
+import com.github.st1hy.sabre.libgdx.mode.UiMode;
+import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
 import com.github.st1hy.view.TouchPredicate;
 
 public class ModePredicate implements TouchPredicate, UiModeChangeListener {

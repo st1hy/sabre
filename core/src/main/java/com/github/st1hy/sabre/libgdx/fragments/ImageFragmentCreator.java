@@ -1,4 +1,4 @@
-package com.github.st1hy.core.screen.fragments;
+package com.github.st1hy.sabre.libgdx.fragments;
 
 import com.badlogic.gdx.utils.FloatArray;
 

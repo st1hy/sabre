@@ -1,4 +1,4 @@
-package com.github.st1hy.core.screen;
+package com.github.st1hy.sabre.libgdx;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -6,22 +6,22 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix3;
-import com.github.st1hy.core.Matrix3ChangedListener;
-import com.github.st1hy.core.State;
-import com.github.st1hy.core.mode.UiMode;
-import com.github.st1hy.core.mode.UiModeChangeListener;
-import com.github.st1hy.core.screen.fragments.ImageFragments;
-import com.github.st1hy.core.screen.path.OnPathChangedListener;
-import com.github.st1hy.core.screen.path.PathRenderer;
-import com.github.st1hy.core.utils.EventBus;
-import com.github.st1hy.core.utils.Transformation;
+import com.github.st1hy.coregdx.Matrix3ChangedListener;
+import com.github.st1hy.coregdx.TouchEventState;
+import com.github.st1hy.sabre.libgdx.fragments.ImageFragments;
+import com.github.st1hy.sabre.libgdx.mode.UiMode;
+import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
+import com.github.st1hy.coregdx.screen.TransformableScreen;
+import com.github.st1hy.coregdx.Transformation;
+import com.github.st1hy.coregdx.OnPathChangedListener;
+import com.github.st1hy.utils.EventBus;
 
 public class ImageScreen implements UiModeChangeListener, TransformableScreen {
     private Texture texture;
 
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
-    private PathRenderer pathRenderer;
+    private SelectionRenderer selectionRenderer;
     private ImageFragments imageFragments;
 
     private Transformation screenTransformation = new Transformation();
@@ -41,7 +41,7 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
     }
 
     public OnPathChangedListener getPathDrawingListener() {
-        return pathRenderer;
+        return selectionRenderer;
     }
 
     @Override
@@ -50,7 +50,7 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
         batch.disableBlending();
         shapeRenderer = new ShapeRenderer();
         imageFragments = new ImageFragments(texture, worldTransformation);
-        pathRenderer = new PathRenderer(imageFragments, worldTransformation);
+        selectionRenderer = new SelectionRenderer(imageFragments, worldTransformation);
         screenTransformation.idt();
         worldTransformation.idt();
         EventBus.INSTANCE.add(UiModeChangeListener.class, this);
@@ -69,7 +69,7 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
     }
 
     @Override
-    public void onMatrix3Changed(State state, Matrix3 matrix3) {
+    public void onMatrix3Changed(TouchEventState state, Matrix3 matrix3) {
         Transformation transformation = null;
         if (uiMode == UiMode.MOVE_CAMERA) {
             transformation = screenTransformation;
@@ -77,7 +77,7 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
             transformation = imageFragments.getCurrentFragmentTransformation();
         }
         if (transformation != null) {
-            if (state == State.STARTED) {
+            if (state == TouchEventState.STARTED) {
                 transformation.applyTransformationRelative(matrix3);
             } else {
                 transformation.applyTransformation(matrix3);
@@ -143,7 +143,7 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
         shapeRenderer.line(x, y + height, x + width, y);
         shapeRenderer.rect(x, y, width, height);
         shapeRenderer.circle(x + width / 2, y + height / 2, Math.min(width / 2, height / 2));
-        pathRenderer.render(shapeRenderer);
+        selectionRenderer.render(shapeRenderer);
         shapeRenderer.end();
     }
 
@@ -161,7 +161,7 @@ public class ImageScreen implements UiModeChangeListener, TransformableScreen {
         texture.dispose();
         shapeRenderer.dispose();
         imageFragments.dispose();
-        pathRenderer.dispose();
+        selectionRenderer.dispose();
         EventBus.INSTANCE.remove(UiModeChangeListener.class, this);
     }
 }

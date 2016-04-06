@@ -1,22 +1,23 @@
-package com.github.st1hy.core.screen.path;
+package com.github.st1hy.sabre.libgdx;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.FloatArray;
-import com.github.st1hy.core.State;
-import com.github.st1hy.core.screen.fragments.ImageFragmentCreator;
-import com.github.st1hy.core.utils.Transformation;
+import com.github.st1hy.coregdx.OnPathChangedListener;
+import com.github.st1hy.coregdx.TouchEventState;
+import com.github.st1hy.coregdx.Transformation;
+import com.github.st1hy.sabre.libgdx.fragments.ImageFragmentCreator;
 
-public class PathRenderer implements OnPathChangedListener {
+public class SelectionRenderer implements OnPathChangedListener {
     private final FloatArray polyLineArray = new FloatArray();
     private final Transformation transformation;
     private final Vector2 tempVector2 = new Vector2();
     private final Vector3 tempVector3 = new Vector3();
     private final ImageFragmentCreator imageFragmentCreator;
 
-    public PathRenderer(ImageFragmentCreator imageFragmentCreator, Transformation transformation) {
+    public SelectionRenderer(ImageFragmentCreator imageFragmentCreator, Transformation transformation) {
         this.imageFragmentCreator = imageFragmentCreator;
         this.transformation = transformation;
     }
@@ -33,14 +34,14 @@ public class PathRenderer implements OnPathChangedListener {
     }
 
     @Override
-    public void onPathChanged(State state, float x, float y, float oldX, float oldY) {
-        if (state == State.STARTED) {
+    public void onPathChanged(TouchEventState state, float x, float y, float oldX, float oldY) {
+        if (state == TouchEventState.STARTED) {
             polyLineArray.clear();
             polyLineArray.shrink();
             add(screenToWorldCoordinates(oldX, oldY));
         }
         add(screenToWorldCoordinates(x, y));
-        if (state == State.ENDED) {
+        if (state == TouchEventState.ENDED) {
             closePath();
         }
         Gdx.graphics.requestRendering();

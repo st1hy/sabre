@@ -1,4 +1,4 @@
-package com.github.st1hy.core.screen;
+package com.github.st1hy.coregdx.screen;
 
 import com.badlogic.gdx.ApplicationListener;
 

@@ -1,14 +1,13 @@
-package com.github.st1hy.core.screen.fragments;
+package com.github.st1hy.sabre.libgdx.fragments;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.FloatArray;
-import com.github.st1hy.core.mode.UiMode;
-import com.github.st1hy.core.mode.UiModeChangeListener;
-import com.github.st1hy.core.utils.EventBus;
-import com.github.st1hy.core.utils.EventMethod;
-import com.github.st1hy.core.utils.Transformation;
+import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
+import com.github.st1hy.utils.EventBus;
+import com.github.st1hy.utils.EventMethod;
+import com.github.st1hy.coregdx.Transformation;
 
 public class ImageFragments implements ImageFragmentCreator {
     private final Texture image;
@@ -41,7 +40,7 @@ public class ImageFragments implements ImageFragmentCreator {
     private final EventMethod<UiModeChangeListener> setObjectMode = new EventMethod<UiModeChangeListener>() {
         @Override
         public void apply(UiModeChangeListener uiModeChangeListener) {
-            if (uiModeChangeListener != null) uiModeChangeListener.onUiModeChanged(UiMode.MOVE_ELEMENT);
+            if (uiModeChangeListener != null) uiModeChangeListener.onUiModeChanged(com.github.st1hy.sabre.libgdx.mode.UiMode.MOVE_ELEMENT);
         }
     };
 

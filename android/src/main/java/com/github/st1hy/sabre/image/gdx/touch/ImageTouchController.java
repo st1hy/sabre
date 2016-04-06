@@ -9,12 +9,12 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.badlogic.gdx.Gdx;
-import com.github.st1hy.core.ImageGdxCore;
-import com.github.st1hy.core.Matrix3ChangedListener;
-import com.github.st1hy.core.mode.UiMode;
-import com.github.st1hy.core.mode.UiModeChangeListener;
-import com.github.st1hy.core.screen.path.OnPathChangedListener;
-import com.github.st1hy.core.utils.EventBus;
+import com.github.st1hy.sabre.libgdx.ImageGdxCore;
+import com.github.st1hy.coregdx.Matrix3ChangedListener;
+import com.github.st1hy.sabre.libgdx.mode.UiMode;
+import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
+import com.github.st1hy.coregdx.OnPathChangedListener;
+import com.github.st1hy.utils.EventBus;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MultipleGestureDetector;

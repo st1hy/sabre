@@ -8,8 +8,8 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import com.badlogic.gdx.utils.FloatArray;
-import com.github.st1hy.core.State;
-import com.github.st1hy.core.screen.path.OnPathChangedListener;
+import com.github.st1hy.coregdx.TouchEventState;
+import com.github.st1hy.coregdx.OnPathChangedListener;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.Options;
@@ -22,7 +22,7 @@ public class PathGestureDetector implements GestureDetector, TranslationDetector
     private final TranslationDetector translationDetector;
     private final float minimalDistanceBetweenPoint;
     private OnPathChangedListener listener;
-    private State state = State.ENDED;
+    private TouchEventState state = TouchEventState.ENDED;
     private boolean revertY = false;
     private int height;
     private int pathSize = 0;
@@ -85,10 +85,10 @@ public class PathGestureDetector implements GestureDetector, TranslationDetector
     private void switchToNextWorkingState() {
         switch (this.state) {
             case STARTED:
-                this.state = State.IN_PROGRESS;
+                this.state = TouchEventState.IN_PROGRESS;
                 break;
             case ENDED:
-                this.state = State.STARTED;
+                this.state = TouchEventState.STARTED;
                 break;
         }
     }
@@ -101,8 +101,8 @@ public class PathGestureDetector implements GestureDetector, TranslationDetector
     }
 
     private void onTranslationEnded() {
-        if (state != State.ENDED) {
-            state = State.ENDED;
+        if (state != TouchEventState.ENDED) {
+            state = TouchEventState.ENDED;
             notifyAboutPath();
         }
         pathSize = 0;

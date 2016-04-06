@@ -1,4 +1,4 @@
-package com.github.st1hy.core.mode;
+package com.github.st1hy.sabre.libgdx.mode;
 
 public enum UiMode {
     MOVE_CAMERA, MOVE_ELEMENT, CUT_ELEMENT;
