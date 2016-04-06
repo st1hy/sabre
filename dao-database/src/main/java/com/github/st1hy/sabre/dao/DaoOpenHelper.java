@@ -22,10 +22,17 @@ public class DaoOpenHelper extends DaoMaster.OpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         boolean updateSuccessful = upgrade(db, oldVersion, newVersion);
         if (!updateSuccessful) {
-            Timber.w("Upgrading schema from version " + oldVersion + " to " + newVersion + " failed. Upgrading by dropping all tables!");
+            Timber.w("Upgrading schema from version %d to %d failed. Upgrading by dropping all tables!", oldVersion, newVersion);
             DaoMaster.dropAllTables(db, true);
             onCreate(db);
         }
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Timber.w("Downgrading database from %d to %d unsupported! Dropping all tables", oldVersion, newVersion);
+        DaoMaster.dropAllTables(db, true);
+        onCreate(db);
     }
 
     private boolean upgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
