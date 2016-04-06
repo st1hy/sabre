@@ -4,5 +4,5 @@ apply plugin:'application'
 mainClassName = "com.github.st1hy.sabre.dao.SabreDaoGenerator"
 
 dependencies {
-    compile 'de.greenrobot:greendao-generator:2.0.0'
+    compile 'de.greenrobot:greendao-generator:2.1.0'
 }
