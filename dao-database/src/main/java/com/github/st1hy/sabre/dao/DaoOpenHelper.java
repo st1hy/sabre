@@ -3,7 +3,10 @@ package com.github.st1hy.sabre.dao;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.github.st1hy.sabre.dao.migration.MigrationHelper;
 import com.github.st1hy.sabre.dao.migration.MigrationHelper1001;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 
 import timber.log.Timber;
 
@@ -35,13 +38,24 @@ public class DaoOpenHelper extends DaoMaster.OpenHelper {
         onCreate(db);
     }
 
+    /**
+     * @return true if database was successfully upgraded.
+     */
     private boolean upgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        boolean success = false;
-        if (oldVersion == MigrationHelper1001.FROM && newVersion == MigrationHelper1001.TO) {
-            success = new MigrationHelper1001(context).onUpgrade(db, oldVersion, newVersion);
+        MigrationHelper migrationHelper = getMigrationPolicy(context).get(oldVersion, newVersion);
+        if (migrationHelper != null) {
+            return migrationHelper.onUpgrade(db, oldVersion, newVersion);
+        } else {
+            Timber.w("No database migration from %d to %d available!", oldVersion, newVersion);
+            return false;
         }
-        return success;
     }
 
+    private static Table<Integer, Integer, MigrationHelper> getMigrationPolicy(Context context) {
+        Table<Integer, Integer, MigrationHelper> migrationHelperTable = HashBasedTable.create();
+        migrationHelperTable.put(MigrationHelper1001.FROM, MigrationHelper1001.TO, new MigrationHelper1001(context));
+
+        return migrationHelperTable;
+    }
 
 }
