@@ -89,7 +89,7 @@ public class Transformation {
         setDirty();
     }
 
-    private void setDirty() {
+    public void setDirty() {
         dirty = true;
     }
 
@@ -104,6 +104,7 @@ public class Transformation {
     public Matrix4 getInvTransformation() {
         if (dirty) {
             invTransformation.set(transformation).inv();
+            dirty = false;
         }
         return invTransformation;
     }

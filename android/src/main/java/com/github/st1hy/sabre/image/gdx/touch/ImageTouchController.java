@@ -8,9 +8,8 @@ import android.support.annotation.Nullable;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.badlogic.gdx.utils.Array;
-import com.github.st1hy.coregdx.Matrix3ChangedListener;
 import com.github.st1hy.coregdx.OnPathChangedListener;
+import com.github.st1hy.coregdx.Transformable;
 import com.github.st1hy.gesturedetector.GestureDetector;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MultipleGestureDetector;
@@ -30,30 +29,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import timber.log.Timber;
-
 public class ImageTouchController extends SimpleGestureListener implements GestureDetector, UiModeChangeListener {
     private final AndroidToLibGdxMatrixAdapter adapter;
     private final PathGestureDetector pathGestureDetector;
     private final SelectorOnTouchListener<GestureDetector> delegate;
     private final Options options;
     private ImageFragmentSelector imageFragmentSelector = null;
-    private final ModePredicate notCutElementPredicate;
-    private UiMode uiMode = UiMode.DEFAULT;
+    private final ModePredicate selectElementPredicate;
 
     public ImageTouchController(@NonNull Context context) {
         this.options = setupOptions(context);
         adapter = new AndroidToLibGdxMatrixAdapter();
         pathGestureDetector = new PathGestureDetector(options);
-        notCutElementPredicate = new ModePredicate(Array.with(UiMode.MOVE_CAMERA, UiMode.MOVE_ELEMENT));
+        selectElementPredicate = new ModePredicate(UiMode.CUT_ELEMENT);
         delegate = buildSelector();
         UiMode.registerChangeListener(this);
     }
 
-    public void setDispatch(@Nullable Matrix3ChangedListener screenTransformation,
+    public void setDispatch(@Nullable Transformable screen,
                             @Nullable OnPathChangedListener pathDrawingListener,
                             @Nullable ImageFragmentSelector imageFragmentSelector) {
-        adapter.setDispatch(screenTransformation);
+        adapter.setDispatch(screen);
         pathGestureDetector.setListener(pathDrawingListener);
         this.imageFragmentSelector = imageFragmentSelector;
     }
@@ -69,19 +65,18 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
         TouchPredicate deadZone = new DeadZoneTouchPredicate();
         conditionMap.put(deadZone, null);
 
-        TouchPredicate notCutElement = notCutElementPredicate;
-        conditionMap.put(notCutElement, buildMatrixDetector());
+        conditionMap.put(selectElementPredicate, new MultipleGestureDetector(this, options));
 
         TouchPredicate allElse = new SimpleTouchPredicate(true);
-        conditionMap.put(allElse, new MultipleGestureDetector(this, options));
+        conditionMap.put(allElse, buildMatrixTransformationDetector());
 
-        List<TouchPredicate> order = Lists.newArrayList(deadZone, notCutElement, allElse);
+        List<TouchPredicate> order = Lists.newArrayList(deadZone, selectElementPredicate, allElse);
         return new SelectorOnTouchListener<>(conditionMap, order);
     }
 
     private static Options setupOptions(Context context) {
         Options options = new Options(context.getResources());
-        for (Options.Event event: Options.Event.values()) {
+        for (Options.Event event : Options.Event.values()) {
             options.setEnabled(event, false);
         }
         options.setFlag(Options.Flag.MATRIX_OPEN_GL_COMPATIBILITY, true);
@@ -92,7 +87,7 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
         return options;
     }
 
-    private GestureDetector buildMatrixDetector() {
+    private GestureDetector buildMatrixTransformationDetector() {
         Options options = this.options.clone();
         options.set(Options.Constant.MATRIX_MAX_POINTERS_COUNT, 2);
         options.setEnabled(Options.Event.MATRIX_TRANSFORMATION, true);
@@ -122,21 +117,16 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
 
     @Override
     public void onMatrix(GestureEventState state, Matrix currentTransformation) {
-//        if (uiMode == UiMode.MOVE_CAMERA || uiMode == UiMode.MOVE_ELEMENT) {
-            Timber.d("Matrix transform %s: %s", state, currentTransformation);
-            adapter.onMatrix(state, currentTransformation);
-//        }
+        adapter.onMatrix(state, currentTransformation);
     }
 
     @Override
     public void onDoubleClick(PointF startPoint) {
-        Timber.d("Double clicked at %fx%f", startPoint.x, startPoint.y);
         resetViewPort();
     }
 
     @Override
     public void onClick(PointF startPoint) {
-        Timber.d("Clicked at %fx%f", startPoint.x, startPoint.y);
         if (imageFragmentSelector != null) {
             imageFragmentSelector.onClickedOnImage(startPoint.x, startPoint.y);
         }
@@ -144,16 +134,11 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
 
     @Override
     public void onTranslate(GestureEventState state, PointF startPoint, float x, float y, float dx, float dy, double distance) {
-//        if (uiMode == UiMode.CUT_ELEMENT) {
-            pathGestureDetector.onTranslate(state, startPoint, x, y, dx, dy, distance);
-//        }
+        pathGestureDetector.onTranslate(state, startPoint, x, y, dx, dy, distance);
     }
-
 
     @Override
     public void onUiModeChanged(UiMode newUiMode) {
-        Timber.d("Mode: %s", newUiMode);
-        notCutElementPredicate.onUiModeChanged(newUiMode);
-        uiMode = newUiMode;
+        selectElementPredicate.onUiModeChanged(newUiMode);
     }
 }

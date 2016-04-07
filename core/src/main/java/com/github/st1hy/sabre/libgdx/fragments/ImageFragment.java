@@ -15,26 +15,28 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.EarClippingTriangulator;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.FloatArray;
+import com.github.st1hy.coregdx.TouchEventState;
+import com.github.st1hy.coregdx.Transformable;
 import com.github.st1hy.coregdx.Transformation;
 
-public class ImageFragment implements Disposable {
+public class ImageFragment implements Disposable, Transformable {
     private final Polygon polygon;
     private final Texture texture;
     private final Rectangle intersection;
     private final Transformation worldTransformation;
-    private final Transformation fragmentTransformation = new Transformation();
 
     private FrameBuffer fbo = null;
     private Sprite sprite = null;
-    private Matrix4 imageTransformation = new Matrix4();
     private float elevation = 10f;
-    private Matrix4 tempMatrix4 = new Matrix4(), tempShadowMatrix4 = new Matrix4();
+    private Transformation imageTransformation = new Transformation();
+    private Matrix4 fragmentMatrix = new Matrix4(), imagePartialMatrix = new Matrix4(), shadowMatrix = new Matrix4();
     private Vector3 tempVector3 = new Vector3();
 
 
@@ -67,23 +69,19 @@ public class ImageFragment implements Disposable {
         }
     }
 
-    public Transformation getFragmentTransformation() {
-        return fragmentTransformation;
-    }
-
     public void render(SpriteBatch batch) {
         if (sprite != null) {
             batch.enableBlending();
-            tempMatrix4.set(worldTransformation.getTransformation()).mul(imageTransformation);
-            renderShadow(batch, tempMatrix4);
-            batch.setTransformMatrix(tempMatrix4);
+            fragmentMatrix.set(worldTransformation.getTransformation()).mul(imageTransformation.getTransformation());
+            renderShadow(batch, fragmentMatrix);
+            batch.setTransformMatrix(fragmentMatrix);
             sprite.draw(batch);
         }
     }
 
     private void renderShadow(SpriteBatch batch, Matrix4 transformation) {
-        tempShadowMatrix4.idt().setTranslation(elevation, -elevation, 0).mul(transformation);
-        batch.setTransformMatrix(tempShadowMatrix4);
+        shadowMatrix.idt().setTranslation(elevation, -elevation, 0).mul(transformation);
+        batch.setTransformMatrix(shadowMatrix);
         sprite.setColor(Color.BLACK);
         sprite.setAlpha(0.3f);
         sprite.draw(batch);
@@ -97,10 +95,17 @@ public class ImageFragment implements Disposable {
         if (fbo != null) fbo.dispose();
     }
 
-    public void setupTransformation() {
-        imageTransformation.set(worldTransformation.getInvTransformation())
-                .mul(fragmentTransformation.getTransformation())
+    @Override
+    public void applyTransformation(TouchEventState state, Matrix3 matrix3) {
+        imagePartialMatrix.set(matrix3)
+                .mulLeft(worldTransformation.getInvTransformation())
                 .mul(worldTransformation.getTransformation());
+        TRANSFORM.apply(imageTransformation, state, imagePartialMatrix);
+    }
+
+    @Override
+    public void resetTransformation() {
+        imageTransformation.idt();
     }
 
     public void setElevation(float elevation) {
@@ -111,10 +116,9 @@ public class ImageFragment implements Disposable {
      * x,y coordinates are in image space
      */
     public boolean isWithinBounds(float x, float y) {
-//        tempMatrix4.set(worldTransformation.getTransformation()).mul(imageTransformation);
-//        tempVector3.set(x, y, 0).mul(tempMatrix4);
-//        x = tempVector3.x;
-//        y = tempVector3.y;
+        tempVector3.set(x, y, 0).mul(imageTransformation.getInvTransformation());
+        x = tempVector3.x;
+        y = tempVector3.y;
 
         float[] vertices = polygon.getVertices();
         boolean isWithinBounds = intersection.contains(x, y);
@@ -122,9 +126,6 @@ public class ImageFragment implements Disposable {
         if (isWithinBounds) {
             isInPolygon = Intersector.isPointInPolygon(vertices, 0, vertices.length, x, y);
         }
-        Gdx.app.debug("IMG_FRAG", String.format("Checking selection touched at: %f.2x%f.2, bounds: %f.2x%f.2 to %f.2x%f.2\ninBounds: %b, inPolygon: %b",
-                x, y, intersection.x, intersection.y, intersection.x + intersection.width,
-                intersection.y + intersection.height, isWithinBounds, isInPolygon));
         return isWithinBounds && isInPolygon;
     }
 

@@ -43,21 +43,6 @@ public class ImageFragments implements ImageFragmentCreator, UiModeChangeListene
         }
     }
 
-
-    public Transformation getCurrentFragmentTransformation() {
-        if (currentFragment != null) {
-            return currentFragment.getFragmentTransformation();
-        } else {
-            return null;
-        }
-    }
-
-    public void setupCurrentFragmentTransformation() {
-        if (currentFragment != null) {
-            currentFragment.setupTransformation();
-        }
-    }
-
     public void prerender() {
         for (int i = 0; i < fragments.size; ++i) {
             fragments.get(i).prerender();
@@ -128,5 +113,10 @@ public class ImageFragments implements ImageFragmentCreator, UiModeChangeListene
 
     private static void notifyNewUiMode(UiMode mode) {
         UiMode.setGlobalMode(mode);
+    }
+
+
+    public ImageFragment getCurrentFragment() {
+        return currentFragment;
     }
 }

@@ -5,8 +5,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.badlogic.gdx.math.Matrix3;
-import com.github.st1hy.coregdx.Matrix3ChangedListener;
 import com.github.st1hy.coregdx.TouchEventState;
+import com.github.st1hy.coregdx.Transformable;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.MatrixTransformationDetector;
 
@@ -17,9 +17,9 @@ public class AndroidToLibGdxMatrixAdapter implements MatrixTransformationDetecto
     private float[] valuesTemp = new float[9];
     private float[] valuesTempColumnMajor = new float[9];
     private final Matrix3 matrix3Temp = new Matrix3();
-    private Matrix3ChangedListener dispatch;
+    private Transformable dispatch;
 
-    public AndroidToLibGdxMatrixAdapter(@Nullable Matrix3ChangedListener dispatch) {
+    public AndroidToLibGdxMatrixAdapter(@Nullable Transformable dispatch) {
         this.dispatch = dispatch;
     }
 
@@ -27,22 +27,22 @@ public class AndroidToLibGdxMatrixAdapter implements MatrixTransformationDetecto
         this(null);
     }
 
-    public void setDispatch(@Nullable Matrix3ChangedListener dispatch) {
+    public void setDispatch(@Nullable Transformable dispatch) {
         this.dispatch = dispatch;
     }
 
     @Override
     public void onMatrix(@NonNull GestureEventState state, @NonNull Matrix matrix) {
-        Matrix3ChangedListener dispatch = this.dispatch;
+        Transformable dispatch = this.dispatch;
         if (dispatch == null) return;
         matrix.getValues(valuesTemp);
         changeMemoryOrder(valuesTemp, valuesTempColumnMajor);
         matrix3Temp.set(valuesTempColumnMajor);
-        dispatch.onMatrix3Changed(from(state), matrix3Temp);
+        dispatch.applyTransformation(from(state), matrix3Temp);
     }
 
     public void reset() {
-        if (dispatch != null) dispatch.onMatrix3Reset();
+        if (dispatch != null) dispatch.resetTransformation();
     }
 
     private static void changeMemoryOrder(float[] rowMajorInput, float[] columnMajorOutput) {

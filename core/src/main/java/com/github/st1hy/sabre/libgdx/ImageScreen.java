@@ -6,9 +6,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix3;
-import com.github.st1hy.coregdx.Matrix3ChangedListener;
 import com.github.st1hy.coregdx.OnPathChangedListener;
 import com.github.st1hy.coregdx.TouchEventState;
+import com.github.st1hy.coregdx.Transformable;
 import com.github.st1hy.coregdx.Transformation;
 import com.github.st1hy.coregdx.screen.TransformableScreen;
 import com.github.st1hy.sabre.libgdx.fragments.ImageFragmentSelector;
@@ -32,11 +32,6 @@ public class ImageScreen implements TransformableScreen {
         super();
         this.texture = texture;
     }
-
-    public Matrix3ChangedListener getScreenTransformationListener() {
-        return this;
-    }
-
     public OnPathChangedListener getPathDrawingListener() {
         return selectionRenderer;
     }
@@ -65,36 +60,24 @@ public class ImageScreen implements TransformableScreen {
         worldTransformation.idt();
         worldTransformation.getInitialTransformation().scale(scale, scale, 1)
                 .translate((width / scale - imgWidth) / 2, (height / scale - imgHeight) / 2, 0);
-        resetWorld();
+        resetTransformation();
     }
 
     @Override
-    public void onMatrix3Changed(TouchEventState state, Matrix3 matrix3) {
-        Transformation transformation = imageFragments.getCurrentFragmentTransformation();
-        if (transformation == null) {
-            applyTransformation(screenTransformation, state, matrix3);
-            setupWorldTransformation();
+    public void applyTransformation(TouchEventState state, Matrix3 matrix3) {
+        Transformable toTransform = imageFragments.getCurrentFragment();
+        if (toTransform != null) {
+            toTransform.applyTransformation(state, matrix3);
         } else {
-            applyTransformation(transformation, state, matrix3);
-            imageFragments.setupCurrentFragmentTransformation();
+            TRANSFORM.apply(screenTransformation, state, matrix3);
+            setupWorldTransformation();
         }
         Gdx.graphics.requestRendering();
-    }
 
-    private void applyTransformation(Transformation transformation, TouchEventState state, Matrix3 matrix3) {
-        if (state == TouchEventState.STARTED) {
-            transformation.applyTransformationRelative(matrix3);
-        } else {
-            transformation.applyTransformation(matrix3);
-        }
     }
 
     @Override
-    public void onMatrix3Reset() {
-        resetWorld();
-    }
-
-    private void resetWorld() {
+    public void resetTransformation() {
         screenTransformation.idt();
         setupWorldTransformation();
         Gdx.graphics.requestRendering();

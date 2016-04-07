@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import com.badlogic.gdx.utils.FloatArray;
 import com.github.st1hy.coregdx.OnPathChangedListener;
 import com.github.st1hy.coregdx.TouchEventState;
+import com.github.st1hy.gesturedetector.GeometryUtils;
 import com.github.st1hy.gesturedetector.GestureEventState;
 import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.TranslationDetector;
@@ -68,10 +69,7 @@ public class PathGestureDetector implements TranslationDetector.Listener {
     }
 
     private boolean movedMinimalDistance(float x, float y) {
-        float dx = x - previousX;
-        float dy = y - previousY;
-        double distance = distance(dx, dy);
-        return distance > minimalDistanceBetweenPoint;
+        return GeometryUtils.distance(x, y, previousX, previousY) > minimalDistanceBetweenPoint;
     }
 
     private void onTranslationEnded() {
@@ -84,10 +82,6 @@ public class PathGestureDetector implements TranslationDetector.Listener {
 
     private void notifyAboutPath() {
         if (listener != null) listener.onPathChanged(state, x, y, previousX, previousY);
-    }
-
-    protected static double distance(float a, float b) {
-        return Math.sqrt(a * a + b * b);
     }
 
 }
