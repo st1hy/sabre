@@ -18,8 +18,6 @@ import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.github.st1hy.sabre.libgdx.ImageGdxCore;
-import com.github.st1hy.sabre.libgdx.ImageScreen;
 import com.github.st1hy.core.utils.MissingInterfaceException;
 import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
@@ -35,6 +33,9 @@ import com.github.st1hy.sabre.core.ImageCacheProvider;
 import com.github.st1hy.sabre.image.AsyncImageReceiver;
 import com.github.st1hy.sabre.image.ImageActivity;
 import com.github.st1hy.sabre.image.gdx.touch.ImageTouchController;
+import com.github.st1hy.sabre.libgdx.ImageGdxCore;
+import com.github.st1hy.sabre.libgdx.ImageScreen;
+import com.github.st1hy.sabre.libgdx.ScreenContext;
 
 import timber.log.Timber;
 
@@ -45,6 +46,10 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     private AsyncImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
     private ImageTouchController imageTouchController;
     private final UiThreadHandler handler = new UiThreadHandler();
+
+    private static final String STORE_SCREEN_CONTEXT_MODEL = "Screen_model";
+    private String screenContextJson = null;
+    private ScreenContext screenContext;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -77,8 +82,21 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
             actionBar.hide();
         }
         imageWorker = createWorker();
+        if (savedInstanceState != null) {
+            screenContextJson = savedInstanceState.getString(STORE_SCREEN_CONTEXT_MODEL);
+        }
         Uri uri = activity.getImageUriFromIntent();
-        if (uri != null) setImageURI(uri);
+        if (uri != null) {
+            setImageURI(uri);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (screenContext != null) {
+            outState.putString(STORE_SCREEN_CONTEXT_MODEL, screenContext.toJson());
+        }
     }
 
     private ImageWorker<Bitmap> createWorker() {
@@ -163,7 +181,8 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex.getTextureObjectHandle());
                 GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-                final ImageScreen imageScreen = imageGdxCore.setImage(tex);
+                screenContext = ScreenContext.createScreenContext(tex, screenContextJson);
+                final ImageScreen imageScreen = imageGdxCore.setImage(screenContext);
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -180,6 +199,8 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     @Override
     public void redrawNeeded() {
     }
+
+
 
     @Override
     public void onImageLoadingFailed() {

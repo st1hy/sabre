@@ -4,27 +4,24 @@ import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
-import com.github.st1hy.coregdx.TextureManager;
 import com.github.st1hy.coregdx.screen.ScreenManager;
+
 
 public class ImageGdxCore implements ApplicationListener {
     private final Color background;
     private final ScreenManager screenManager;
-    private final TextureManager textureManager;
 
     public ImageGdxCore(Color backgroundColor) {
         this.background = backgroundColor;
         screenManager = new ScreenManager();
-        textureManager = new TextureManager();
     }
 
     public ImageGdxCore() {
         this(new Color());
     }
 
-    public ImageScreen setImage(Texture image) {
-        ImageScreen screen = new ImageScreen(image);
+    public ImageScreen setImage(ScreenContext screenContext) {
+        ImageScreen screen = new ImageScreen(screenContext);
         screenManager.setCurrentScreen(screen);
         return screen;
     }
@@ -61,10 +58,5 @@ public class ImageGdxCore implements ApplicationListener {
     @Override
     public void dispose() {
         screenManager.dispose();
-        textureManager.dispose();
-    }
-
-    public TextureManager getTextureManager() {
-        return textureManager;
     }
 }

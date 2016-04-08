@@ -5,4 +5,5 @@ import com.badlogic.gdx.ApplicationListener;
 public interface Screen extends ApplicationListener {
 
     void prerender();
+
 }

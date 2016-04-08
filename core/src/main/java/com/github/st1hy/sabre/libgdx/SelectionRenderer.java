@@ -7,19 +7,19 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.FloatArray;
 import com.github.st1hy.coregdx.OnPathChangedListener;
 import com.github.st1hy.coregdx.TouchEventState;
-import com.github.st1hy.coregdx.Transformation;
 import com.github.st1hy.sabre.libgdx.fragments.ImageFragmentCreator;
 
 public class SelectionRenderer implements OnPathChangedListener {
-    private final FloatArray polyLineArray = new FloatArray();
-    private final Transformation transformation;
-    private final Vector2 tempVector2 = new Vector2();
-    private final Vector3 tempVector3 = new Vector3();
+    private final ScreenContext model;
     private final ImageFragmentCreator imageFragmentCreator;
 
-    public SelectionRenderer(ImageFragmentCreator imageFragmentCreator, Transformation transformation) {
+    private final FloatArray polyLineArray = new FloatArray();
+    private final Vector2 tempVector2 = new Vector2();
+    private final Vector3 tempVector3 = new Vector3();
+
+    public SelectionRenderer(ScreenContext model, ImageFragmentCreator imageFragmentCreator) {
+        this.model = model;
         this.imageFragmentCreator = imageFragmentCreator;
-        this.transformation = transformation;
     }
 
     public void render(ShapeRenderer renderer) {
@@ -56,14 +56,14 @@ public class SelectionRenderer implements OnPathChangedListener {
         if (polyLineArray.size < 4) return;
         tempVector2.set(polyLineArray.get(0), polyLineArray.get(1));
         add(tempVector2);
-        imageFragmentCreator.addNew(polyLineArray);
+        imageFragmentCreator.addNew(polyLineArray.toArray());
         polyLineArray.clear();
         polyLineArray.shrink();
     }
 
     private Vector2 screenToWorldCoordinates(float x, float y) {
         tempVector3.set(x, y, 0);
-        tempVector3.mul(transformation.getInvTransformation());
+        tempVector3.mul(model.getWorldTransformation().getInvTransformation());
         tempVector2.set(tempVector3.x, tempVector3.y);
         return tempVector2;
     }

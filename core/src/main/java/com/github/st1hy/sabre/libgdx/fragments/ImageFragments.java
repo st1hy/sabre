@@ -1,40 +1,39 @@
 package com.github.st1hy.sabre.libgdx.fragments;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.FloatArray;
-import com.github.st1hy.coregdx.Transformation;
+import com.github.st1hy.sabre.libgdx.ScreenContext;
 import com.github.st1hy.sabre.libgdx.mode.UiMode;
 import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
+import com.github.st1hy.sabre.libgdx.model.ImageFragmentModel;
 
 public class ImageFragments implements ImageFragmentCreator, UiModeChangeListener, ImageFragmentSelector {
-    private final Texture image;
-    private final Transformation worldTransformation;
-    private Array<ImageFragment> fragments = new Array<>();
+    private final ScreenContext model;
+    private final Array<ImageFragment> fragments;
     private ImageFragment currentFragment = null;
-    private Elevation elevation;
 
     private Vector3 tempVector3 = new Vector3();
 
-    /**
-     * @param image               borrowed texture
-     * @param worldTransformation transformation of the world
-     */
-    public ImageFragments(Texture image, Transformation worldTransformation) {
-        this.image = image;
-        this.worldTransformation = worldTransformation;
-        elevation = new Elevation(Gdx.graphics.getDensity());
+    public ImageFragments(ScreenContext model) {
+        this.model = model;
+        Array<ImageFragmentModel> fragmentModels = model.getFragmentModels();
+        this.fragments = new Array<>(fragmentModels.size);
+        for (ImageFragmentModel fragmentModel : fragmentModels) {
+            ImageFragment fragment = ImageFragment.createNewFragment(fragmentModel, model);
+            if (fragment == null) throw new UnknownError("Model could not recreate fragment");
+            fragments.add(fragment);
+        }
         UiMode.registerChangeListener(this);
     }
 
     @Override
-    public boolean addNew(FloatArray outline) {
-        ImageFragment fragment = ImageFragment.createNewFragment(outline, image, worldTransformation);
+    public boolean addNew(float[] vertices) {
+        ImageFragment fragment = ImageFragment.createNewFragment(vertices, model);
         if (fragment != null) {
             fragments.add(fragment);
+            model.getFragmentModels().add(fragment.getModel());
             changeCurrentFragment(fragment);
             notifyNewUiMode(UiMode.MOVE_ELEMENT);
             return true;
@@ -76,11 +75,11 @@ public class ImageFragments implements ImageFragmentCreator, UiModeChangeListene
     private boolean changeCurrentFragment(ImageFragment newImageFragment) {
         boolean isFragmentChanged = isObjectChanged(currentFragment, newImageFragment);
         if (currentFragment != null) {
-            currentFragment.setElevation(elevation.getElevationLow());
+            currentFragment.setElevation(model.getElevation().getElevationLow());
         }
         currentFragment = newImageFragment;
         if (currentFragment != null) {
-            currentFragment.setElevation(elevation.getElevationHigh());
+            currentFragment.setElevation(model.getElevation().getElevationHigh());
         }
         return isFragmentChanged;
     }
@@ -93,7 +92,7 @@ public class ImageFragments implements ImageFragmentCreator, UiModeChangeListene
     public void onClickedOnImage(float screenX, float screenY) {
         ImageFragment fragmentToChangeTo = null;
         if (fragments.size > 0) {
-            tempVector3.set(screenX, screenY, 0).mul(worldTransformation.getInvTransformation());
+            tempVector3.set(screenX, screenY, 0).mul(model.getWorldTransformation().getInvTransformation());
             float x = tempVector3.x;
             float y = tempVector3.y;
             for (int i = fragments.size - 1; i >= 0; --i) {

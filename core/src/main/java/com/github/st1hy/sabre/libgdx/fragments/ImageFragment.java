@@ -21,46 +21,75 @@ import com.badlogic.gdx.math.Polygon;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Disposable;
-import com.badlogic.gdx.utils.FloatArray;
 import com.github.st1hy.coregdx.TouchEventState;
 import com.github.st1hy.coregdx.Transformable;
-import com.github.st1hy.coregdx.Transformation;
+import com.github.st1hy.sabre.libgdx.ScreenContext;
+import com.github.st1hy.sabre.libgdx.model.ImageFragmentModel;
 
 public class ImageFragment implements Disposable, Transformable {
-    private final Polygon polygon;
-    private final Texture texture;
-    private final Rectangle intersection;
-    private final Transformation worldTransformation;
+    private final ImageFragmentModel model;
+    private final ScreenContext screenModel;
+
+    private Rectangle intersection;
+    private Polygon polygon;
 
     private FrameBuffer fbo = null;
     private Sprite sprite = null;
-    private float elevation = 10f;
-    private Transformation imageTransformation = new Transformation();
+    private float elevation;
+
     private Matrix4 fragmentMatrix = new Matrix4(), imagePartialMatrix = new Matrix4(), shadowMatrix = new Matrix4();
     private Vector3 tempVector3 = new Vector3();
 
 
-    private ImageFragment(Polygon polygon, Texture texture, Rectangle intersection, Transformation worldTransformation) {
-        this.polygon = polygon;
-        this.texture = texture;
-        this.intersection = intersection;
-        this.worldTransformation = worldTransformation;
+    private ImageFragment(ImageFragmentModel model, ScreenContext screenModel) {
+        this.model = model;
+        this.screenModel = screenModel;
+        this.elevation = screenModel.getElevation().getElevationLow();
     }
 
     /**
      * Creates new fragment from an intersection of image and area created by path.
      * If path is located outside of image returns null;
      */
-    public static ImageFragment createNewFragment(FloatArray vertices, Texture texture, Transformation worldTransformation) {
-        Polygon polygon = new Polygon(vertices.toArray());
+    public static ImageFragment createNewFragment(float[] vertices, ScreenContext screenModel) {
+        Polygon polygon = new Polygon(vertices);
         Rectangle polygonBounds = polygon.getBoundingRectangle();
+        Texture texture = screenModel.getBackground();
         Rectangle textureBounds = new Rectangle(0, 0, texture.getWidth(), texture.getHeight());
         Rectangle intersection = new Rectangle();
         if (Intersector.intersectRectangles(polygonBounds, textureBounds, intersection)) {
-            return new ImageFragment(polygon, texture, intersection, worldTransformation);
+            ImageFragmentModel model = new ImageFragmentModel(vertices);
+            ImageFragment fragment = new ImageFragment(model, screenModel);
+            fragment.polygon = polygon;
+            fragment.intersection = intersection;
+            return fragment;
         } else {
             return null;
         }
+    }
+
+    /**
+     * Creates new fragment from an intersection of image and area created by path.
+     * If path is located outside of image returns null;
+     */
+    public static ImageFragment createNewFragment(ImageFragmentModel model, ScreenContext screenModel) {
+        Polygon polygon = new Polygon(model.getVertices());
+        Rectangle polygonBounds = polygon.getBoundingRectangle();
+        Texture texture = screenModel.getBackground();
+        Rectangle textureBounds = new Rectangle(0, 0, texture.getWidth(), texture.getHeight());
+        Rectangle intersection = new Rectangle();
+        if (Intersector.intersectRectangles(polygonBounds, textureBounds, intersection)) {
+            ImageFragment fragment = new ImageFragment(model, screenModel);
+            fragment.polygon = polygon;
+            fragment.intersection = intersection;
+            return fragment;
+        } else {
+            return null;
+        }
+    }
+
+    public ImageFragmentModel getModel() {
+        return model;
     }
 
     public void prerender() {
@@ -72,7 +101,9 @@ public class ImageFragment implements Disposable, Transformable {
     public void render(SpriteBatch batch) {
         if (sprite != null) {
             batch.enableBlending();
-            fragmentMatrix.set(worldTransformation.getTransformation()).mul(imageTransformation.getTransformation());
+            Matrix4 worldMatrix = screenModel.getWorldTransformation().getTransformation();
+            Matrix4 imageMatrix = model.getImageTransformation().getTransformation();
+            fragmentMatrix.set(worldMatrix).mul(imageMatrix);
             renderShadow(batch, fragmentMatrix);
             batch.setTransformMatrix(fragmentMatrix);
             sprite.draw(batch);
@@ -95,17 +126,22 @@ public class ImageFragment implements Disposable, Transformable {
         if (fbo != null) fbo.dispose();
     }
 
+
+    /**
+     * Converts transformation of the fragment in screen coordinates into the same transformation in
+     * image coordinates so when user changes screen transformation position of the fragment remains intact.
+     */
     @Override
     public void applyTransformation(TouchEventState state, Matrix3 matrix3) {
         imagePartialMatrix.set(matrix3)
-                .mulLeft(worldTransformation.getInvTransformation())
-                .mul(worldTransformation.getTransformation());
-        TRANSFORM.apply(imageTransformation, state, imagePartialMatrix);
+                .mulLeft(screenModel.getWorldTransformation().getInvTransformation())
+                .mul(screenModel.getWorldTransformation().getTransformation());
+        TRANSFORM.apply(model.getImageTransformation(), state, imagePartialMatrix);
     }
 
     @Override
     public void resetTransformation() {
-        imageTransformation.idt();
+        model.getImageTransformation().idt();
     }
 
     public void setElevation(float elevation) {
@@ -116,7 +152,7 @@ public class ImageFragment implements Disposable, Transformable {
      * x,y coordinates are in image space
      */
     public boolean isWithinBounds(float x, float y) {
-        tempVector3.set(x, y, 0).mul(imageTransformation.getInvTransformation());
+        tempVector3.set(x, y, 0).mul(model.getImageTransformation().getInvTransformation());
         x = tempVector3.x;
         y = tempVector3.y;
 
@@ -132,7 +168,7 @@ public class ImageFragment implements Disposable, Transformable {
     public Sprite getSpriteLazy() {
         if (sprite != null) return sprite;
 
-        PolygonSprite polygonSprite = createPolygonSprite(texture, polygon);
+        PolygonSprite polygonSprite = createPolygonSprite(screenModel.getBackground(), polygon);
 
         PolygonSpriteBatch fb = new PolygonSpriteBatch();
         int x = MathUtils.floor(intersection.x);

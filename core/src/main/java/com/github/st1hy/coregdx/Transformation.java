@@ -3,7 +3,9 @@ package com.github.st1hy.coregdx;
 import com.badlogic.gdx.math.Matrix3;
 import com.badlogic.gdx.math.Matrix4;
 
-public class Transformation {
+import java.io.Serializable;
+
+public class Transformation implements Serializable {
     private final Matrix4 initialTransformation = new Matrix4();
     private final Matrix4 transformation = new Matrix4();
     private final Matrix4 invTransformation = new Matrix4();
