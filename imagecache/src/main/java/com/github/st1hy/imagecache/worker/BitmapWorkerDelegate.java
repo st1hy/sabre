@@ -98,7 +98,7 @@ public class BitmapWorkerDelegate<T> implements Callable<Bitmap> {
             mImageCache.addBitmapToCache(cacheIndex, bitmap, cacheOnDisk);
         }
         if (BuildConfig.DEBUG) {
-            Timber.d("finished work " + bitmap);
+            Timber.d("finished work on %s", bitmap);
         }
         return bitmap;
     }

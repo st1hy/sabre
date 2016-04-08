@@ -26,7 +26,7 @@ public class FileBitmapFactory implements BitmapDecoder<String> {
             /*  do nothing.
                 If the exception happened on open, bm will be null.
             */
-            Timber.e("BitmapFactory", "Unable to decode stream: " + e);
+            Timber.e(e, "Unable to decode stream");
         } finally {
             if (stream != null) {
                 try {

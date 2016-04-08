@@ -25,6 +25,11 @@ android {
         }
     }
 
+    dexOptions {
+        maxProcessCount = 4
+    }
+
+
 }
 
 configurations {

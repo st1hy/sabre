@@ -162,7 +162,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
         if (bitmapWorkerTask != null) {
             bitmapWorkerTask.cancelTask(true);
             if (BuildConfig.DEBUG) {
-                Timber.d("cancelWork - cancelled work for %d", bitmapWorkerTask.getCacheIndex());
+                Timber.d("cancelWork - cancelled work for %s", bitmapWorkerTask.getCacheIndex());
             }
         }
     }
@@ -175,7 +175,7 @@ public class ImageWorkerImp<T> implements ImageWorker<T> {
             if (cacheIndex == null || !cacheIndex.equals(getCacheIndex(uri))) {
                 bitmapWorkerTask.cancelTask(true);
                 if (BuildConfig.DEBUG) {
-                    Timber.d("cancelPotentialWork - cancelled work for %d", cacheIndex);
+                    Timber.d("cancelPotentialWork - cancelled work for %s", cacheIndex);
                 }
             } else {
                 // The same work is already in progress.

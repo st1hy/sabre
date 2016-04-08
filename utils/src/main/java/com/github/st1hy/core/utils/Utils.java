@@ -50,7 +50,7 @@ public enum Utils {
         return Build.VERSION.SDK_INT >= VERSION_CODES.M;
     }
 
-    public static boolean hasLolipop() {
+    public static boolean hasLollipop() {
         return Build.VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP;
     }
 
@@ -68,6 +68,7 @@ public enum Utils {
         return resources.getColor(colorResId, theme);
     }
 
+    @SuppressWarnings("deprecation")
     private static int getColorDeprecated(@NonNull Resources resources, int colorResId) {
         return resources.getColor(colorResId);
     }
@@ -75,7 +76,7 @@ public enum Utils {
     public static Drawable getDrawable(@NonNull Context context, int drawableResId) {
         Resources resources = context.getResources();
         int density = resources.getDisplayMetrics().densityDpi;
-        if (hasLolipop()) {
+        if (hasLollipop()) {
             return getDrawableL(resources, context.getTheme(), drawableResId, density);
         } else {
             return getDrawableDeprecated(resources, drawableResId, density);
@@ -87,6 +88,7 @@ public enum Utils {
         return resources.getDrawableForDensity(colorResId, density, theme);
     }
 
+    @SuppressWarnings("deprecation")
     private static Drawable getDrawableDeprecated(@NonNull Resources resources, int colorResId, int density) {
         return resources.getDrawableForDensity(colorResId, density);
     }
@@ -106,8 +108,8 @@ public enum Utils {
     private static File getPathFromContentURI(@NonNull Context context, @NonNull Uri contentUri) {
         Cursor cursor = null;
         try {
-            String[] proj = {MediaStore.Images.Media.DATA};
-            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+            String[] projection = {MediaStore.Images.Media.DATA};
+            cursor = context.getContentResolver().query(contentUri, projection, null, null, null);
             if (cursor == null) return null;
             int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
             cursor.moveToFirst();

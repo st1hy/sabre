@@ -10,15 +10,15 @@ import com.google.common.collect.MutableClassToInstanceMap;
 import java.util.Map;
 
 public class MutableRestrictiveClassToInstanceMap extends ForwardingMap<Class<?>, Object> implements RestrictiveClassToInstanceMap {
-    private final ClassToInstanceMap map;
+    private final ClassToInstanceMap<Object> map;
 
-    private MutableRestrictiveClassToInstanceMap(ClassToInstanceMap map) {
+    private MutableRestrictiveClassToInstanceMap(ClassToInstanceMap<Object> map) {
         this.map = map;
     }
 
     @Override
     protected Map<Class<?>, Object> delegate() {
-        return null;
+        return map;
     }
 
     @Override
@@ -34,12 +34,12 @@ public class MutableRestrictiveClassToInstanceMap extends ForwardingMap<Class<?>
     }
 
     public static RestrictiveClassToInstanceMap create() {
-        MutableClassToInstanceMap instanceMap = MutableClassToInstanceMap.create();
+        MutableClassToInstanceMap<Object> instanceMap = MutableClassToInstanceMap.create();
         return new MutableRestrictiveClassToInstanceMap(instanceMap);
     }
 
-    public static <B> RestrictiveClassToInstanceMap create(Map<Class<? extends B>, B> backingMap) {
-        MutableClassToInstanceMap<B> instanceMap = MutableClassToInstanceMap.create(backingMap);
+    public static RestrictiveClassToInstanceMap create(Map<Class<?>, Object> backingMap) {
+        MutableClassToInstanceMap<Object> instanceMap = MutableClassToInstanceMap.create(backingMap);
         return new MutableRestrictiveClassToInstanceMap(instanceMap);
     }
 }
