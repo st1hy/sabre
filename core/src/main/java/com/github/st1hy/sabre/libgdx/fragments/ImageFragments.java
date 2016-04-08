@@ -13,7 +13,7 @@ import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
 public class ImageFragments implements ImageFragmentCreator, UiModeChangeListener, ImageFragmentSelector {
     private final Texture image;
     private final Transformation worldTransformation;
-    private Array<ImageFragment> fragments = new Array<ImageFragment>();
+    private Array<ImageFragment> fragments = new Array<>();
     private ImageFragment currentFragment = null;
     private Elevation elevation;
 

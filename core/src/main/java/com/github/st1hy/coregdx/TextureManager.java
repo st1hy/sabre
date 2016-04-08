@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TextureManager extends ApplicationAdapter {
-    private Map<String, Texture> textureMap = new HashMap<String, Texture>();
+    private Map<String, Texture> textureMap = new HashMap<>();
 
     public void put(String key, Texture tex) {
         Texture texture = get(key);

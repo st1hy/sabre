@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class EventBus {
     public static final EventBus INSTANCE = new EventBus();
-    private final Map<Class, Array> map = new HashMap<Class, Array>();
+    private final Map<Class, Array> map = new HashMap<>();
 
 
     private EventBus() {
@@ -16,7 +16,7 @@ public class EventBus {
     public synchronized <T> void add(Class<T> tag, T object) {
         Array<T> objects = get(tag);
         if (objects == null) {
-            objects = new Array<T>();
+            objects = new Array<>();
             map.put(tag, objects);
         }
         objects.add(object);

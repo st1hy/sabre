@@ -6,8 +6,6 @@
 
     <string name="history_empty_text">History of viewed images is empty.</string>
 
-    <string name="pref_use_open_gl_title">Enable OpenGL</string>
-    <string name="pref_use_open_gl_desc">Greatly improves responsiveness of image manipulations</string>
     <string name="pref_clear_cache_title">Clear cache</string>
     <string name="pref_clear_cache_desc">Remove cache of image miniatures.</string>
 

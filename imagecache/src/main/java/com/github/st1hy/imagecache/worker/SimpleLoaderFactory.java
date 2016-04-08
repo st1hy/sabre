@@ -24,7 +24,6 @@ public enum SimpleLoaderFactory implements LoaderFactory {
         public <T> BitmapWorkerTask newTask(@NonNull Uri uri, @NonNull ImageReceiver<T> receiver, @NonNull BitmapWorkerTask.Callback<T> callback) {
             return new BitmapWorkerRunnable<>(uri, receiver, callback).cacheOnDisk(false);
         }
-    };
-
+    }
 
 }

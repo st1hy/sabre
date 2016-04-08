@@ -3,9 +3,7 @@
     <color name="colorAccent">@color/default_dark</color>
     <color name="colorPrimary">@color/material_grey_900</color>
     <color name="default_dark">@color/material_grey_800</color>
-    <color name="default_light">@color/material_grey_100</color>
     <color name="progress_bar_stroke">@color/default_dark</color>
-    <color name="viewer_background">@color/default_light</color>
     <color name="setting_separator">@color/material_grey_400</color>
     <color name="settings_ripple">@color/material_grey_400</color>
     <color name="history_entry_ripple_foreground">#08111111</color>

@@ -17,6 +17,7 @@
         android:text="@string/start_instructions"
         android:layout_gravity="center"
         android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"
         />
 
     <com.rey.material.widget.FloatingActionButton

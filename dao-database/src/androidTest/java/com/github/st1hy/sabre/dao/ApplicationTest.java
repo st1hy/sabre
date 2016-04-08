@@ -1,4 +1,4 @@
-package com.github.st1hy.sabre.dao.daohistorydb;
+package com.github.st1hy.sabre.dao;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

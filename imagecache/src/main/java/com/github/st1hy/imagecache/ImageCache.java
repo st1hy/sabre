@@ -482,7 +482,7 @@ public class ImageCache {
      * onward this returns the allocated memory size of the bitmap which can be larger than the
      * actual bitmap data byte count (in the case it was re-used).
      *
-     * @param bitmap
+     * @param bitmap input bitmap
      * @return size in bytes
      */
     @TargetApi(VERSION_CODES.KITKAT)

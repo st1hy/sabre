@@ -3,13 +3,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".history.HistoryActivity">
     <item
-        android:id="@+id/action_open"
         android:title="@string/action_open"
         android:icon="@drawable/ic_open"
         android:onClick="onActionOpen"
         app:showAsAction="ifRoom|collapseActionView" />
     <item
-        android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"
         android:onClick="onActionSettings"
