@@ -23,7 +23,6 @@ import com.github.st1hy.sabre.dao.DaoMaster;
 import com.github.st1hy.sabre.dao.DaoSession;
 import com.github.st1hy.sabre.dao.OpenImageUtils;
 import com.github.st1hy.sabre.libgdx.mode.UiMode;
-import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
 import com.rey.material.widget.FloatingActionButton;
 
 import java.util.Date;
@@ -31,10 +30,14 @@ import java.util.Date;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import timber.log.BuildConfig;
 import timber.log.Timber;
 
 public class ImageActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks,
-        ImageCacheProvider, UiModeChangeListener {
+        ImageCacheProvider {
     private ImageCacheHandler imageCacheHandler;
     private Uri imageUriFromIntent;
     @Bind(R.id.image_fab)
@@ -42,6 +45,7 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     private static final String SAVE_EDIT_MODE_STATE = "ImageActivity.isInEditMode";
     private UiMode uiMode = UiMode.DEFAULT;
     private UiThreadHandler handler = new UiThreadHandler();
+    private Subscription uiModeSubscibtion;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +81,9 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     @Nullable
     private Uri getImageUriFromIntent(@NonNull Intent intent) {
         String action = intent.getAction();
-        Timber.d("View image: %s", intent.toString());
+        if (BuildConfig.DEBUG) {
+            Timber.d("View image: %s", intent.toString());
+        }
         if (action.equals(Intent.ACTION_VIEW)) {
             String type = intent.getType();
             if (type != null && type.startsWith("image/")) {
@@ -87,7 +93,9 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
             String type = intent.getType();
             if (type != null && type.startsWith("image/")) {
                 Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-                Timber.d("View image extra stream: %s", uri);
+                if (BuildConfig.DEBUG) {
+                    Timber.d("View image extra stream: %s", uri);
+                }
                 return uri;
             }
         }
@@ -113,13 +121,23 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     @Override
     protected void onStart() {
         super.onStart();
-        UiMode.registerChangeListener(this);
+        uiModeSubscibtion = UiMode.toObservable()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<UiMode>() {
+                    @Override
+                    public void call(UiMode newUiMode) {
+                        if (newUiMode != uiMode) {
+                            uiMode = newUiMode;
+                            setEditMode(floatingButton, uiMode, true);
+                        }
+                    }
+                });
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        UiMode.unregisterChangeListener(this);
+        uiModeSubscibtion.unsubscribe();
     }
 
     @Override
@@ -200,16 +218,4 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
         UiMode.setGlobalMode(mode);
     }
 
-    @Override
-    public void onUiModeChanged(final UiMode newUiMode) {
-        if (newUiMode != uiMode) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    uiMode = newUiMode;
-                    setEditMode(floatingButton, uiMode, true);
-                }
-            });
-        }
-    }
 }

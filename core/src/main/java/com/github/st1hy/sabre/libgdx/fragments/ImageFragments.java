@@ -6,13 +6,17 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.github.st1hy.sabre.libgdx.ScreenContext;
 import com.github.st1hy.sabre.libgdx.mode.UiMode;
-import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
 import com.github.st1hy.sabre.libgdx.model.ImageFragmentModel;
 
-public class ImageFragments implements ImageFragmentCreator, UiModeChangeListener, ImageFragmentSelector {
+import rx.Subscription;
+import rx.concurrency.GdxScheduler;
+import rx.functions.Action1;
+
+public class ImageFragments implements ImageFragmentCreator, ImageFragmentSelector {
     private final ScreenContext model;
     private final Array<ImageFragment> fragments;
     private ImageFragment currentFragment = null;
+    private Subscription uiModeSubscription;
 
     private Vector3 tempVector3 = new Vector3();
 
@@ -25,7 +29,18 @@ public class ImageFragments implements ImageFragmentCreator, UiModeChangeListene
             if (fragment == null) throw new UnknownError("Model could not recreate fragment");
             fragments.add(fragment);
         }
-        UiMode.registerChangeListener(this);
+        uiModeSubscription = UiMode.toObservable()
+                .observeOn(GdxScheduler.get())
+                .subscribe(new Action1<UiMode>() {
+                    @Override
+                    public void call(UiMode newUiMode) {
+                        if (newUiMode != UiMode.MOVE_ELEMENT) {
+                            if (changeCurrentFragment(null)) {
+                                Gdx.graphics.requestRendering();
+                            }
+                        }
+                    }
+                });
     }
 
     @Override
@@ -55,21 +70,12 @@ public class ImageFragments implements ImageFragmentCreator, UiModeChangeListene
     }
 
     public void dispose() {
+        uiModeSubscription.unsubscribe();
         for (int i = 0; i < fragments.size; ++i) {
             fragments.get(i).dispose();
         }
         fragments.clear();
         fragments.shrink();
-        UiMode.unregisterChangeListener(this);
-    }
-
-    @Override
-    public void onUiModeChanged(UiMode newUiMode) {
-        if (newUiMode != UiMode.MOVE_ELEMENT) {
-            if (changeCurrentFragment(null)) {
-                Gdx.graphics.requestRendering();
-            }
-        }
     }
 
     private boolean changeCurrentFragment(ImageFragment newImageFragment) {
@@ -113,7 +119,6 @@ public class ImageFragments implements ImageFragmentCreator, UiModeChangeListene
     private static void notifyNewUiMode(UiMode mode) {
         UiMode.setGlobalMode(mode);
     }
-
 
     public ImageFragment getCurrentFragment() {
         return currentFragment;

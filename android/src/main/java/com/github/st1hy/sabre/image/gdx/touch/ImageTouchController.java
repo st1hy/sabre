@@ -17,7 +17,6 @@ import com.github.st1hy.gesturedetector.Options;
 import com.github.st1hy.gesturedetector.SimpleGestureListener;
 import com.github.st1hy.sabre.libgdx.fragments.ImageFragmentSelector;
 import com.github.st1hy.sabre.libgdx.mode.UiMode;
-import com.github.st1hy.sabre.libgdx.mode.UiModeChangeListener;
 import com.github.st1hy.view.SelectorOnTouchListener;
 import com.github.st1hy.view.SimpleTouchPredicate;
 import com.github.st1hy.view.TouchPredicate;
@@ -29,13 +28,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ImageTouchController extends SimpleGestureListener implements GestureDetector, UiModeChangeListener {
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+
+public class ImageTouchController extends SimpleGestureListener implements GestureDetector {
     private final AndroidToLibGdxMatrixAdapter adapter;
     private final PathGestureDetector pathGestureDetector;
     private final SelectorOnTouchListener<GestureDetector> delegate;
     private final Options options;
     private ImageFragmentSelector imageFragmentSelector = null;
     private final ModePredicate selectElementPredicate;
+    private Subscription uiModeSubscribtion;
 
     public ImageTouchController(@NonNull Context context) {
         this.options = setupOptions(context);
@@ -43,7 +47,14 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
         pathGestureDetector = new PathGestureDetector(options);
         selectElementPredicate = new ModePredicate(UiMode.CUT_ELEMENT);
         delegate = buildSelector();
-        UiMode.registerChangeListener(this);
+        uiModeSubscribtion = UiMode.toObservable()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<UiMode>() {
+            @Override
+            public void call(UiMode uiMode) {
+                selectElementPredicate.onUiModeChanged(uiMode);
+            }
+        });
     }
 
     public void setDispatch(@Nullable Transformable screen,
@@ -55,7 +66,7 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
     }
 
     public void onDestroy() {
-        UiMode.unregisterChangeListener(this);
+        uiModeSubscribtion.unsubscribe();
     }
 
     @NonNull
@@ -137,8 +148,4 @@ public class ImageTouchController extends SimpleGestureListener implements Gestu
         pathGestureDetector.onTranslate(state, startPoint, x, y, dx, dy, distance);
     }
 
-    @Override
-    public void onUiModeChanged(UiMode newUiMode) {
-        selectElementPredicate.onUiModeChanged(newUiMode);
-    }
 }
