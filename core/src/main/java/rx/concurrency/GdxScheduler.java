@@ -44,10 +44,10 @@ public final class GdxScheduler extends Scheduler {
 
     @Override
     public Worker createWorker() {
-        return worker;
+        return new GdxWorker();
     }
 
-    private Worker worker = new Worker() {
+    private static class GdxWorker extends Worker {
 
         volatile boolean isUnsubscribed;
 

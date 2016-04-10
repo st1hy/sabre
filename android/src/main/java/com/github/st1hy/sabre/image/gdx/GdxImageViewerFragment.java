@@ -13,13 +13,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
 import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.github.st1hy.core.utils.MissingInterfaceException;
-import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.imagecache.ImageCache;
@@ -37,6 +35,12 @@ import com.github.st1hy.sabre.libgdx.ImageGdxCore;
 import com.github.st1hy.sabre.libgdx.ImageScreen;
 import com.github.st1hy.sabre.libgdx.ScreenContext;
 
+import rx.Observable;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.concurrency.GdxScheduler;
+import rx.functions.Action1;
+import rx.functions.Func1;
 import timber.log.Timber;
 
 public class GdxImageViewerFragment extends AndroidFragmentApplication implements AsyncImageReceiver.Callback {
@@ -45,11 +49,11 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     private ImageWorker<Bitmap> imageWorker;
     private AsyncImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
     private ImageTouchController imageTouchController;
-    private final UiThreadHandler handler = new UiThreadHandler();
 
     private static final String STORE_SCREEN_CONTEXT_MODEL = "Screen_model";
     private String screenContextJson = null;
     private ScreenContext screenContext;
+    private Subscription glLoadingSubscription;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -118,6 +122,12 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     }
 
     @Override
+    public void onStop() {
+        super.onStop();
+        if (glLoadingSubscription != null) glLoadingSubscription.unsubscribe();
+    }
+
+    @Override
     public void onDestroyView() {
         super.onDestroyView();
         viewHolder.unbind();
@@ -137,6 +147,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
 
     public void setImageURI(@NonNull final Uri uri) {
         onLoadingStarted();
+        Observable.just(uri);
         imageWorker.loadImage(uri, imageReceiver);
         imageTouchController.resetViewPort();
     }
@@ -159,7 +170,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         imageTouchController.onDestroy();
         imageWorker.setExitTasksEarly(true);
         imageWorker.cancelWork(imageReceiver);
-        handler.removeAll();
     }
 
     @Override
@@ -171,29 +181,32 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
             }
             return;
         }
-        Gdx.app.postRunnable(new Runnable() {
-            @Override
-            public void run() {
-                if (Config.DEBUG) {
-                    Timber.v("Loading texture");
-                }
-                Texture tex = new Texture(bitmap.getWidth(), bitmap.getHeight(), Pixmap.Format.RGBA8888);
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex.getTextureObjectHandle());
-                GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-                screenContext = ScreenContext.createScreenContext(tex, screenContextJson);
-                final ImageScreen imageScreen = imageGdxCore.setImage(screenContext);
-                handler.post(new Runnable() {
+        glLoadingSubscription = Observable.just(bitmap)
+                .map(new Func1<Bitmap, ImageScreen>() {
                     @Override
-                    public void run() {
+                    public ImageScreen call(Bitmap bitmap) {
+                        if (Config.DEBUG) {
+                            Timber.v("Loading texture");
+                        }
+                        Texture tex = new Texture(bitmap.getWidth(), bitmap.getHeight(), Pixmap.Format.RGBA8888);
+                        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex.getTextureObjectHandle());
+                        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+                        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+                        screenContext = ScreenContext.createScreenContext(tex, screenContextJson);
+                        return imageGdxCore.setImage(screenContext);
+                    }
+                })
+                .subscribeOn(GdxScheduler.get())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<ImageScreen>() {
+                    @Override
+                    public void call(ImageScreen imageScreen) {
                         imageTouchController.setDispatch(imageScreen,
                                 imageScreen.getPathDrawingListener(),
                                 imageScreen.getImageFragmentSelector());
                         onLoadingFinished();
                     }
                 });
-            }
-        });
     }
 
     @Override
