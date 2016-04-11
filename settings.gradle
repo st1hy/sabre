@@ -1,1 +1,1 @@
-include ':android', ':core', ':imagecache', ':utils', ':dao-generator', ':dao-database'
+include ':android', ':core', ':utils', ':dao-generator', ':dao-database'
