@@ -20,40 +20,39 @@ import com.badlogic.gdx.graphics.Texture;
 import com.github.st1hy.core.utils.MissingInterfaceException;
 import com.github.st1hy.core.utils.Utils;
 import com.github.st1hy.gesturedetector.Config;
-import com.github.st1hy.imagecache.ImageCache;
-import com.github.st1hy.imagecache.worker.ImageWorker;
-import com.github.st1hy.imagecache.worker.ImageWorkerImp;
-import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
-import com.github.st1hy.imagecache.worker.creator.BitmapCreator;
 import com.github.st1hy.sabre.BuildConfig;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.ImageCacheProvider;
-import com.github.st1hy.sabre.image.AsyncImageReceiver;
 import com.github.st1hy.sabre.image.ImageActivity;
 import com.github.st1hy.sabre.image.gdx.touch.ImageTouchController;
 import com.github.st1hy.sabre.libgdx.ImageGdxCore;
 import com.github.st1hy.sabre.libgdx.ImageScreen;
 import com.github.st1hy.sabre.libgdx.ScreenContext;
+import com.squareup.picasso.Picasso;
 
 import rx.Observable;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.concurrency.GdxScheduler;
 import rx.functions.Action1;
 import rx.functions.Func1;
+import rx.picasso.BitmapLoadedEvent;
+import rx.picasso.RxTarget;
+import rx.picasso.TargetEvent;
+import rx.subscriptions.CompositeSubscription;
 import timber.log.Timber;
 
-public class GdxImageViewerFragment extends AndroidFragmentApplication implements AsyncImageReceiver.Callback {
+public class GdxImageViewerFragment extends AndroidFragmentApplication  {
+    private static final String TAG = GdxImageViewerFragment.class.getSimpleName();
+
     private ImageGdxCore imageGdxCore;
     private GdxViewHolder viewHolder;
-    private ImageWorker<Bitmap> imageWorker;
-    private AsyncImageReceiver<Bitmap> imageReceiver = new BitmapImageReceiver(this);
     private ImageTouchController imageTouchController;
 
     private static final String STORE_SCREEN_CONTEXT_MODEL = "Screen_model";
     private String screenContextJson = null;
     private ScreenContext screenContext;
-    private Subscription glLoadingSubscription;
+
+    private CompositeSubscription subscriptions = new CompositeSubscription();
+    private RxTarget rxTarget;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -62,6 +61,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         this.imageGdxCore = new ImageGdxCore(getBackground());
         imageTouchController = new ImageTouchController(getActivity());
         if (BuildConfig.DEBUG) setLogLevel(LOG_DEBUG);
+        rxTarget = RxTarget.get();
     }
 
     private void sanityCheck() {
@@ -85,7 +85,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         if (actionBar != null) {
             actionBar.hide();
         }
-        imageWorker = createWorker();
         if (savedInstanceState != null) {
             screenContextJson = savedInstanceState.getString(STORE_SCREEN_CONTEXT_MODEL);
         }
@@ -103,14 +102,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         }
     }
 
-    private ImageWorker<Bitmap> createWorker() {
-        ImageWorkerImp.Builder<Bitmap> builder = new ImageWorkerImp.Builder<>(getActivity(), new BitmapCreator());
-        builder.setLoaderFactory(SimpleLoaderFactory.WITHOUT_DISK_CACHE);
-        ImageCache imageCache = ((ImageCacheProvider) getActivity()).getImageCacheHandler().getCache();
-        builder.setImageCache(imageCache);
-        return builder.build();
-    }
-
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -124,7 +115,7 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     @Override
     public void onStop() {
         super.onStop();
-        if (glLoadingSubscription != null) glLoadingSubscription.unsubscribe();
+        subscriptions.unsubscribe();
     }
 
     @Override
@@ -132,6 +123,8 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
         super.onDestroyView();
         viewHolder.unbind();
         imageTouchController.invalidate();
+        Picasso.with(getActivity())
+                .cancelTag(TAG);
     }
 
     private AndroidApplicationConfiguration initConfig() {
@@ -146,45 +139,20 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
     }
 
     public void setImageURI(@NonNull final Uri uri) {
-        onLoadingStarted();
-        Observable.just(uri);
-        imageWorker.loadImage(uri, imageReceiver);
-        imageTouchController.resetViewPort();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        imageWorker.setPauseWork(false);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        imageWorker.setPauseWork(true);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        imageTouchController.onDestroy();
-        imageWorker.setExitTasksEarly(true);
-        imageWorker.cancelWork(imageReceiver);
-    }
-
-    @Override
-    public void onImageLoaded() {
-        final Bitmap bitmap = imageReceiver.getImage();
-        if (bitmap == null) {
-            if (Config.DEBUG) {
-                Timber.w("Nothing to draw despite caller says otherwise!");
-            }
-            return;
-        }
-        glLoadingSubscription = Observable.just(bitmap)
-                .map(new Func1<Bitmap, ImageScreen>() {
+        Observable<TargetEvent> observableTarget = rxTarget.toObservable();
+        subscriptions.add(observableTarget.filter(
+                new Func1<TargetEvent, Boolean>() {
                     @Override
-                    public ImageScreen call(Bitmap bitmap) {
+                    public Boolean call(TargetEvent event) {
+                        return event.getType() == TargetEvent.BitmapEventType.LOADED;
+                    }
+                })
+                .observeOn(GdxScheduler.get())
+                .map(new Func1<TargetEvent, ImageScreen>() {
+                    @Override
+                    public ImageScreen call(TargetEvent event) {
+                        BitmapLoadedEvent bitmapLoaded = (BitmapLoadedEvent) event.getEvent();
+                        Bitmap bitmap = bitmapLoaded.getBitmap();
                         if (Config.DEBUG) {
                             Timber.v("Loading texture");
                         }
@@ -196,7 +164,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                         return imageGdxCore.setImage(screenContext);
                     }
                 })
-                .subscribeOn(GdxScheduler.get())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<ImageScreen>() {
                     @Override
@@ -206,25 +173,35 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication implement
                                 imageScreen.getImageFragmentSelector());
                         onLoadingFinished();
                     }
-                });
+                }));
+        subscriptions.add(observableTarget.observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<TargetEvent>() {
+                    @Override
+                    public void call(TargetEvent event) {
+                        switch (event.getType()) {
+                            case PREPARED:
+                                onLoadingStarted();
+                                imageTouchController.resetViewPort();
+                                break;
+                            case FAILED:
+                                ImageActivity activity = (ImageActivity) getActivity();
+                                activity.onImageFailedToLoad();
+                                break;
+                            case LOADED:
+                                break;
+                        }
+                    }
+                }));
+        Picasso.with(getActivity())
+                .load(uri)
+                .tag(TAG)
+                .into(rxTarget);
     }
 
     @Override
-    public void redrawNeeded() {
-    }
-
-
-
-    @Override
-    public void onImageLoadingFailed() {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                ImageActivity activity = (ImageActivity) getActivity();
-                if (activity == null) return;
-                activity.onImageFailedToLoad();
-            }
-        });
+    public void onDestroy() {
+        super.onDestroy();
+        imageTouchController.onDestroy();
     }
 
     private void onLoadingStarted() {

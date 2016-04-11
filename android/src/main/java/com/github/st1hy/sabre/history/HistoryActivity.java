@@ -1,9 +1,7 @@
 package com.github.st1hy.sabre.history;
 
 import android.app.Activity;
-import android.content.ComponentCallbacks2;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,22 +17,19 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
-import com.github.st1hy.sabre.dao.DaoMaster;
-import com.github.st1hy.sabre.dao.OpenedImageContentProvider;
-import com.github.st1hy.imagecache.ImageCacheHandler;
 import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.CacheUtils;
+import com.github.st1hy.sabre.dao.DaoMaster;
+import com.github.st1hy.sabre.dao.OpenedImageContentProvider;
 import com.github.st1hy.sabre.image.ImageActivity;
 import com.github.st1hy.sabre.settings.SettingsActivity;
 import com.google.common.base.Preconditions;
 
-public class HistoryActivity extends AppCompatActivity implements HistoryRecyclerAdapter.OnImageClicked, ComponentCallbacks2 {
+public class HistoryActivity extends AppCompatActivity implements HistoryRecyclerAdapter.OnImageClicked {
     private static final int REQUEST_IMAGE = 0x16ed;
     private static final String SAVE_ANIMATION_SHOW_FLAG = "animation shown";
 
     private final HistoryViewHolder viewHolder = new HistoryViewHolder();
-    private ImageCacheHandler imageCacheHandler;
     private boolean showHelp = true;
     private HistoryRecyclerAdapter historyAdapter;
     private Animation fade_out;
@@ -42,16 +37,16 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        imageCacheHandler = CacheUtils.newImageCacheHandler((Application) getApplication());
         fade_out = AnimationUtils.loadAnimation(this, R.anim.fade_out);
         showHelp = needShowHelp(savedInstanceState);
-        historyAdapter = new HistoryRecyclerAdapter(this, this, imageCacheHandler.getCache());
+        historyAdapter = new HistoryRecyclerAdapter(this, this);
         setupDao();
         SettingsActivity.loadDefaultSettings(this, false);
         getApplication().registerComponentCallbacks(this);
 
         setContentView(R.layout.activity_history);
         bind();
+
         setSupportActionBar(viewHolder.getToolbar());
     }
 
@@ -70,8 +65,6 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
     protected void onDestroy() {
         super.onDestroy();
         getApplication().unregisterComponentCallbacks(this);
-        imageCacheHandler.onStop();
-        imageCacheHandler.onDestroy();
         historyAdapter.onDestroy();
         OpenedImageContentProvider.daoSession = null;
     }
@@ -81,14 +74,15 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
         viewHolder.getRecyclerView().setAdapter(historyAdapter);
         viewHolder.getRecyclerView().setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         viewHolder.getFloatingButtonText().setVisibility(View.GONE);
-        getSupportLoaderManager().initLoader(0, null, new LoaderCallback());
         viewHolder.getFloatingButton().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onActionOpen();
             }
         });
+        getSupportLoaderManager().initLoader(0, null, new LoaderCallback());
     }
+
 
     private class LoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
         @Override
@@ -133,10 +127,10 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
 
 
     //Called using menu_history.xml
-    public void onActionSettings(final MenuItem item) {
-        Intent intent = new Intent(this, SettingsActivity.class);
-        startActivity(intent);
-    }
+//    public void onActionSettings(final MenuItem item) {
+//        Intent intent = new Intent(this, SettingsActivity.class);
+//        startActivity(intent);
+//    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -158,21 +152,8 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
         intent.setDataAndTypeAndNormalize(uri, "image/*");
         intent.setAction(Intent.ACTION_VIEW);
         intent.setClass(this, ImageActivity.class);
-//        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-//            startActivityWithExitTransition(intent);
-//        } else {
-//            startActivity(intent);
-//        }
         startActivity(intent);
     }
-
-//    @TargetApi(21)
-//    private void startActivityWithExitTransition(Intent intent) {
-//        Bundle bundle = ActivityOptions
-//                .makeSceneTransitionAnimation(getActivity())
-//                .toBundle();
-//        startActivity(intent, bundle);
-//    }
 
     private void onDataLoaded(Cursor data) {
         if (data.getCount() > 0) {
@@ -199,21 +180,5 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
             });
             viewHolder.getFloatingButtonText().startAnimation(fade_out);
         }
-    }
-
-
-    @Override
-    public void onTrimMemory(int level) {
-        if (level == TRIM_MEMORY_BACKGROUND || level == TRIM_MEMORY_RUNNING_LOW) {
-            imageCacheHandler.getCache().clearMemory();
-        }
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-    }
-
-    @Override
-    public void onLowMemory() {
     }
 }

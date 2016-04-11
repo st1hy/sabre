@@ -2,6 +2,7 @@ package com.github.st1hy.sabre.history;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.github.st1hy.sabre.R;
@@ -11,7 +12,7 @@ import butterknife.ButterKnife;
 
 public class HistoryEntryHolder extends RecyclerView.ViewHolder {
     @Bind(R.id.entry_image)
-    ImageReceiverView image;
+    ImageView image;
     @Bind(R.id.entry_resource)
     TextView imageName;
     @Bind(R.id.entry_date)
@@ -37,7 +38,7 @@ public class HistoryEntryHolder extends RecyclerView.ViewHolder {
         return imageName;
     }
 
-    public ImageReceiverView getImage() {
+    public ImageView getImage() {
         return image;
     }
 

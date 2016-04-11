@@ -37,7 +37,7 @@
                 app:cardElevation="2dp"
                 app:cardBackgroundColor="@color/card_background"
                 >
-                <com.github.st1hy.sabre.history.ImageReceiverView
+                <ImageView
                     android:id="@+id/entry_image"
                     android:layout_width="@dimen/history_thumb_size"
                     android:layout_height="@dimen/history_thumb_size"

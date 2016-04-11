@@ -1,13 +1,11 @@
 package com.github.st1hy.sabre.history;
 
+import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -15,54 +13,42 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
+import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.dao.OpenedImageContentProvider;
 import com.github.st1hy.sabre.dao.OpenedImageDao;
-import com.github.st1hy.imagecache.ImageCache;
-import com.github.st1hy.imagecache.worker.ImageWorkerImp;
-import com.github.st1hy.imagecache.worker.ImageWorker;
-import com.github.st1hy.imagecache.worker.SimpleLoaderFactory;
-import com.github.st1hy.imagecache.worker.creator.DrawableCreator;
-import com.github.st1hy.imagecache.worker.name.CacheEntryNameFactory;
-import com.github.st1hy.sabre.R;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
 import java.util.Date;
 
+import butterknife.BindDimen;
+import butterknife.ButterKnife;
+import timber.log.BuildConfig;
+import timber.log.Timber;
+
 public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHolder> implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final String TAG = HistoryRecyclerAdapter.class.getSimpleName();
     private static final int HISTORY_ENTRY = R.layout.history_entry_layout;
 
     private final Context context;
-    private final ImageWorker<Drawable> imageWorker;
     private final OnImageClicked onImageClicked;
     private Cursor cursor;
 
-    public HistoryRecyclerAdapter(@NonNull Context context, @NonNull OnImageClicked onImageClicked, @Nullable ImageCache imageCache) {
+    @BindDimen(R.dimen.history_thumb_size)
+    int thumbSize;
+
+    public HistoryRecyclerAdapter(@NonNull Activity context, @NonNull OnImageClicked onImageClicked) {
         this.context = context;
         this.onImageClicked = onImageClicked;
-        this.imageWorker = createWorker(context, imageCache);
+        ButterKnife.bind(this, context);
     }
 
-    private static ImageWorker<Drawable> createWorker(@NonNull Context context, @Nullable ImageCache imageCache) {
-        Resources resources = context.getResources();
-        DrawableCreator drawableCreator = new DrawableCreator(resources);
-        ImageWorkerImp.Builder<Drawable> builder = new ImageWorkerImp.Builder<>(context, drawableCreator);
-        builder.setLoaderFactory(SimpleLoaderFactory.RESULT_ON_MAIN_THREAD);
-        builder.setImageCache(imageCache);
-        final int thumbSize = resources.getDimensionPixelSize(R.dimen.history_thumb_size);
-        builder.setRequestedSize(thumbSize, thumbSize);
-        builder.setCacheEntryNameFactory(new CacheEntryNameFactory() {
-            @Override
-            @NonNull
-            public String getCacheIndex(@NonNull Uri uri) {
-                return uri.getPath().concat(".thumb");
-            }
-        });
-        return builder.build();
-    }
 
     public void onDestroy() {
-        imageWorker.setExitTasksEarly(true);
+        Picasso.with(context).cancelTag(TAG);
     }
 
     @Override
@@ -93,7 +79,24 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         long timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Date.columnName));
         String filename = cursor.getString(cursor.getColumnIndexOrThrow(OpenedImageDao.Properties.Filename.columnName));
         final Uri uri = Uri.parse(uriAsString);
-        imageWorker.loadImage(uri, holder.getImage());
+        ImageView image = holder.getImage();
+        Picasso.with(context)
+                .cancelRequest(image);
+        Picasso.with(context)
+                .load(uri)
+                .resize(thumbSize, thumbSize)
+                .centerCrop()
+                .onlyScaleDown()
+                .tag(TAG)
+                .into(image, new Callback.EmptyCallback() {
+
+                    @Override
+                    public void onError() {
+                        if (BuildConfig.DEBUG) {
+                            Timber.d("Error downloading: %s", uri);
+                        }
+                    }
+                });
         holder.getLastAccess().setText(DateFormat.getDateTimeInstance().format(new Date(timestamp)));
         holder.getImageName().setText(filename != null ? filename : uriAsString);
         holder.getMaterialRippleLayout().setOnClickListener(new View.OnClickListener() {

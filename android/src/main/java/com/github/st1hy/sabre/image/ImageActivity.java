@@ -14,11 +14,8 @@ import com.badlogic.gdx.backends.android.AndroidFragmentApplication;
 import com.github.st1hy.core.utils.SystemUIMode;
 import com.github.st1hy.core.utils.UiThreadHandler;
 import com.github.st1hy.core.utils.Utils;
-import com.github.st1hy.imagecache.ImageCacheHandler;
 import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.CacheUtils;
-import com.github.st1hy.sabre.core.ImageCacheProvider;
 import com.github.st1hy.sabre.dao.DaoMaster;
 import com.github.st1hy.sabre.dao.DaoSession;
 import com.github.st1hy.sabre.dao.OpenImageUtils;
@@ -30,28 +27,25 @@ import java.util.Date;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
+import rx.subscriptions.CompositeSubscription;
 import timber.log.BuildConfig;
 import timber.log.Timber;
 
-public class ImageActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks,
-        ImageCacheProvider {
-    private ImageCacheHandler imageCacheHandler;
+public class ImageActivity extends AppCompatActivity implements AndroidFragmentApplication.Callbacks {
     private Uri imageUriFromIntent;
     @Bind(R.id.image_fab)
     FloatingActionButton floatingButton;
     private static final String SAVE_EDIT_MODE_STATE = "ImageActivity.isInEditMode";
     private UiMode uiMode = UiMode.DEFAULT;
     private UiThreadHandler handler = new UiThreadHandler();
-    private Subscription uiModeSubscibtion;
+    private CompositeSubscription subscriptions = new CompositeSubscription();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Application app = (Application) getApplication();
-        imageCacheHandler = CacheUtils.newImageCacheHandler(app);
         Intent intent = getIntent();
         if (intent != null) {
             imageUriFromIntent = getImageUriFromIntent(intent);
@@ -121,7 +115,7 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
     @Override
     protected void onStart() {
         super.onStart();
-        uiModeSubscibtion = UiMode.toObservable()
+        subscriptions.add(UiMode.toObservable()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Action1<UiMode>() {
                     @Override
@@ -131,13 +125,13 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
                             setEditMode(floatingButton, uiMode, true);
                         }
                     }
-                });
+                }));
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        uiModeSubscibtion.unsubscribe();
+        subscriptions.unsubscribe();
     }
 
     @Override
@@ -188,12 +182,6 @@ public class ImageActivity extends AppCompatActivity implements AndroidFragmentA
             Timber.wtf("No editable database available!");
         }
         return daoMaster;
-    }
-
-    @Override
-    @NonNull
-    public ImageCacheHandler getImageCacheHandler() {
-        return imageCacheHandler;
     }
 
     @OnClick(R.id.image_fab)

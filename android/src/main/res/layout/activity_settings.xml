@@ -30,10 +30,6 @@
             android:layout_gravity="center_horizontal"
             android:orientation="vertical"
             >
-            <include
-                android:id="@+id/setting_clear_cache"
-                layout="@layout/setting_on_off"
-                />
         </LinearLayout>
     </ScrollView>
 

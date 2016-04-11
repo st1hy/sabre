@@ -25,5 +25,6 @@
         app:pv_progressStyle="@style/CircularProgress"
         app:pv_progressMode="indeterminate"
         android:layout_gravity="center"
+        android:visibility="gone"
         />
 </FrameLayout>

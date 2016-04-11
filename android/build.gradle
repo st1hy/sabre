@@ -24,10 +24,6 @@ android {
             jniLibs.srcDirs = ['libs']
         }
     }
-
-    dexOptions {
-        maxProcessCount = 4
-    }
 }
 
 configurations {
@@ -41,7 +37,6 @@ repositories {
 
 dependencies {
     compile project(':core')
-    compile project(':imagecache')
     compile project(':dao-database')
     compile "com.android.support:recyclerview-v7:$rootProject.ext.supportLibraryVersion"
     compile "com.android.support:appcompat-v7:$rootProject.ext.supportLibraryVersion"
@@ -53,6 +48,7 @@ dependencies {
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'io.reactivex:rxandroid:1.1.0'
     compile 'io.reactivex:rxjava:1.1.0'
+    compile 'com.squareup.picasso:picasso:2.5.2'
 
     compile "com.badlogicgames.gdx:gdx-backend-android:$rootProject.ext.gdxVersion"
     natives "com.badlogicgames.gdx:gdx-platform:$rootProject.ext.gdxVersion:natives-armeabi"

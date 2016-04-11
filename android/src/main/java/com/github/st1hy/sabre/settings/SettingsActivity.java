@@ -4,47 +4,35 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 
-import com.balysv.materialripple.MaterialRippleLayout;
-import com.github.st1hy.imagecache.ImageCacheHandler;
-import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.core.CacheUtils;
-
-import java.util.List;
 
 import butterknife.Bind;
 import butterknife.BindColor;
 import butterknife.ButterKnife;
 
 public class SettingsActivity extends AppCompatActivity {
-    public static final ButterKnife.Setter<View, Integer> RIPPLE = new ButterKnife.Setter<View, Integer>() {
-        @Override
-        public void set(@NonNull View view, @ColorInt Integer value, int index) {
-            MaterialRippleLayout.on(view).rippleColor(value).rippleAlpha(1f).create();
-        }
-    };
+//    public static final ButterKnife.Setter<View, Integer> RIPPLE = new ButterKnife.Setter<View, Integer>() {
+//        @Override
+//        public void set(@NonNull View view, @ColorInt Integer value, int index) {
+//            MaterialRippleLayout.on(view).rippleColor(value).rippleAlpha(1f).create();
+//        }
+//    };
 
     @BindColor(R.color.settings_ripple)
     int rippleColor;
-    @Bind({R.id.setting_clear_cache})
-    List<View> settingViews;
+//    @Bind({})
+//    List<View> settingViews;
     @Bind(R.id.settings_toolbar)
     Toolbar toolbar;
-
-    private ImageCacheHandler imageCacheHandler;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        imageCacheHandler = CacheUtils.newImageCacheHandler((Application) getApplication());
         setContentView(R.layout.activity_settings);
         bind();
         setSupportActionBar(toolbar);
@@ -56,8 +44,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void bind() {
         ButterKnife.bind(this);
-        new ClearCacheHolder(imageCacheHandler).bind(settingViews.get(0));
-        ButterKnife.apply(settingViews, RIPPLE, rippleColor);
+//        ButterKnife.apply(settingViews, RIPPLE, rippleColor);
     }
 
     public static void loadDefaultSettings(Context context, boolean overrideCurrentValues) {

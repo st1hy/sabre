@@ -4,9 +4,10 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.github.st1hy.collect.MutableRestrictiveClassToInstanceMap;
 import com.github.st1hy.collect.RestrictiveClassToInstanceMap;
+import com.github.st1hy.gesturedetector.Config;
 import com.github.st1hy.sabre.dao.DaoMaster;
 import com.github.st1hy.sabre.dao.DaoOpenHelper;
-import com.github.st1hy.gesturedetector.Config;
+import com.squareup.picasso.Picasso;
 
 import java.util.concurrent.ConcurrentHashMap;
 

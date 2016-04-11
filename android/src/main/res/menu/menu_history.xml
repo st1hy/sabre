@@ -7,9 +7,9 @@
         android:icon="@drawable/ic_open"
         android:onClick="onActionOpen"
         app:showAsAction="ifRoom|collapseActionView" />
-    <item
-        android:title="@string/action_settings"
-        android:orderInCategory="100"
-        android:onClick="onActionSettings"
-        app:showAsAction="never" />
+    <!--<item-->
+        <!--android:title="@string/action_settings"-->
+        <!--android:orderInCategory="100"-->
+        <!--android:onClick="onActionSettings"-->
+        <!--app:showAsAction="never" />-->
 </menu>
