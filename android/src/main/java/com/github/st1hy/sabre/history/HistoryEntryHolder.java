@@ -1,5 +1,6 @@
 package com.github.st1hy.sabre.history;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
@@ -24,7 +25,7 @@ public class HistoryEntryHolder extends RecyclerView.ViewHolder {
         super(itemView);
     }
 
-    public static HistoryEntryHolder newHistoryItem(View itemView) {
+    public static HistoryEntryHolder newHistoryItem(@NonNull View itemView) {
         HistoryEntryHolder holder = new HistoryEntryHolder(itemView);
         ButterKnife.bind(holder, itemView);
         return holder;

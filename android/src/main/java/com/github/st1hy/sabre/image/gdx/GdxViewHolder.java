@@ -17,7 +17,7 @@ public class GdxViewHolder extends ViewBinder {
     @Bind(R.id.fragment_image_viewer_progress_bar)
     View loadingProgressBar;
 
-    public GdxViewHolder(View glSurface) {
+    public GdxViewHolder(@NonNull  View glSurface) {
         this.glSurface = glSurface;
     }
 

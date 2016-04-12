@@ -8,6 +8,8 @@ import android.view.View;
 
 import com.github.st1hy.sabre.R;
 
+import javax.inject.Inject;
+
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
@@ -25,7 +27,8 @@ public class HistoryViewHolder {
     @Bind(R.id.history_toolbar)
     Toolbar toolbar;
 
-    public void bind(@NonNull Activity activity) {
+    @Inject
+    public HistoryViewHolder(@NonNull Activity activity) {
         ButterKnife.bind(this, activity);
     }
 

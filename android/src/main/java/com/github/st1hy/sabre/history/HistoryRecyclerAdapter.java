@@ -2,6 +2,7 @@ package com.github.st1hy.sabre.history;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,11 +19,15 @@ import android.widget.ImageView;
 import com.github.st1hy.sabre.R;
 import com.github.st1hy.sabre.dao.OpenedImageContentProvider;
 import com.github.st1hy.sabre.dao.OpenedImageDao;
+import com.github.st1hy.sabre.image.ImageActivity;
+import com.google.common.base.Preconditions;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
 import java.util.Date;
+
+import javax.inject.Inject;
 
 import butterknife.BindDimen;
 import butterknife.ButterKnife;
@@ -34,20 +39,19 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     private static final int HISTORY_ENTRY = R.layout.history_entry_layout;
 
     private final Context context;
-    private final OnImageClicked onImageClicked;
+
     private Cursor cursor;
 
     @BindDimen(R.dimen.history_thumb_size)
     int thumbSize;
 
-    public HistoryRecyclerAdapter(@NonNull Activity context, @NonNull OnImageClicked onImageClicked) {
+    @Inject
+    public HistoryRecyclerAdapter(@NonNull Activity context) {
         this.context = context;
-        this.onImageClicked = onImageClicked;
         ButterKnife.bind(this, context);
     }
 
-
-    public void onDestroy() {
+    public void onStop() {
         Picasso.with(context).cancelTag(TAG);
     }
 
@@ -64,6 +68,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
     @Override
     public HistoryEntryHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(viewType, parent, false);
+        Preconditions.checkNotNull(view);
         switch (viewType) {
             case HISTORY_ENTRY:
                 return HistoryEntryHolder.newHistoryItem(view);
@@ -102,7 +107,7 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         holder.getMaterialRippleLayout().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onImageClicked.openImage(uri);
+                openImage(uri);
             }
         });
     }
@@ -126,7 +131,11 @@ public class HistoryRecyclerAdapter extends RecyclerView.Adapter<HistoryEntryHol
         notifyDataSetChanged();
     }
 
-    public interface OnImageClicked {
-        void openImage(@NonNull Uri uri);
+    public void openImage(@NonNull Uri uri) {
+        Intent intent = new Intent();
+        intent.setDataAndTypeAndNormalize(uri, "image/*");
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setClass(context, ImageActivity.class);
+        context.startActivity(intent);
     }
 }

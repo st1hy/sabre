@@ -6,10 +6,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,60 +14,50 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
-import com.github.st1hy.sabre.Application;
 import com.github.st1hy.sabre.R;
-import com.github.st1hy.sabre.dao.DaoMaster;
-import com.github.st1hy.sabre.dao.OpenedImageContentProvider;
-import com.github.st1hy.sabre.image.ImageActivity;
+import com.github.st1hy.sabre.core.ui.BaseActivity;
+import com.github.st1hy.sabre.history.utils.ForwardingLoaderCallback;
+import com.github.st1hy.sabre.history.utils.SimpleAnimationListener;
 import com.github.st1hy.sabre.settings.SettingsActivity;
-import com.google.common.base.Preconditions;
 
-public class HistoryActivity extends AppCompatActivity implements HistoryRecyclerAdapter.OnImageClicked {
+import javax.inject.Inject;
+
+public class HistoryActivity extends BaseActivity {
     private static final int REQUEST_IMAGE = 0x16ed;
     private static final String SAVE_ANIMATION_SHOW_FLAG = "animation shown";
 
-    private final HistoryViewHolder viewHolder = new HistoryViewHolder();
     private boolean showHelp = true;
-    private HistoryRecyclerAdapter historyAdapter;
     private Animation fade_out;
+
+    @Inject
+    HistoryRecyclerAdapter historyAdapter;
+    @Inject
+    HistoryViewHolder viewHolder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_history);
+        getComponent().inject(this);
+
         fade_out = AnimationUtils.loadAnimation(this, R.anim.fade_out);
         showHelp = needShowHelp(savedInstanceState);
-        historyAdapter = new HistoryRecyclerAdapter(this, this);
-        setupDao();
         SettingsActivity.loadDefaultSettings(this, false);
-        getApplication().registerComponentCallbacks(this);
-
-        setContentView(R.layout.activity_history);
-        bind();
-
         setSupportActionBar(viewHolder.getToolbar());
+        onViewCreated();
     }
 
     private boolean needShowHelp(Bundle savedInstanceState) {
         return savedInstanceState == null || savedInstanceState.getBoolean(SAVE_ANIMATION_SHOW_FLAG, true);
     }
 
-    private void setupDao() {
-        Application app = (Application) getApplication();
-        DaoMaster daoMaster = app.getCache().getInstance(DaoMaster.class);
-        Preconditions.checkNotNull(daoMaster);
-        OpenedImageContentProvider.daoSession = daoMaster.newSession();
-    }
-
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        getApplication().unregisterComponentCallbacks(this);
-        historyAdapter.onDestroy();
-        OpenedImageContentProvider.daoSession = null;
+    protected void onStop() {
+        super.onStop();
+        historyAdapter.onStop();
     }
 
-    private void bind() {
-        viewHolder.bind(this);
+    private void onViewCreated() {
         viewHolder.getRecyclerView().setAdapter(historyAdapter);
         viewHolder.getRecyclerView().setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         viewHolder.getFloatingButtonText().setVisibility(View.GONE);
@@ -80,28 +67,14 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
                 onActionOpen();
             }
         });
-        getSupportLoaderManager().initLoader(0, null, new LoaderCallback());
+        getSupportLoaderManager().initLoader(0, null, new ForwardingLoaderCallback(historyAdapter) {
+            @Override
+            public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+                super.onLoadFinished(loader, data);
+                onDataLoaded(data);
+            }
+        });
     }
-
-
-    private class LoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
-        @Override
-        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            return historyAdapter.onCreateLoader(id, args);
-        }
-
-        @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-            onDataLoaded(data);
-            historyAdapter.onLoadFinished(loader, data);
-        }
-
-        @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
-            historyAdapter.onLoaderReset(loader);
-        }
-    }
-
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -116,6 +89,7 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
         return true;
     }
 
+    //Called using menu_history.xml
     public void onActionOpen(final MenuItem item) {
         onActionOpen();
     }
@@ -138,21 +112,12 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
             case REQUEST_IMAGE:
                 if (resultCode == Activity.RESULT_OK && null != data) {
                     Uri uri = data.getData();
-                    openImage(uri);
+                    historyAdapter.openImage(uri);
                 }
                 break;
             default:
                 super.onActivityResult(requestCode, resultCode, data);
         }
-    }
-
-    @Override
-    public void openImage(@NonNull Uri uri) {
-        Intent intent = new Intent();
-        intent.setDataAndTypeAndNormalize(uri, "image/*");
-        intent.setAction(Intent.ACTION_VIEW);
-        intent.setClass(this, ImageActivity.class);
-        startActivity(intent);
     }
 
     private void onDataLoaded(Cursor data) {
@@ -163,19 +128,11 @@ public class HistoryActivity extends AppCompatActivity implements HistoryRecycle
             viewHolder.getFloatingButtonText().setVisibility(View.VISIBLE);
             fade_out.setDuration(2000);
             fade_out.setStartOffset(5000);
-            fade_out.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                }
-
+            fade_out.setAnimationListener(new SimpleAnimationListener() {
                 @Override
                 public void onAnimationEnd(Animation animation) {
                     showHelp = false;
                     viewHolder.getFloatingButtonText().setVisibility(View.GONE);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
                 }
             });
             viewHolder.getFloatingButtonText().startAnimation(fade_out);

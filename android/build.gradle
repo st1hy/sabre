@@ -1,5 +1,5 @@
 apply plugin: "com.android.application"
-
+apply plugin: 'com.neenbedankt.android-apt'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -33,6 +33,7 @@ configurations {
 repositories {
     maven { url "https://oss.sonatype.org/content/repositories/releases/" }
     maven { url "http://dl.bintray.com/st1hy/maven" }
+
 }
 
 dependencies {
@@ -49,6 +50,8 @@ dependencies {
     compile 'io.reactivex:rxandroid:1.1.0'
     compile 'io.reactivex:rxjava:1.1.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.google.dagger:dagger:2.2'
+    apt 'com.google.dagger:dagger-compiler:2.2'
 
     compile "com.badlogicgames.gdx:gdx-backend-android:$rootProject.ext.gdxVersion"
     natives "com.badlogicgames.gdx:gdx-platform:$rootProject.ext.gdxVersion:natives-armeabi"
