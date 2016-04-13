@@ -1,7 +1,6 @@
 package com.github.st1hy.sabre.libgdx;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -103,20 +102,20 @@ public class ImageScreen implements TransformableScreen {
     }
 
     private void renderShapes() {
-        Texture background = screenContext.getBackground();
-        int width = background.getWidth();
-        int height = background.getHeight();
-        int x = 0;
-        int y = 0;
-        shapeRenderer.setTransformMatrix(screenContext.getWorldTransformation().getTransformation());
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(Color.RED);
-        shapeRenderer.line(x, y, x + width, y + height);
-        shapeRenderer.line(x, y + height, x + width, y);
-        shapeRenderer.rect(x, y, width, height);
-        shapeRenderer.circle(x + width / 2, y + height / 2, Math.min(width / 2, height / 2));
-        selectionRenderer.render(shapeRenderer);
-        shapeRenderer.end();
+//        Texture background = screenContext.getBackground();
+//        int width = background.getWidth();
+//        int height = background.getHeight();
+//        int x = 0;
+//        int y = 0;
+//        shapeRenderer.setTransformMatrix(screenContext.getWorldTransformation().getTransformation());
+//        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+//        shapeRenderer.setColor(Color.RED);
+//        shapeRenderer.line(x, y, x + width, y + height);
+//        shapeRenderer.line(x, y + height, x + width, y);
+//        shapeRenderer.rect(x, y, width, height);
+//        shapeRenderer.circle(x + width / 2, y + height / 2, Math.min(width / 2, height / 2));
+//        selectionRenderer.render(shapeRenderer);
+//        shapeRenderer.end();
     }
 
     @Override

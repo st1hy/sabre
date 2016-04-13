@@ -43,7 +43,7 @@ public class ScreenContext {
      * 1. Initial transformation 'A' - transforms image to fit the screen (keeping aspect ratio) and
      * centers image
      * 2. User transformation 'B' - transformation of the screen created by user touch movement
-     * Result transformation 'T' is defined as: T := AB
+     * Result transformation 'T' is defined as: T := BA
      */
     public Transformation getWorldTransformation() {
         return worldTransformation;
