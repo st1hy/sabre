@@ -28,12 +28,6 @@ public class GdxViewHolder extends ViewBinder {
         return this;
     }
 
-    @Override
-    public ViewBinder unbind() {
-        glSurface = null;
-        return super.unbind();
-    }
-
     public View getLoadingProgressBar() {
         return loadingProgressBar;
     }

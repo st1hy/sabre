@@ -121,7 +121,6 @@ public class GdxImageViewerFragment extends AndroidFragmentApplication  {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        viewHolder.unbind();
         imageTouchController.invalidate();
         Picasso.with(getActivity())
                 .cancelTag(TAG);

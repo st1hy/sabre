@@ -4,7 +4,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.0.0'
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
     }
 }
 
@@ -28,6 +28,12 @@ ext {
     aiVersion = '1.8.0'
 
     supportLibraryVersion = '23.3.0'
+
+    daggerVersion = '2.2'
+    jUnitVersion = '4.12'
+    robolectricVersion = '3.0'
+    rxJavaVersion = '1.1.0'
+    greenDaoVersion = '2.1.0'
 }
 
 allprojects {
@@ -40,3 +46,8 @@ allprojects {
         options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
     }
 }
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+

@@ -11,9 +11,9 @@ repositories {
 
 dependencies {
     compile "com.badlogicgames.gdx:gdx:$rootProject.ext.gdxVersion"
-    compile "com.badlogicgames.gdx:gdx-box2d:$rootProject.ext.gdxVersion"
-    compile 'io.reactivex:rxjava:1.1.0'
-    testCompile "junit:junit:4.12"
+    compile "io.reactivex:rxjava:$rootProject.ext.rxJavaVersion"
+
+    testCompile "junit:junit:$rootProject.ext.jUnitVersion"
 }
 
 if (System.env.JDK7_HOME) {//Fix for bootstrap warning if possible

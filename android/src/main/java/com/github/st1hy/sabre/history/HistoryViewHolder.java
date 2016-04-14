@@ -7,6 +7,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 
 import com.github.st1hy.sabre.R;
+import com.google.common.base.Preconditions;
 
 import javax.inject.Inject;
 
@@ -30,6 +31,7 @@ public class HistoryViewHolder {
     @Inject
     public HistoryViewHolder(@NonNull Activity activity) {
         ButterKnife.bind(this, activity);
+        Preconditions.checkNotNull(toolbar);
     }
 
     public View getFloatingButtonContainer() {

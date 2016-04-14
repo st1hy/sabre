@@ -20,9 +20,10 @@ android {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
     compile project(':utils')
-    compile 'de.greenrobot:greendao:2.1.0'
-    compile 'com.google.dagger:dagger:2.2'
-    apt 'com.google.dagger:dagger-compiler:2.2'
+    compile "de.greenrobot:greendao:$rootProject.ext.greenDaoVersion"
+    compile "com.google.dagger:dagger:$rootProject.ext.daggerVersion"
+    apt "com.google.dagger:dagger-compiler:$rootProject.ext.daggerVersion"
+
+    testCompile "junit:junit:$rootProject.ext.jUnitVersion"
 }
